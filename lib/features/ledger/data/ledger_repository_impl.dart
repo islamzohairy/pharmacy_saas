@@ -20,19 +20,21 @@ class DriftLedgerRepository implements LedgerRepository {
   @override
   Future<LedgerEntry> append(LedgerEntryDraft draft) {
     return _db.transaction(() async {
-      final row = await _db.into(_db.ledgerEntries).insertReturning(
-        LedgerEntriesCompanion.insert(
-          pharmacyId: draft.pharmacyId,
-          type: draft.type,
-          amountMinor: draft.amountMinor,
-          productId: Value(draft.productId),
-          supplierId: Value(draft.supplierId),
-          customerId: Value(draft.customerId),
-          profileId: Value(draft.profileId),
-          occurredAt: draft.occurredAt,
-          note: Value(draft.note),
-        ),
-      );
+      final row = await _db
+          .into(_db.ledgerEntries)
+          .insertReturning(
+            LedgerEntriesCompanion.insert(
+              pharmacyId: draft.pharmacyId,
+              type: draft.type,
+              amountMinor: draft.amountMinor,
+              productId: Value(draft.productId),
+              supplierId: Value(draft.supplierId),
+              customerId: Value(draft.customerId),
+              profileId: Value(draft.profileId),
+              occurredAt: draft.occurredAt,
+              note: Value(draft.note),
+            ),
+          );
       return _toDomain(row);
     });
   }
@@ -75,7 +77,8 @@ class DriftLedgerRepository implements LedgerRepository {
       ..where((t) {
         var condition = t.pharmacyId.equals(pharmacyId);
         condition = condition & t.type.equals(type.name);
-        condition = condition &
+        condition =
+            condition &
             (type == LedgerEntryType.supplierDebt ||
                     type == LedgerEntryType.debtRepayment
                 ? t.supplierId.equals(partyId)
@@ -92,9 +95,7 @@ class DriftLedgerRepository implements LedgerRepository {
     int limit = 200,
   }) {
     final query = _db.select(_db.ledgerEntries)
-      ..where(
-        (t) => t.pharmacyId.equals(pharmacyId) & t.syncedAt.isNull(),
-      )
+      ..where((t) => t.pharmacyId.equals(pharmacyId) & t.syncedAt.isNull())
       ..orderBy([(t) => OrderingTerm.asc(t.id)])
       ..limit(limit);
     return query.get().then((rows) => rows.map(_toDomain).toList());
@@ -123,9 +124,7 @@ class DriftLedgerRepository implements LedgerRepository {
     return _db.transaction(() async {
       for (final id in ids) {
         await (_db.update(_db.ledgerEntries)
-              ..where(
-                (t) => t.id.equals(id) & t.pharmacyId.equals(pharmacyId),
-              ))
+              ..where((t) => t.id.equals(id) & t.pharmacyId.equals(pharmacyId)))
             .write(LedgerEntriesCompanion(syncedAt: Value(at)));
       }
     });

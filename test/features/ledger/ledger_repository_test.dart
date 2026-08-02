@@ -55,9 +55,7 @@ void main() {
     expect(entry.profileId, 1);
     expect(entry.syncedAt, isNull);
 
-    final all = await repository
-        .watchEntries(pharmacyId: pharmacyId)
-        .first;
+    final all = await repository.watchEntries(pharmacyId: pharmacyId).first;
     expect(all, hasLength(1));
   });
 
@@ -96,10 +94,14 @@ void main() {
   test('entriesByParty returns only the party requested', () async {
     final supplierId = await db
         .into(db.suppliers)
-        .insert(SuppliersCompanion.insert(pharmacyId: pharmacyId, name: 'مورد'));
+        .insert(
+          SuppliersCompanion.insert(pharmacyId: pharmacyId, name: 'مورد'),
+        );
     final customerId = await db
         .into(db.customers)
-        .insert(CustomersCompanion.insert(pharmacyId: pharmacyId, name: 'عميل'));
+        .insert(
+          CustomersCompanion.insert(pharmacyId: pharmacyId, name: 'عميل'),
+        );
 
     await repository.append(
       draft(type: LedgerEntryType.supplierDebt, supplierId: supplierId),
@@ -121,33 +123,32 @@ void main() {
     expect(supplierEntries, hasLength(1));
   });
 
-  test('unsynced → markSynced → unsynced empty, backlog stream follows',
-      () async {
-    final a = await repository.append(draft());
-    final b = await repository.append(draft(amount: 200));
+  test(
+    'unsynced → markSynced → unsynced empty, backlog stream follows',
+    () async {
+      final a = await repository.append(draft());
+      final b = await repository.append(draft(amount: 200));
 
-    final unsynced = await repository.unsyncedEntries(pharmacyId: pharmacyId);
-    expect(unsynced.map((e) => e.id), [a.id, b.id]);
+      final unsynced = await repository.unsyncedEntries(pharmacyId: pharmacyId);
+      expect(unsynced.map((e) => e.id), [a.id, b.id]);
 
-    final counts = <int>[];
-    final sub = repository
-        .watchUnsyncedCount(pharmacyId: pharmacyId)
-        .listen(counts.add);
-    await _waitForBacklog(counts, 2);
+      final counts = <int>[];
+      final sub = repository
+          .watchUnsyncedCount(pharmacyId: pharmacyId)
+          .listen(counts.add);
+      await _waitForBacklog(counts, 2);
 
-    await repository.markSynced(
-      pharmacyId: pharmacyId,
-      ids: [a.id, b.id],
-      at: DateTime.now().toUtc(),
-    );
-    await _waitForBacklog(counts, 0);
-    expect(
-      await repository.unsyncedEntries(pharmacyId: pharmacyId),
-      isEmpty,
-    );
+      await repository.markSynced(
+        pharmacyId: pharmacyId,
+        ids: [a.id, b.id],
+        at: DateTime.now().toUtc(),
+      );
+      await _waitForBacklog(counts, 0);
+      expect(await repository.unsyncedEntries(pharmacyId: pharmacyId), isEmpty);
 
-    await sub.cancel();
-  });
+      await sub.cancel();
+    },
+  );
 
   test('markSynced never touches business fields', () async {
     final a = await repository.append(draft(amount: 555));
@@ -159,9 +160,9 @@ void main() {
       at: stamped,
     );
 
-    final row = await (db.select(db.ledgerEntries)
-          ..where((t) => t.id.equals(a.id)))
-        .getSingle();
+    final row = await (db.select(
+      db.ledgerEntries,
+    )..where((t) => t.id.equals(a.id))).getSingle();
     expect(row.amountMinor, 555);
     expect(row.syncedAt?.toUtc(), stamped);
   });
@@ -173,49 +174,60 @@ void main() {
     );
   });
 
-  test('a party referenced by the ledger cannot be deleted (FK RESTRICT)',
-      () async {
-    final supplierId = await db
-        .into(db.suppliers)
-        .insert(SuppliersCompanion.insert(pharmacyId: pharmacyId, name: 'مورد'));
-    await repository.append(
-      draft(type: LedgerEntryType.supplierDebt, supplierId: supplierId),
-    );
+  test(
+    'a party referenced by the ledger cannot be deleted (FK RESTRICT)',
+    () async {
+      final supplierId = await db
+          .into(db.suppliers)
+          .insert(
+            SuppliersCompanion.insert(pharmacyId: pharmacyId, name: 'مورد'),
+          );
+      await repository.append(
+        draft(type: LedgerEntryType.supplierDebt, supplierId: supplierId),
+      );
 
-    await expectLater(
-      db.delete(db.suppliers).go(),
-      throwsA(isA<SqliteException>()),
-    );
-  });
+      await expectLater(
+        db.delete(db.suppliers).go(),
+        throwsA(isA<SqliteException>()),
+      );
+    },
+  );
 
-  test('the append-only ledger has no update/delete path in its interface',
-      () async {
-    final source = await File(
-      'lib/features/ledger/domain/ledger_repository.dart',
-    ).readAsString();
-    final withoutComments = source
-        .replaceAll(RegExp(r'///.*'), '')
-        .replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '');
-    expect(
-      RegExp(r'\b(update|delete)\s*\(').hasMatch(withoutComments),
-      isFalse,
-      reason: 'LedgerRepository must not expose update/delete members — '
-          'corrections are new offsetting rows.',
-    );
-  });
+  test(
+    'the append-only ledger has no update/delete path in its interface',
+    () async {
+      final source = await File(
+        'lib/features/ledger/domain/ledger_repository.dart',
+      ).readAsString();
+      final withoutComments = source
+          .replaceAll(RegExp(r'///.*'), '')
+          .replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '');
+      expect(
+        RegExp(r'\b(update|delete)\s*\(').hasMatch(withoutComments),
+        isFalse,
+        reason:
+            'LedgerRepository must not expose update/delete members — '
+            'corrections are new offsetting rows.',
+      );
+    },
+  );
 
-  test('repositories are keyed to the pharmacy (tenant isolation local)',
-      () async {
-    final otherPharmacyId = await seedPharmacy(db, remoteUuid: 'other');
-    await repository.append(draft());
+  test(
+    'repositories are keyed to the pharmacy (tenant isolation local)',
+    () async {
+      final otherPharmacyId = await seedPharmacy(db, remoteUuid: 'other');
+      await repository.append(draft());
 
-    final otherBacklog = await repository
-        .unsyncedEntries(pharmacyId: otherPharmacyId);
-    expect(otherBacklog, isEmpty);
-    final ownBacklog = await repository
-        .unsyncedEntries(pharmacyId: pharmacyId);
-    expect(ownBacklog, hasLength(1));
-  });
+      final otherBacklog = await repository.unsyncedEntries(
+        pharmacyId: otherPharmacyId,
+      );
+      expect(otherBacklog, isEmpty);
+      final ownBacklog = await repository.unsyncedEntries(
+        pharmacyId: pharmacyId,
+      );
+      expect(ownBacklog, hasLength(1));
+    },
+  );
 }
 
 /// Polls a drift stream query until it reports [target] (drift emits

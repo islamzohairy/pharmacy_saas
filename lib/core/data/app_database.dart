@@ -8,7 +8,11 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'secure_store.dart';
+import 'tables/customers_table.dart';
+import 'tables/ledger_entries_table.dart';
 import 'tables/pharmacies_table.dart';
+import 'tables/products_table.dart';
+import 'tables/suppliers_table.dart';
 import 'tables/user_profiles_table.dart';
 
 part 'app_database.g.dart';
@@ -17,25 +21,43 @@ part 'app_database.g.dart';
 /// sqlite3 (see the `hooks` section in pubspec.yaml).
 ///
 /// Schema version 1 (foundation) had no tables; version 2 adds identity
-/// (`pharmacies`, `user_profiles`). Plan 03 adds the remaining entities —
-/// the append-only ledger rule applies to the schema added there.
-@DriftDatabase(tables: [Pharmacies, UserProfiles])
+/// (`pharmacies`, `user_profiles`); version 3 adds the plan-03 entities
+/// (`products`, `suppliers`, `customers`, `ledger_entries`). The
+/// append-only ledger rule applies to the schema added in version 3.
+@DriftDatabase(tables: [
+  Pharmacies,
+  UserProfiles,
+  Products,
+  Suppliers,
+  Customers,
+  LedgerEntries,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createTable(pharmacies);
       await m.createTable(userProfiles);
+      await m.createTable(products);
+      await m.createTable(suppliers);
+      await m.createTable(customers);
+      await m.createTable(ledgerEntries);
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.createTable(pharmacies);
         await m.createTable(userProfiles);
+      }
+      if (from < 3) {
+        await m.createTable(products);
+        await m.createTable(suppliers);
+        await m.createTable(customers);
+        await m.createTable(ledgerEntries);
       }
     },
     beforeOpen: (details) async {

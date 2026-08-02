@@ -14,9 +14,22 @@
   gate on profile switch, forgot-PIN wipe with in-app limitation notice.
   Roles (`owner`/`family`/`employee`) are captured and displayed but not
   enforced — no server auth, no login screen, per plan scope.
+- 03_DATA_AND_SYNC_PLAN — full drift schema for all P0 entities
+  (`pharmacies` + `remote_uuid`, `user_profiles`, `products` with
+  soft-delete flag, `suppliers`, `customers`, append-only
+  `ledger_entries`), feature repositories with per-pharmacy isolation,
+  one-way ledger backup to Supabase: device-token registration
+  (SHA-256 hash server-side, register-first-wins on uuid), batched
+  idempotent pushes (composite `(pharmacy_id, id)` PK), background
+  scheduler (start/foreground-resume/write-debounce/60s periodic,
+  exponential backoff), in-app backup-status indicator (RTL),
+  server-side RLS with anon locked to two SECURITY DEFINER functions.
+  Verified against the live project (migration applied; e2e + 8 server
+  checks passed). Unsynced-only ledger backup — products/suppliers/
+  customers stay local by plan scope.
 
 ## In progress
-None — next up: `PLANS/03_DATA_AND_SYNC_PLAN.md`.
+None — next up: `PLANS/04_FINANCIAL_LEDGER_PLAN.md`.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |

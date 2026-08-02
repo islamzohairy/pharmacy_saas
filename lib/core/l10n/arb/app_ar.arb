@@ -159,5 +159,26 @@
   "addProfileTooltip": "إضافة ملف",
   "@addProfileTooltip": {
     "description": "Tooltip for the add-profile action on the switcher screen"
+  },
+  "backupNeverSynced": "لم تتم المزامنة بعد",
+  "@backupNeverSynced": {
+    "description": "Backup indicator: the device has never backed up"
+  },
+  "backupSyncing": "جارٍ النسخ الاحتياطي…",
+  "@backupSyncing": {
+    "description": "Backup indicator: a sync pass is in progress"
+  },
+  "backupSyncedAt": "آخر نسخة: {time}",
+  "@backupSyncedAt": {
+    "description": "Backup indicator: last successful backup time",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "backupError": "تعذر النسخ الاحتياطي — سنحاول مرة أخرى",
+  "@backupError": {
+    "description": "Backup indicator: the last sync attempt failed"
   }
 }

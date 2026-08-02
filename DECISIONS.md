@@ -175,3 +175,88 @@ deterministic for this one-screen flow.
 ALTERNATIVES CONSIDERED: `pop()` (broken, see above); `push()` (rejected
 — keeps the switcher on the back stack, user can't go "back" past a
 profile switch).
+
+## 2026-08-02 — Backup authentication: device token + SECURITY DEFINER RPC
+DECISION: the P0 one-way ledger backup authenticates with a per-install
+random 256-bit device token (base64url, stored in
+`flutter_secure_storage` as `device_token_v1`) presented to two anon-
+executable RPC functions, `register_device` and `push_ledger_entries`.
+The server stores only the SHA-256 hex of the token in `devices`; the
+tenant is derived server-side from the token hash — the payload never
+carries a pharmacy id. Anon has ALL privileges revoked from every table
+(no direct-table RLS policies), and the functions are SECURITY DEFINER.
+Registration is register-first-wins on the pharmacy `uuid`: a uuid
+already claimed by another token is refused.
+WHY: RLS policies that key on the token require the token to be readable
+inside the policy, forcing it into a table column (leakage if the table
+is ever misgranted). The RPC layer keeps the hash-only column and gives
+a single, auditable write surface. The anon key is extractable from the
+APK by design, so every auth control lives server-side in the function
+bodies; this model is the minimum that makes backup writes safe while
+keeping P0 auth-free on the device. First-wins is chosen over last-wins
+so an attacker who obtains a fresh token cannot hijack an already-
+registered tenant (they could only create a new phantom tenant).
+ALTERNATIVES CONSIDERED: anon upsert with RLS policies keyed on a stored
+token (rejected — token must live in a readable column); server-side
+accounts/session auth (rejected by the 2026-07-30 no-backend-auth
+decision); per-request JWT signing (rejected — overkill while a single
+token per install covers the threat: the token IS the possession factor).
+
+## 2026-08-02 — Remote ledger PK is composite (pharmacy_id, id); retries are idempotent
+DECISION: the server-side `ledger_entries` table uses
+`primary key (pharmacy_id, id)` where `id` is the local drift
+autoincrement, and `push_ledger_entries` inserts with
+`ON CONFLICT (pharmacy_id, id) DO NOTHING`, returning the inserted
+count. Local ids are 1,2,3… per install, so they collide across tenants;
+the pair is what makes an idempotent retry safe.
+WHY: the local-first sync design (plan 03) retries failed pushes with
+backoff, and the app stamps `synced_at` only after the server acks.
+Without the composite key, a retry after a partial network failure
+silently duplicates money rows. With it, retries are a no-op by
+construction (verified live: identical re-push returns 0).
+ALTERNATIVES CONSIDERED: UUIDs per entry from the start (rejected —
+deferred to the multi-device era; P0 is single-device so local
+autoincrement is fine and cheaper); a server-returned upsert id (rejected
+— adds a round trip per batch).
+
+## 2026-08-02 — Sync scope is ledger-only in P0
+DECISION: only `ledger_entries` is backed up. `products`, `suppliers`,
+`customers`, and `user_profiles` exist on the server (schema parity) but
+have no write path and no client code; their data is local-only in P0.
+WHY: plan 03's problem statement is the data-loss risk for money
+movement, which the ledger fully captures. Products/suppliers/customers
+are re-entrable in a few hours each — their loss is a nuisance, not a
+financial catastrophe — and extending sync to them multiplies the
+conflict surface (hard delete, renames) that the single-device assumption
+is meant to avoid. The schema keeps parity so the migration path to
+fuller sync is additive.
+ALTERNATIVES CONSIDERED: full-table sync in P0 (rejected — conflict
+surface without multi-device need); products-only sync (rejected —
+inconsistent split of "recoverable" vs "valuable" data).
+
+## 2026-08-02 — Schema deviations from plan 03: is_active and remote_uuid
+DECISION: two deliberate deviations from the plan's table sketches, both
+documented in the migration: (1) `products.is_active` boolean (default
+true, soft-delete) instead of hard delete; (2) `pharmacies.remote_uuid`
+random UUIDv4 instead of a sequential server id as the registration key.
+WHY: (1) plan 05's product management must never destroy ledger-visible
+history — `ledger_entries.product_id` is a RESTRICT FK, and hard-deleting
+a product the ledger references is impossible by construction; soft
+delete is the natural way to retire a product without a ledger dead end.
+(2) sequential ids are guessable across tenants; the uuid is the only
+client-visible key to the server, so it must not be enumerable.
+ALTERNATIVES CONSIDERED: hard delete + NULL-out ledger refs (rejected —
+destroys attribution, contradicts append-only); sequential registration
+id (rejected — enumeration risk on the registration surface).
+
+## 2026-08-02 — Backup status surface: in-app indicator, not settings screen
+DECISION: backup state (never/syncing/synced/error) renders as a small
+indicator in the dashboard's bottom bar (`BackupStatusIndicator`,
+Arabic labels, synced time shown) fed by a ChangeNotifierProvider
+(`backupStatusProvider`). No settings screen in P0.
+WHY: the plan's requirement is that the owner can see backup is working
+— the indicator addresses the trust concern with zero navigation cost.
+The scheduler never throws (errors land in the status, not the UI).
+ALTERNATIVES CONSIDERED: settings/backup screen (rejected — another
+route to build and maintain for one boolean-ish signal in P0); toast on
+failure (rejected — transient, disappears before the user can act).

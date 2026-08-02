@@ -19,6 +19,20 @@ abstract interface class IdentityRepository {
 
   Future<Pharmacy> getPharmacy();
 
+  /// The device's secret backup token: a random 256-bit value generated
+  /// at onboarding, persisted in secure storage (never in the drift DB).
+  /// Authenticates this install to the remote backup path — see
+  /// SECURITY.md and DECISIONS.md.
+  Future<String> getDeviceToken();
+
+  /// Whether this device has already registered its token against the
+  /// remote backup backend (register-first-wins, done at first sync).
+  Future<bool> isDeviceRegistered();
+
+  /// Records that registration succeeded. Only meaningful for the backup
+  /// path; the flag lives in secure storage with the token.
+  Future<void> markDeviceRegistered();
+
   Future<List<UserProfile>> getProfiles();
 
   /// Adds a `family`-role profile for the shared-shift pattern.

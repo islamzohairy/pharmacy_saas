@@ -128,4 +128,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get addProfileTooltip => 'إضافة ملف';
+
+  @override
+  String get backupNeverSynced => 'لم تتم المزامنة بعد';
+
+  @override
+  String get backupSyncing => 'جارٍ النسخ الاحتياطي…';
+
+  @override
+  String backupSyncedAt(String time) {
+    return 'آخر نسخة: $time';
+  }
+
+  @override
+  String get backupError => 'تعذر النسخ الاحتياطي — سنحاول مرة أخرى';
 }

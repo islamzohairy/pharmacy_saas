@@ -21,6 +21,8 @@ class DriftIdentityRepository implements IdentityRepository {
 
   static const _lastActiveKey = 'last_active_profile_id';
   static const _pinHashKeyPrefix = 'pin_hash_';
+  static const _deviceTokenKey = 'device_token_v1';
+  static const _deviceRegisteredKey = 'device_registered_v1';
 
   @override
   Future<bool> hasAnyProfile() async {
@@ -40,6 +42,7 @@ class DriftIdentityRepository implements IdentityRepository {
             PharmaciesCompanion.insert(
               name: pharmacyName.trim(),
               currency: currency.trim(),
+              remoteUuid: Value(_randomUuidV4()),
             ),
           );
       final ownerId = await _db.into(_db.userProfiles).insert(
@@ -55,11 +58,34 @@ class DriftIdentityRepository implements IdentityRepository {
       final owner = await (_db.select(_db.userProfiles)
             ..where((t) => t.id.equals(ownerId)))
           .getSingle();
+      await getDeviceToken();
       return (
         pharmacy: pharmacy.toDomain(),
         owner: owner.toDomain(),
       );
     });
+  }
+
+  @override
+  Future<String> getDeviceToken() async {
+    final existing = await _secureStore.read(_deviceTokenKey);
+    if (existing != null && existing.isNotEmpty) return existing;
+    final random = Random.secure();
+    final token = base64UrlEncode(
+      List<int>.generate(32, (_) => random.nextInt(256)),
+    );
+    await _secureStore.write(_deviceTokenKey, token);
+    return token;
+  }
+
+  @override
+  Future<bool> isDeviceRegistered() async {
+    return await _secureStore.read(_deviceRegisteredKey) == '1';
+  }
+
+  @override
+  Future<void> markDeviceRegistered() async {
+    await _secureStore.write(_deviceRegisteredKey, '1');
   }
 
   @override
@@ -155,9 +181,24 @@ class DriftIdentityRepository implements IdentityRepository {
       await _secureStore.delete(_pinKeyFor(row.id));
     }
     await _secureStore.delete(_lastActiveKey);
+    await _secureStore.delete(_deviceTokenKey);
+    await _secureStore.delete(_deviceRegisteredKey);
   }
 
   String _pinKeyFor(int profileId) => '$_pinHashKeyPrefix$profileId';
+
+  /// RFC 4122 version 4 UUID from [Random.secure] — the remote tenant
+  /// binding key must be unguessable across tenants.
+  String _randomUuidV4() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+        '${hex.substring(12, 16)}-${hex.substring(16, 20)}-'
+        '${hex.substring(20)}';
+  }
 
   String _randomSalt() {
     final random = Random.secure();
@@ -189,6 +230,7 @@ extension on StoredPharmacy {
     name: name,
     currency: currency,
     createdAt: createdAt,
+    remoteUuid: remoteUuid,
   );
 }
 

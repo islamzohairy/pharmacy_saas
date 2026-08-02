@@ -5,6 +5,7 @@ class Pharmacy {
     required this.name,
     required this.currency,
     required this.createdAt,
+    this.remoteUuid,
   });
 
   final int id;
@@ -13,4 +14,10 @@ class Pharmacy {
   /// ISO 4217 code. P0 always `EGP`.
   final String currency;
   final DateTime createdAt;
+
+  /// Random v4 UUID generated at onboarding. The remote binding key for
+  /// first-sync registration (register-first-wins) — local sequential
+  /// ids are guessable across tenants, this must be random
+  /// (DECISIONS.md).
+  final String? remoteUuid;
 }

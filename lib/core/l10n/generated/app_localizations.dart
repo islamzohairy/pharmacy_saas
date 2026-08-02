@@ -333,6 +333,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'إضافة ملف'**
   String get addProfileTooltip;
+
+  /// Backup indicator: the device has never backed up
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تتم المزامنة بعد'**
+  String get backupNeverSynced;
+
+  /// Backup indicator: a sync pass is in progress
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ النسخ الاحتياطي…'**
+  String get backupSyncing;
+
+  /// Backup indicator: last successful backup time
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر نسخة: {time}'**
+  String backupSyncedAt(String time);
+
+  /// Backup indicator: the last sync attempt failed
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر النسخ الاحتياطي — سنحاول مرة أخرى'**
+  String get backupError;
 }
 
 class _AppLocalizationsDelegate

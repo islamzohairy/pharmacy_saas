@@ -1,12 +1,15 @@
 # Features — Pharmacy Profit Control Platform
 
 ## Shipped
-None yet.
+- 01_PROJECT_FOUNDATION_PLAN — project foundation (Android-only
+  implementation, feature-first folder tree, go_router skeleton with 7 P0
+  route stubs, Arabic-primary RTL l10n via intl/gen-l10n, drift
+  connection wired with SQLCipher encryption, Supabase client
+  configuration wiring, CI analyze+test on push). No feature logic
+  shipped — every screen is a stub.
 
 ## In progress
-None yet — start with `PLANS/01_PROJECT_FOUNDATION_PLAN.md`. Update this
-section to name the active plan once work begins, e.g.:
-`01_PROJECT_FOUNDATION_PLAN — in progress, blocked on: <if anything>`.
+None — next up: `PLANS/02_IDENTITY_AND_ACCESS_PLAN.md`.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |

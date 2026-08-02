@@ -26,8 +26,15 @@ future evidence tier.
 - **Language:** Arabic-primary, RTL. English not yet built.
 
 ## Current state
-Pre-implementation. `PLANS/01`-`08` are written and sequenced; none are
-built yet. See `FEATURES.md` for per-plan status as work starts.
+Plan 01 (project foundation) is complete: Android applicationId is
+`com.skypiecode.pharmacy_saas`; feature-first folder tree with stub
+screens for all seven P0 routes; Arabic-primary RTL l10n (gen-l10n, ARB
+in `lib/core/l10n/arb/`); `drift` connection wired with SQLCipher
+encryption (sqlite3 3.x hooks user-define — `sqlcipher_flutter_libs` is
+obsolete and must not be added); Supabase client wired as configuration
+only (read from `SUPABASE_URL`/`SUPABASE_ANON_KEY` `--dart-define`s,
+empty by default — no credentials committed, no auth/data flows).
+Plans 02-08 remain unbuilt. See `FEATURES.md` for per-plan status.
 
 ## Things intentionally NOT done (don't propose these as gaps)
 - No backend authentication — deliberate, see `ARCHITECTURE.md` §Identity.

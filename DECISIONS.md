@@ -85,3 +85,43 @@ money-correctness-sensitive; a hand-written SQL typo in a balance query is
 exactly the failure mode the ledger design (see above) exists to prevent.
 ALTERNATIVES CONSIDERED: raw `sqflite` (rejected — no compile-time query
 safety).
+
+## 2026-08-02 — Android applicationId: com.skypiecode.pharmacy_saas
+DECISION: `applicationId`/`namespace` = `com.skypiecode.pharmacy_saas`
+(org identifier `com.skypiecode`, per the owner's Play Store identity).
+Applied across android/, ios/, and macos/ bundle identifiers.
+WHY: the package name is load-bearing for signing, Play Store identity,
+and future Firebase config — cheapest to fix before first release, not
+after.
+ALTERNATIVES CONSIDERED: keeping `com.example.pharmacy_saas` (rejected —
+placeholder namespace, not shippable).
+
+## 2026-08-02 — Encryption mechanism: sqlite3 3.x hooks + SQLCipher build
+DECISION: local database encryption at rest is configured via the pubspec
+hooks user-define (`hooks: user_defines: sqlite3: source: sqlcipher`),
+which makes `package:sqlite3` 3.x bundle the SQLCipher-compiled library.
+The `sqlcipher_flutter_libs` package was **not** added — it is a no-op
+since sqlite3 3.x moved to the hooks mechanism.
+WHY: `SECURITY.md` requires the drift DB encrypted at rest; the hooks
+user-define is the current (and only functional) way to get SQLCipher
+under drift 2.34 / sqlite3 3.5. The DB key is a random 256-bit value
+stored in `flutter_secure_storage` (`db_key_v1`), never in the DB file.
+License check per `GLOBAL_RULES.md`: SQLCipher community build is
+BSD-style licensed and links OpenSSL on some platforms (Apache-2.0) —
+acceptable for a commercial app, recorded here as the governance check.
+ALTERNATIVES CONSIDERED: `sqlcipher_flutter_libs` (obsolete, 0.7.0+eol is
+a no-op); SQLite3MultipleCiphers (`source: sqlite3mc`, web-compatible but
+SQLCipher is the mechanism the plan documents and works on Android).
+
+## 2026-08-02 — Dependency governance check for foundation packages
+DECISION: added `go_router` 17.x, `flutter_riverpod` 2.x, `intl`
+0.20.2 (pinned by `flutter_localizations`), `supabase_flutter` 2.16,
+`drift` 2.34.3 + `drift_flutter` 0.3.1, `flutter_secure_storage` 10.3.1,
+`path_provider`, `path` (runtime); `drift_dev`, `build_runner` (dev).
+WHY (check results): all are actively maintained (commits within the last
+months), MIT/BSD/Apache licensed, and each maps to an already-decided
+architecture item (`ARCHITECTURE.md` / `DECISIONS.md`) — none added "just
+in case". `flutter_riverpod` stays on 2.x (hand-written providers, the
+portfolio default); no codegen.
+ALTERNATIVES CONSIDERED: none — packages were already mandated by
+existing decisions; this entry records the governance check itself.

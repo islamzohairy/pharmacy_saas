@@ -1,30 +1,55 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:pharmacy_saas/main.dart';
+import 'package:pharmacy_saas/app.dart';
+import 'package:pharmacy_saas/core/l10n/generated/app_localizations.dart';
+import 'package:pharmacy_saas/core/router/app_router.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('app boots to the onboarding route, RTL', (tester) async {
+    await tester.pumpWidget(const PharmacyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('مرحباً بك'), findsOneWidget);
+    expect(find.text('هذه الشاشة قيد الإنشاء'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    final directionality = tester.widget<Directionality>(
+      find.byType(Directionality).first,
+    );
+    expect(directionality.textDirection, TextDirection.rtl);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('all seven P0 routes render RTL with Arabic strings', (
+    tester,
+  ) async {
+    final routes = <String, String>{
+      '/products': 'المنتجات',
+      '/sales': 'المبيعات',
+      '/draws': 'السحوبات',
+      '/supplier-debt': 'ديون الموردين',
+      '/customer-debt': 'ديون العملاء',
+      '/dashboard': 'لوحة التحكم',
+    };
+
+    for (final entry in routes.entries) {
+      appRouter.go(entry.key);
+      await tester.pumpWidget(const PharmacyApp());
+      await tester.pumpAndSettle();
+
+      expect(find.text(entry.value), findsOneWidget, reason: entry.key);
+
+      final directionality = tester.widget<Directionality>(
+        find.byType(Directionality).first,
+      );
+      expect(directionality.textDirection, TextDirection.rtl);
+    }
+  });
+
+  test('ar is a supported locale', () {
+    expect(AppLocalizations.supportedLocales, contains(const Locale('ar')));
+    expect(
+      GlobalMaterialLocalizations.delegate.isSupported(const Locale('ar')),
+      isTrue,
+    );
   });
 }

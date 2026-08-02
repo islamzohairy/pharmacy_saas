@@ -1,0 +1,39 @@
+{
+  "@@locale": "ar",
+  "appTitle": "إدارة الصيدلية",
+  "@appTitle": {
+    "description": "Application title shown in the app bar and launcher context"
+  },
+  "onboardingTitle": "مرحباً بك",
+  "@onboardingTitle": {
+    "description": "Title of the onboarding/profile placeholder screen"
+  },
+  "productsTitle": "المنتجات",
+  "@productsTitle": {
+    "description": "Title of the products placeholder screen"
+  },
+  "salesTitle": "المبيعات",
+  "@salesTitle": {
+    "description": "Title of the sales entry placeholder screen"
+  },
+  "drawsTitle": "السحوبات",
+  "@drawsTitle": {
+    "description": "Title of the cash draws placeholder screen"
+  },
+  "supplierDebtTitle": "ديون الموردين",
+  "@supplierDebtTitle": {
+    "description": "Title of the supplier debt placeholder screen"
+  },
+  "customerDebtTitle": "ديون العملاء",
+  "@customerDebtTitle": {
+    "description": "Title of the customer debt placeholder screen"
+  },
+  "dashboardTitle": "لوحة التحكم",
+  "@dashboardTitle": {
+    "description": "Title of the dashboard placeholder screen"
+  },
+  "screenUnderConstruction": "هذه الشاشة قيد الإنشاء",
+  "@screenUnderConstruction": {
+    "description": "Placeholder body text shown on stub screens"
+  }
+}

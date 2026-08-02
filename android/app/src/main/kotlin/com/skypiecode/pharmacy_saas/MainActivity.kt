@@ -1,4 +1,4 @@
-package com.example.pharmacy_saas
+package com.skypiecode.pharmacy_saas
 
 import io.flutter.embedding.android.FlutterActivity
 

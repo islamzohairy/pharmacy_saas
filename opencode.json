@@ -1,4 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": []
+  "instructions": [],
+  "mcp": {
+    "flutter-mcp-toolkit": {
+      "type": "local",
+      "command": ["/Users/izohairy/.local/bin/flutter-mcp-toolkit", "serve"],
+      "enabled": true
+    }
+  }
 }

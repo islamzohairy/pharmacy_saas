@@ -103,6 +103,25 @@ the emulator done (add/edit/validate/deactivate/sale flows). Sales and
 products are route-reachable only — dashboard navigation is plan 07's
 job. See `FEATURES.md` for per-plan status.
 
+## Tooling (installed 2026-08-02, AI Engineering OS full setup)
+- Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`
+  installed; `opencode.jsonc` now has the 8 CORE_SYSTEM files in
+  `instructions` (auto-loads every session), `default_agent: build` +
+  plan/build permission overrides, and MCP servers `dart` (dart
+  mcp-server) + `context7` enabled, `github` disabled.
+  `~/.config/opencode/agent` → AGENTS/ and `~/.config/opencode/skills`
+  → SKILLS/ symlinks.
+- `flutter-mcp-toolkit` binary 3.1.0 (stable, pinned over the 4.0.0-dev
+  prerelease the installer defaults to) at `~/.local/bin` (PATH added to
+  `~/.zshrc`); wired into this project's `opencode.json` as the
+  `flutter-mcp-toolkit` MCP server (`serve`). Runtime verification of
+  critical flows (plan 06) uses it against a debug-mode running app.
+- In-app: `mcp_toolkit: ^3.0.0` added; `main.dart` boots through
+  `MCPToolkitBinding.instance.bootstrapFlutter` (debug-only VM-service
+  extensions, inert in release). Analyzer clean, 95/95 tests still pass.
+  See `DECISIONS.md` (dependency governance entry) for the package
+  checks and the `codegen-init`/`init opencode` upstream gaps.
+
 ## Things intentionally NOT done (don't propose these as gaps)
 - No backend authentication — deliberate, see `ARCHITECTURE.md` §Identity.
 - No employee-role enforcement — the field exists, the behavior doesn't.

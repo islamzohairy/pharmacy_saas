@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:mcp_toolkit/mcp_toolkit.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
@@ -40,10 +41,15 @@ Future<void> main() async {
   // backend is configured (see SyncScheduler).
   container.read(syncSchedulerProvider).start();
 
-  runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: PharmacyApp(router: router),
+  // MCPToolkitBinding.bootstrapFlutter wraps runApp: it ensures the binding,
+  // initializes the toolkit (VM-service extensions, debug-only), forwards
+  // zone errors, then calls runApp. Inert in release builds.
+  await MCPToolkitBinding.instance.bootstrapFlutter(
+    runApp: () => runApp(
+      UncontrolledProviderScope(
+        container: container,
+        child: PharmacyApp(router: router),
+      ),
     ),
   );
 }

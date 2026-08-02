@@ -376,3 +376,32 @@ ALTERNATIVES CONSIDERED: sales screen constructing
 `DriftLedgerRepository` itself (rejected — duplicate wiring, provider
 overrides in tests would not apply); `goNamed` for the form (rejected —
 no back stack, save-then-pop throws).
+
+## 2026-08-02 — Dependency: mcp_toolkit + flutter-mcp-toolkit (runtime-verification tooling)
+DECISION: added `mcp_toolkit: ^3.0.0` as a runtime dependency; `main.dart`
+boots the app through `MCPToolkitBinding.instance.bootstrapFlutter(...)`
+(VM-service extensions registered in debug mode only, inert in release);
+the `flutter-mcp-toolkit` binary (3.1.0, installed to `~/.local/bin`,
+PATH entry added to `~/.zshrc`) is wired into this project's
+`opencode.json` as the `flutter-mcp-toolkit` MCP server (`serve`
+subcommand, absolute binary path). Governed per `GLOBAL_RULES.md`
+dependency checks: MIT license, actively maintained (commits/releases
+June 2026), verified publisher on pub.dev, maps to the already-decided
+runtime-verification requirement in `DEFINITION_OF_DONE.md` /
+`MCP_AND_TOOLING.md` — this is what lets plan 06's high-trust flows be
+actually run and observed, not just unit-tested.
+WHY: `DEFINITION_OF_DONE.md` requires runtime verification of critical
+flows; the toolkit is the prescribed mechanism. The 3.1.0 stable release
+is pinned deliberately over the 4.0.0-dev prerelease the installer
+defaults to — the project's own README notice says to stay on stable 3.x
+until 4.0.0 is promoted. Note: the tool's `codegen-init` fails on
+current pub.dev (it tries `flutter pub add flutter_mcp_toolkit`, which
+doesn't exist — the package is `mcp_toolkit`), so the integration was
+done manually per the package's documented bootstrap. `init opencode`
+does not exist in 3.1.0 (claude-code/cursor/codex/cline only), so the
+MCP entry was written by hand.
+ALTERNATIVES CONSIDERED: skipping the in-app package and using only the
+binary's `fmt_*` tools (rejected — loses app-error forwarding and
+dynamic-tool registration the OS docs prescribe); the 4.0.0-dev train
+(rejected — prerelease, per upstream's own guidance).
+

@@ -147,6 +147,192 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'هذه الشاشة قيد الإنشاء'**
   String get screenUnderConstruction;
+
+  /// Label for the pharmacy name input during onboarding
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم الصيدلية'**
+  String get pharmacyNameLabel;
+
+  /// Validation error when pharmacy name is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل اسم الصيدلية'**
+  String get pharmacyNameRequired;
+
+  /// Label for the owner display name input during onboarding
+  ///
+  /// In ar, this message translates to:
+  /// **'اسمك'**
+  String get ownerDisplayNameLabel;
+
+  /// Validation error when owner display name is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل اسمك'**
+  String get ownerDisplayNameRequired;
+
+  /// Currency notice shown during onboarding; P0 is EGP only
+  ///
+  /// In ar, this message translates to:
+  /// **'العملة: جنيه مصري (EGP)'**
+  String get currencyIsEgp;
+
+  /// Submit button of the onboarding creation form
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء والبدء'**
+  String get createAndStart;
+
+  /// Title of the profile switcher screen
+  ///
+  /// In ar, this message translates to:
+  /// **'الملفات الشخصية'**
+  String get profilesTitle;
+
+  /// Badge marking the currently active profile in the switcher
+  ///
+  /// In ar, this message translates to:
+  /// **'الملف الحالي'**
+  String get currentProfileBadge;
+
+  /// Button to add a family-role profile for the shared-shift pattern
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ملف عائلة'**
+  String get addFamilyProfile;
+
+  /// Label for the family member display name input
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم العضو'**
+  String get familyProfileNameLabel;
+
+  /// Validation error when family member name is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل اسم العضو'**
+  String get familyProfileNameRequired;
+
+  /// Confirm button of the add-family-profile dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة'**
+  String get addProfile;
+
+  /// Generic cancel button
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get cancel;
+
+  /// Action to set a PIN on a profile
+  ///
+  /// In ar, this message translates to:
+  /// **'تعيين رمز الدخول'**
+  String get setPin;
+
+  /// Action to remove a profile PIN
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة رمز الدخول'**
+  String get clearPin;
+
+  /// Title of the PIN setup dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'إعداد رمز الدخول'**
+  String get setPinTitle;
+
+  /// Label for the PIN input
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز الدخول'**
+  String get pinLabel;
+
+  /// Label for the PIN confirmation input
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد رمز الدخول'**
+  String get confirmPinLabel;
+
+  /// Error shown when PIN and confirmation differ
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز غير متطابق'**
+  String get pinMismatch;
+
+  /// Generic save button
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ'**
+  String get save;
+
+  /// Title of the PIN entry dialog shown when switching to a protected profile
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رمز الدخول'**
+  String get enterPinTitle;
+
+  /// Error shown when the entered PIN does not match
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز الدخول غير صحيح'**
+  String get pinWrong;
+
+  /// Link shown on the PIN entry dialog for the no-recovery path
+  ///
+  /// In ar, this message translates to:
+  /// **'نسيت رمز الدخول؟'**
+  String get forgotPin;
+
+  /// Title of the forgot-PIN reset dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة بدء الصيدلية'**
+  String get forgotPinTitle;
+
+  /// Explains the wipe-based PIN reset and its limitation, in-app
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد استرداد لرمز الدخول في هذه المرحلة. إعادة البدء ستحذف الملفات الشخصية والبيانات من هذا الجهاز فقط.'**
+  String get forgotPinBody;
+
+  /// Destructive confirm button of the forgot-PIN dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف وإعادة البدء'**
+  String get confirmReset;
+
+  /// Tooltip for the profile switcher entry icon
+  ///
+  /// In ar, this message translates to:
+  /// **'الملفات الشخصية'**
+  String get profilesTooltip;
+
+  /// Display label for the owner role (informational — role is not enforced in P0)
+  ///
+  /// In ar, this message translates to:
+  /// **'المالك'**
+  String get roleOwner;
+
+  /// Display label for the family role (informational — role is not enforced in P0)
+  ///
+  /// In ar, this message translates to:
+  /// **'العائلة'**
+  String get roleFamily;
+
+  /// Display label for the employee role (informational — role is not enforced in P0)
+  ///
+  /// In ar, this message translates to:
+  /// **'موظف'**
+  String get roleEmployee;
+
+  /// Tooltip for the add-profile action on the switcher screen
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة ملف'**
+  String get addProfileTooltip;
 }
 
 class _AppLocalizationsDelegate

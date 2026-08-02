@@ -26,15 +26,21 @@ future evidence tier.
 - **Language:** Arabic-primary, RTL. English not yet built.
 
 ## Current state
-Plan 01 (project foundation) is complete: Android applicationId is
-`com.skypiecode.pharmacy_saas`; feature-first folder tree with stub
-screens for all seven P0 routes; Arabic-primary RTL l10n (gen-l10n, ARB
-in `lib/core/l10n/arb/`); `drift` connection wired with SQLCipher
-encryption (sqlite3 3.x hooks user-define — `sqlcipher_flutter_libs` is
-obsolete and must not be added); Supabase client wired as configuration
-only (read from `SUPABASE_URL`/`SUPABASE_ANON_KEY` `--dart-define`s,
-empty by default — no credentials committed, no auth/data flows).
-Plans 02-08 remain unbuilt. See `FEATURES.md` for per-plan status.
+Plan 02 (local identity and access) is complete: onboarding creates
+pharmacy + owner atomically and offline; per-profile optional 4-digit PIN
+(salted SHA-256 hash in `flutter_secure_storage` under
+`pin_hash_<profileId>`, only the key reference in the DB's
+`UserProfiles.pin_hash_ref`); profile switcher adds family profiles and
+switches the active profile (PIN-gated when set); active profile
+persisted (`last_active_profile_id` in secure storage) and attributed via
+`activeProfileProvider`; forgot-PIN wipes local identity and re-onboards
+(no recovery, stated in-app). Drift tables live in `lib/core/data/tables/`
+(shared core layer, not inside the feature — plan 03's ledger tables will
+follow the same home). Profile switch navigates with `go()`, not `pop()`
+(go_router has no back stack after `go()`). `test/widget_test.dart` covers
+RTL boot smoke; `test/features/identity/` covers the repository and the
+full identity flows.
+Plan 03 (data + sync) is next. See `FEATURES.md` for per-plan status.
 
 ## Things intentionally NOT done (don't propose these as gaps)
 - No backend authentication — deliberate, see `ARCHITECTURE.md` §Identity.

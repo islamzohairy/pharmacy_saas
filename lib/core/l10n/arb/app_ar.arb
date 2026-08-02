@@ -35,5 +35,129 @@
   "screenUnderConstruction": "هذه الشاشة قيد الإنشاء",
   "@screenUnderConstruction": {
     "description": "Placeholder body text shown on stub screens"
+  },
+  "pharmacyNameLabel": "اسم الصيدلية",
+  "@pharmacyNameLabel": {
+    "description": "Label for the pharmacy name input during onboarding"
+  },
+  "pharmacyNameRequired": "أدخل اسم الصيدلية",
+  "@pharmacyNameRequired": {
+    "description": "Validation error when pharmacy name is empty"
+  },
+  "ownerDisplayNameLabel": "اسمك",
+  "@ownerDisplayNameLabel": {
+    "description": "Label for the owner display name input during onboarding"
+  },
+  "ownerDisplayNameRequired": "أدخل اسمك",
+  "@ownerDisplayNameRequired": {
+    "description": "Validation error when owner display name is empty"
+  },
+  "currencyIsEgp": "العملة: جنيه مصري (EGP)",
+  "@currencyIsEgp": {
+    "description": "Currency notice shown during onboarding; P0 is EGP only"
+  },
+  "createAndStart": "إنشاء والبدء",
+  "@createAndStart": {
+    "description": "Submit button of the onboarding creation form"
+  },
+  "profilesTitle": "الملفات الشخصية",
+  "@profilesTitle": {
+    "description": "Title of the profile switcher screen"
+  },
+  "currentProfileBadge": "الملف الحالي",
+  "@currentProfileBadge": {
+    "description": "Badge marking the currently active profile in the switcher"
+  },
+  "addFamilyProfile": "إضافة ملف عائلة",
+  "@addFamilyProfile": {
+    "description": "Button to add a family-role profile for the shared-shift pattern"
+  },
+  "familyProfileNameLabel": "اسم العضو",
+  "@familyProfileNameLabel": {
+    "description": "Label for the family member display name input"
+  },
+  "familyProfileNameRequired": "أدخل اسم العضو",
+  "@familyProfileNameRequired": {
+    "description": "Validation error when family member name is empty"
+  },
+  "addProfile": "إضافة",
+  "@addProfile": {
+    "description": "Confirm button of the add-family-profile dialog"
+  },
+  "cancel": "إلغاء",
+  "@cancel": {
+    "description": "Generic cancel button"
+  },
+  "setPin": "تعيين رمز الدخول",
+  "@setPin": {
+    "description": "Action to set a PIN on a profile"
+  },
+  "clearPin": "إزالة رمز الدخول",
+  "@clearPin": {
+    "description": "Action to remove a profile PIN"
+  },
+  "setPinTitle": "إعداد رمز الدخول",
+  "@setPinTitle": {
+    "description": "Title of the PIN setup dialog"
+  },
+  "pinLabel": "رمز الدخول",
+  "@pinLabel": {
+    "description": "Label for the PIN input"
+  },
+  "confirmPinLabel": "تأكيد رمز الدخول",
+  "@confirmPinLabel": {
+    "description": "Label for the PIN confirmation input"
+  },
+  "pinMismatch": "الرمز غير متطابق",
+  "@pinMismatch": {
+    "description": "Error shown when PIN and confirmation differ"
+  },
+  "save": "حفظ",
+  "@save": {
+    "description": "Generic save button"
+  },
+  "enterPinTitle": "أدخل رمز الدخول",
+  "@enterPinTitle": {
+    "description": "Title of the PIN entry dialog shown when switching to a protected profile"
+  },
+  "pinWrong": "رمز الدخول غير صحيح",
+  "@pinWrong": {
+    "description": "Error shown when the entered PIN does not match"
+  },
+  "forgotPin": "نسيت رمز الدخول؟",
+  "@forgotPin": {
+    "description": "Link shown on the PIN entry dialog for the no-recovery path"
+  },
+  "forgotPinTitle": "إعادة بدء الصيدلية",
+  "@forgotPinTitle": {
+    "description": "Title of the forgot-PIN reset dialog"
+  },
+  "forgotPinBody": "لا يوجد استرداد لرمز الدخول في هذه المرحلة. إعادة البدء ستحذف الملفات الشخصية والبيانات من هذا الجهاز فقط.",
+  "@forgotPinBody": {
+    "description": "Explains the wipe-based PIN reset and its limitation, in-app"
+  },
+  "confirmReset": "حذف وإعادة البدء",
+  "@confirmReset": {
+    "description": "Destructive confirm button of the forgot-PIN dialog"
+  },
+  "profilesTooltip": "الملفات الشخصية",
+  "@profilesTooltip": {
+    "description": "Tooltip for the profile switcher entry icon"
+  },
+  "roleOwner": "المالك",
+  "@roleOwner": {
+    "description": "Display label for the owner role (informational — role is not enforced in P0)"
+  },
+  "roleFamily": "العائلة",
+  "@roleFamily": {
+    "description": "Display label for the family role (informational — role is not enforced in P0)"
+  },
+  "roleEmployee": "موظف",
+  "@roleEmployee": {
+    "description": "Display label for the employee role (informational — role is not enforced in P0)"
+  },
+  "addProfileTooltip": "إضافة ملف",
+  "@addProfileTooltip": {
+    "description": "Tooltip for the add-profile action on the switcher screen"
   }
 }

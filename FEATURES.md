@@ -7,9 +7,16 @@
   connection wired with SQLCipher encryption, Supabase client
   configuration wiring, CI analyze+test on push). No feature logic
   shipped — every screen is a stub.
+- 02_IDENTITY_AND_ACCESS_PLAN — local device identity: onboarding
+  (pharmacy + owner created atomically, offline, RTL), optional 4-digit
+  PIN per profile (salted hash in secure storage), profile switcher with
+  family-profile addition, active-profile persistence + attribution, PIN
+  gate on profile switch, forgot-PIN wipe with in-app limitation notice.
+  Roles (`owner`/`family`/`employee`) are captured and displayed but not
+  enforced — no server auth, no login screen, per plan scope.
 
 ## In progress
-None — next up: `PLANS/02_IDENTITY_AND_ACCESS_PLAN.md`.
+None — next up: `PLANS/03_DATA_AND_SYNC_PLAN.md`.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |

@@ -125,3 +125,53 @@ in case". `flutter_riverpod` stays on 2.x (hand-written providers, the
 portfolio default); no codegen.
 ALTERNATIVES CONSIDERED: none — packages were already mandated by
 existing decisions; this entry records the governance check itself.
+
+## 2026-08-02 — Cross-feature tables live in core, not in the feature
+DECISION: drift tables (`Pharmacies`, `UserProfiles`) live in
+`lib/core/data/tables/`, not inside `features/identity/data/` as the plan
+drafted. Feature folders keep their repository/domain/presentation layers;
+shared data tables are a core-layer concern.
+WHY: `PLANS/03_DATA_AND_SYNC_PLAN.md` (ledger, customers, suppliers,
+products) needs every feature to read/write the same tables — table
+ownership by one feature would force cross-feature imports of another
+feature's internals, which `ARCHITECTURE.md` forbids. The first plan
+already set the precedent (plan 01 put `AppDatabase` in core).
+ALTERNATIVES CONSIDERED: tables inside `features/identity/data/` (rejected
+— violates the no-cross-feature-imports rule the moment plan 03 lands).
+
+## 2026-08-02 — PIN: salted hash in secure storage, key reference in DB
+DECISION: profile PINs are stored as a salted SHA-256 hash
+(`salt:hash`, base64) in `flutter_secure_storage` under
+`pin_hash_<profileId>`; the drift `UserProfile` row stores only the
+storage key in `pin_hash_ref` (NULL = no PIN). Verifying compares the
+salted hash, never the plaintext. Forgot-PIN = `wipeLocalIdentity` +
+re-onboarding; the destructive, no-recovery consequence is stated in-app
+before confirmation. Last-active profile id is persisted in secure storage
+(`last_active_profile_id`) so the app restores the right profile after
+restart.
+WHY: PINs are device-local convenience credentials, not server secrets —
+storage in secure storage keeps them off the encrypted DB (which is
+copyable/restorable), and the hash keeps them out of the DB entirely.
+SHA-256 over scrypt/argon2 is a deliberate trade: PINs have 10k possible
+values so KDF strength buys nothing against offline attacks; the threat
+here is shoulder-surfing / casual access, addressed by keeping material
+in the OS keystore. There is no PIN-recovery path by design — a lost PIN
+on a device with an encrypted-at-rest DB cannot be recovered by anyone,
+so the only honest option is a reset, and the UI states it.
+ALTERNATIVES CONSIDERED: scrypt/argon2 KDF (rejected — no added security
+for a 4-digit space, added dependency); server-side account+reset flow
+(rejected by the no-backend-auth decision above); biometric fallback
+(deferred — `SECURITY.md` lists it as a follow-up).
+
+## 2026-08-02 — Profile switch navigates with go(), not pop()
+DECISION: after switching the active profile, the switcher screen
+navigates with `context.goNamed(AppRoutes.dashboard)` rather than
+`context.pop()`.
+WHY (lesson): `go_router`'s `go()` replaces the page stack below the
+navigated location, so there is nothing to pop after
+onboarding → dashboard → profiles — `context.pop()` throws `GoError:
+nothing to pop` at runtime (caught by the widget tests). `go()` is
+deterministic for this one-screen flow.
+ALTERNATIVES CONSIDERED: `pop()` (broken, see above); `push()` (rejected
+— keeps the switcher on the back stack, user can't go "back" past a
+profile switch).

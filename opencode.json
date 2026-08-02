@@ -1,5 +1,4 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "_comment": "CORE_SYSTEM rules are already loaded globally via ~/.config/opencode/opencode.json's `instructions` array. Deliberately NOT adding ENGINEERING/ or PLANS/ files here — they're large and only relevant to whichever plan is active; loading all of them every session would burn context for no benefit, the same reasoning TOKEN_OPTIMIZATION.md applies to MCP server sprawl. AGENTS.md already points agents at PLANS/ and ENGINEERING/ for manual, targeted reads.",
   "instructions": []
 }

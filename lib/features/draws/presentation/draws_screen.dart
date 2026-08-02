@@ -9,8 +9,6 @@ class DrawsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PlaceholderScaffold(
-      title: context.l10n.drawsTitle,
-    );
+    return PlaceholderScaffold(title: context.l10n.drawsTitle);
   }
 }

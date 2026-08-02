@@ -74,9 +74,9 @@ class ProfileSwitcherScreen extends ConsumerWidget {
     );
 
     if (name == null || !context.mounted) return;
-    await ref.read(identityRepositoryProvider).addFamilyProfile(
-      displayName: name,
-    );
+    await ref
+        .read(identityRepositoryProvider)
+        .addFamilyProfile(displayName: name);
     ref.invalidate(profileListProvider);
   }
 

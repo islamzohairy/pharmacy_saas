@@ -46,23 +46,20 @@ class FakeLedger implements LedgerRepository {
     DateTime? from,
     DateTime? to,
     LedgerEntryType? type,
-  }) =>
-      const Stream.empty();
+  }) => const Stream.empty();
 
   @override
   Stream<List<LedgerEntry>> watchEntriesByParty({
     required int pharmacyId,
     required LedgerEntryType type,
     required int partyId,
-  }) =>
-      const Stream.empty();
+  }) => const Stream.empty();
 
   @override
   Future<List<LedgerEntry>> unsyncedEntries({
     required int pharmacyId,
     int limit = 200,
-  }) async =>
-      _pending.take(limit).toList();
+  }) async => _pending.take(limit).toList();
 
   @override
   Stream<int> watchUnsyncedCount({required int pharmacyId}) =>
@@ -220,8 +217,7 @@ void main() {
     });
   });
 
-  test('start() syncs pending entries immediately and reports synced',
-      () {
+  test('start() syncs pending entries immediately and reports synced', () {
     fakeAsync((async) {
       final ledger = FakeLedger();
       ledger.addPending(_entry(1));

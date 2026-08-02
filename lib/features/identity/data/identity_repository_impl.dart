@@ -45,24 +45,23 @@ class DriftIdentityRepository implements IdentityRepository {
               remoteUuid: Value(_randomUuidV4()),
             ),
           );
-      final ownerId = await _db.into(_db.userProfiles).insert(
-        UserProfilesCompanion.insert(
-          pharmacyId: pharmacyId,
-          role: UserRole.owner.storedValue,
-          displayName: ownerDisplayName.trim(),
-        ),
-      );
-      final pharmacy = await (_db.select(_db.pharmacies)
-            ..where((t) => t.id.equals(pharmacyId)))
-          .getSingle();
-      final owner = await (_db.select(_db.userProfiles)
-            ..where((t) => t.id.equals(ownerId)))
-          .getSingle();
+      final ownerId = await _db
+          .into(_db.userProfiles)
+          .insert(
+            UserProfilesCompanion.insert(
+              pharmacyId: pharmacyId,
+              role: UserRole.owner.storedValue,
+              displayName: ownerDisplayName.trim(),
+            ),
+          );
+      final pharmacy = await (_db.select(
+        _db.pharmacies,
+      )..where((t) => t.id.equals(pharmacyId))).getSingle();
+      final owner = await (_db.select(
+        _db.userProfiles,
+      )..where((t) => t.id.equals(ownerId))).getSingle();
       await getDeviceToken();
-      return (
-        pharmacy: pharmacy.toDomain(),
-        owner: owner.toDomain(),
-      );
+      return (pharmacy: pharmacy.toDomain(), owner: owner.toDomain());
     });
   }
 
@@ -99,9 +98,9 @@ class DriftIdentityRepository implements IdentityRepository {
 
   @override
   Future<List<UserProfile>> getProfiles() async {
-    final rows = await (_db.select(_db.userProfiles)
-          ..orderBy([(t) => OrderingTerm.asc(t.displayName)]))
-        .get();
+    final rows = await (_db.select(
+      _db.userProfiles,
+    )..orderBy([(t) => OrderingTerm.asc(t.displayName)])).get();
     return rows.map((row) => row.toDomain()).toList();
   }
 
@@ -109,25 +108,26 @@ class DriftIdentityRepository implements IdentityRepository {
   Future<UserProfile> addFamilyProfile({required String displayName}) {
     return _db.transaction(() async {
       final pharmacy = await getPharmacy();
-      final id = await _db.into(_db.userProfiles).insert(
-        UserProfilesCompanion.insert(
-          pharmacyId: pharmacy.id,
-          role: UserRole.family.storedValue,
-          displayName: displayName.trim(),
-        ),
-      );
-      return (await (_db.select(_db.userProfiles)
-                ..where((t) => t.id.equals(id)))
-              .getSingle())
-          .toDomain();
+      final id = await _db
+          .into(_db.userProfiles)
+          .insert(
+            UserProfilesCompanion.insert(
+              pharmacyId: pharmacy.id,
+              role: UserRole.family.storedValue,
+              displayName: displayName.trim(),
+            ),
+          );
+      return (await (_db.select(
+        _db.userProfiles,
+      )..where((t) => t.id.equals(id))).getSingle()).toDomain();
     });
   }
 
   @override
   Future<UserProfile?> getProfile(int id) async {
-    final row = await (_db.select(_db.userProfiles)
-          ..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    final row = await (_db.select(
+      _db.userProfiles,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
     return row?.toDomain();
   }
 
@@ -136,8 +136,7 @@ class DriftIdentityRepository implements IdentityRepository {
     final key = _pinKeyFor(profile.id);
     final salt = _randomSalt();
     await _secureStore.write(key, '$salt:${_hashPin(pin, salt)}');
-    await (_db.update(_db.userProfiles)
-          ..where((t) => t.id.equals(profile.id)))
+    await (_db.update(_db.userProfiles)..where((t) => t.id.equals(profile.id)))
         .write(UserProfilesCompanion(pinHashRef: Value(key)));
   }
 
@@ -153,8 +152,7 @@ class DriftIdentityRepository implements IdentityRepository {
   @override
   Future<void> clearPin(UserProfile profile) async {
     await _secureStore.delete(_pinKeyFor(profile.id));
-    await (_db.update(_db.userProfiles)
-          ..where((t) => t.id.equals(profile.id)))
+    await (_db.update(_db.userProfiles)..where((t) => t.id.equals(profile.id)))
         .write(const UserProfilesCompanion(pinHashRef: Value(null)));
   }
 
@@ -202,9 +200,7 @@ class DriftIdentityRepository implements IdentityRepository {
 
   String _randomSalt() {
     final random = Random.secure();
-    return base64UrlEncode(
-      List<int>.generate(16, (_) => random.nextInt(256)),
-    );
+    return base64UrlEncode(List<int>.generate(16, (_) => random.nextInt(256)));
   }
 
   /// Salted SHA-256 — the PIN is short, so the salt defeats rainbow

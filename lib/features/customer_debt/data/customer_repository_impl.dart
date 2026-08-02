@@ -11,17 +11,11 @@ class DriftCustomerRepository implements CustomerRepository {
   final AppDatabase _db;
 
   @override
-  Future<Customer> create({
-    required int pharmacyId,
-    required String name,
-  }) {
+  Future<Customer> create({required int pharmacyId, required String name}) {
     return _db
         .into(_db.customers)
         .insertReturning(
-          CustomersCompanion.insert(
-            pharmacyId: pharmacyId,
-            name: name,
-          ),
+          CustomersCompanion.insert(pharmacyId: pharmacyId, name: name),
         )
         .then(_toDomain);
   }

@@ -34,32 +34,29 @@ class DriftProductRepository implements ProductRepository {
 
   @override
   Future<Product> update(Product product) async {
-    await (_db.update(_db.products)
-          ..where((t) => t.id.equals(product.id)))
-        .write(
-          ProductsCompanion(
-            name: Value(product.name),
-            costMinor: Value(product.costMinor),
-            sellMinor: Value(product.sellMinor),
-            expiryDate: Value(product.expiryDate),
-          ),
-        );
+    await (_db.update(
+      _db.products,
+    )..where((t) => t.id.equals(product.id))).write(
+      ProductsCompanion(
+        name: Value(product.name),
+        costMinor: Value(product.costMinor),
+        sellMinor: Value(product.sellMinor),
+        expiryDate: Value(product.expiryDate),
+      ),
+    );
     return product;
   }
 
   @override
   Future<void> deactivate(int productId) {
-    return (_db.update(_db.products)
-          ..where((t) => t.id.equals(productId)))
+    return (_db.update(_db.products)..where((t) => t.id.equals(productId)))
         .write(const ProductsCompanion(isActive: Value(false)));
   }
 
   @override
   Stream<List<Product>> watchActive({required int pharmacyId}) {
     final query = _db.select(_db.products)
-      ..where(
-        (t) => t.pharmacyId.equals(pharmacyId) & t.isActive.equals(true),
-      )
+      ..where((t) => t.pharmacyId.equals(pharmacyId) & t.isActive.equals(true))
       ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
     return query.watch().map((rows) => rows.map(_toDomain).toList());
   }
@@ -67,9 +64,7 @@ class DriftProductRepository implements ProductRepository {
   @override
   Future<List<Product>> activeProducts({required int pharmacyId}) {
     final query = _db.select(_db.products)
-      ..where(
-        (t) => t.pharmacyId.equals(pharmacyId) & t.isActive.equals(true),
-      )
+      ..where((t) => t.pharmacyId.equals(pharmacyId) & t.isActive.equals(true))
       ..orderBy([(t) => OrderingTerm.asc(t.name)]);
     return query.get().then((rows) => rows.map(_toDomain).toList());
   }

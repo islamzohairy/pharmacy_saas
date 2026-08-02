@@ -12,9 +12,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     final container = ProviderContainer(
-      overrides: [
-        backupStatusProvider.overrideWith((ref) => status),
-      ],
+      overrides: [backupStatusProvider.overrideWith((ref) => status)],
     );
     addTearDown(container.dispose);
     await tester.pumpWidget(
@@ -40,9 +38,7 @@ void main() {
   });
 
   testWidgets('syncing state', (tester) async {
-    status.update(
-      const BackupStatus(state: BackupSyncState.syncing),
-    );
+    status.update(const BackupStatus(state: BackupSyncState.syncing));
     await pump(tester);
     expect(find.text('جارٍ النسخ الاحتياطي…'), findsOneWidget);
   });
@@ -61,10 +57,7 @@ void main() {
 
   testWidgets('error state', (tester) async {
     status.update(
-      const BackupStatus(
-        state: BackupSyncState.error,
-        lastError: 'boom',
-      ),
+      const BackupStatus(state: BackupSyncState.error, lastError: 'boom'),
     );
     await pump(tester);
     expect(find.text('تعذر النسخ الاحتياطي — سنحاول مرة أخرى'), findsOneWidget);

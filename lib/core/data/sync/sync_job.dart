@@ -27,7 +27,11 @@ class SyncResult {
     : error = null,
       suggestedRetryDelay = Duration.zero;
 
-  const SyncResult.failure(this.error, this.suggestedRetryDelay, {this.pushed = 0});
+  const SyncResult.failure(
+    this.error,
+    this.suggestedRetryDelay, {
+    this.pushed = 0,
+  });
 
   /// Returned when no backend is configured — not an error, just nothing
   /// to do.

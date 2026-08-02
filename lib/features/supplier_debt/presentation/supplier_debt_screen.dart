@@ -9,8 +9,6 @@ class SupplierDebtScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PlaceholderScaffold(
-      title: context.l10n.supplierDebtTitle,
-    );
+    return PlaceholderScaffold(title: context.l10n.supplierDebtTitle);
   }
 }

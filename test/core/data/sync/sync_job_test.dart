@@ -95,7 +95,10 @@ void main() {
     client.configured = false;
     await appendEntry();
 
-    final result = await job.runOnce(pharmacyId: pharmacyId, credentials: credentials);
+    final result = await job.runOnce(
+      pharmacyId: pharmacyId,
+      credentials: credentials,
+    );
 
     expect(result.isSkipped, isTrue);
     expect(client.pushCalls, 0);
@@ -129,28 +132,30 @@ void main() {
     expect(client.pushCalls, 1);
   });
 
-  test('unregistered device calls registerDevice exactly once per run',
-      () async {
-    await appendEntry();
-    var registeredCalls = 0;
-    const unregistered = SyncCredentials(
-      deviceToken: 'token',
-      deviceRegistered: false,
-      pharmacyUuid: 'uuid',
-      pharmacyName: 'صيدلية',
-      currency: 'EGP',
-    );
+  test(
+    'unregistered device calls registerDevice exactly once per run',
+    () async {
+      await appendEntry();
+      var registeredCalls = 0;
+      const unregistered = SyncCredentials(
+        deviceToken: 'token',
+        deviceRegistered: false,
+        pharmacyUuid: 'uuid',
+        pharmacyName: 'صيدلية',
+        currency: 'EGP',
+      );
 
-    final result = await job.runOnce(
-      pharmacyId: pharmacyId,
-      credentials: unregistered,
-      onRegistered: () async => registeredCalls++,
-    );
+      final result = await job.runOnce(
+        pharmacyId: pharmacyId,
+        credentials: unregistered,
+        onRegistered: () async => registeredCalls++,
+      );
 
-    expect(result.isSuccess, isTrue);
-    expect(client.registerCalls, 1);
-    expect(registeredCalls, 1);
-  });
+      expect(result.isSuccess, isTrue);
+      expect(client.registerCalls, 1);
+      expect(registeredCalls, 1);
+    },
+  );
 
   test('failed push returns failure with exponential backoff', () async {
     await appendEntry();
@@ -197,50 +202,54 @@ void main() {
     expect(failedAgain.suggestedRetryDelay, const Duration(seconds: 5));
   });
 
-  test('batch failure mid-sync: nothing stamped, retry re-pushes all',
-      () async {
-    final ids = <int>[];
-    for (var i = 0; i < 5; i++) {
-      ids.add(await appendEntry(amount: 100 + i));
-    }
+  test(
+    'batch failure mid-sync: nothing stamped, retry re-pushes all',
+    () async {
+      final ids = <int>[];
+      for (var i = 0; i < 5; i++) {
+        ids.add(await appendEntry(amount: 100 + i));
+      }
 
-    // Fail on the second batch (batch size 200 is larger than 5 entries,
-    // so simulate failure on the first push instead).
-    client.failNextPush = true;
-    final result = await job.runOnce(
-      pharmacyId: pharmacyId,
-      credentials: credentials,
-    );
+      // Fail on the second batch (batch size 200 is larger than 5 entries,
+      // so simulate failure on the first push instead).
+      client.failNextPush = true;
+      final result = await job.runOnce(
+        pharmacyId: pharmacyId,
+        credentials: credentials,
+      );
 
-    expect(result.isSuccess, isFalse);
-    expect(await ledger.unsyncedEntries(pharmacyId: pharmacyId), hasLength(5));
+      expect(result.isSuccess, isFalse);
+      expect(
+        await ledger.unsyncedEntries(pharmacyId: pharmacyId),
+        hasLength(5),
+      );
 
-    final retry = await job.runOnce(
-      pharmacyId: pharmacyId,
-      credentials: credentials,
-    );
-    expect(retry.isSuccess, isTrue);
-    expect(retry.pushed, 5);
-    // The retry pushed the full batch again (server-side upsert is
-    // idempotent — see the migration), and nothing was double-stamped.
-    expect(
-      await ledger.unsyncedEntries(pharmacyId: pharmacyId),
-      isEmpty,
-    );
-  });
+      final retry = await job.runOnce(
+        pharmacyId: pharmacyId,
+        credentials: credentials,
+      );
+      expect(retry.isSuccess, isTrue);
+      expect(retry.pushed, 5);
+      // The retry pushed the full batch again (server-side upsert is
+      // idempotent — see the migration), and nothing was double-stamped.
+      expect(await ledger.unsyncedEntries(pharmacyId: pharmacyId), isEmpty);
+    },
+  );
 
-  test('server-side idempotency assumption: same ids re-pushed on retry',
-      () async {
-    final id = await appendEntry();
+  test(
+    'server-side idempotency assumption: same ids re-pushed on retry',
+    () async {
+      final id = await appendEntry();
 
-    client.failNextPush = true;
-    await job.runOnce(pharmacyId: pharmacyId, credentials: credentials);
+      client.failNextPush = true;
+      await job.runOnce(pharmacyId: pharmacyId, credentials: credentials);
 
-    final retry = await job.runOnce(
-      pharmacyId: pharmacyId,
-      credentials: credentials,
-    );
-    expect(retry.pushed, 1);
-    expect(client.pushedBatches.single.single.id, id);
-  });
+      final retry = await job.runOnce(
+        pharmacyId: pharmacyId,
+        credentials: credentials,
+      );
+      expect(retry.pushed, 1);
+      expect(client.pushedBatches.single.single.id, id);
+    },
+  );
 }

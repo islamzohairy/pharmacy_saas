@@ -11,17 +11,11 @@ class DriftSupplierRepository implements SupplierRepository {
   final AppDatabase _db;
 
   @override
-  Future<Supplier> create({
-    required int pharmacyId,
-    required String name,
-  }) {
+  Future<Supplier> create({required int pharmacyId, required String name}) {
     return _db
         .into(_db.suppliers)
         .insertReturning(
-          SuppliersCompanion.insert(
-            pharmacyId: pharmacyId,
-            name: name,
-          ),
+          SuppliersCompanion.insert(pharmacyId: pharmacyId, name: name),
         )
         .then(_toDomain);
   }

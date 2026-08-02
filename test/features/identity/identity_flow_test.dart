@@ -57,7 +57,10 @@ void main() {
       find.widgetWithText(TextFormField, 'اسم الصيدلية'),
       'صيدلية النور',
     );
-    await tester.enterText(find.widgetWithText(TextFormField, 'اسمك'), 'أم أحمد');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'اسمك'),
+      'أم أحمد',
+    );
     await tester.tap(find.text('إنشاء والبدء'));
     await tester.pumpAndSettle();
 
@@ -90,7 +93,10 @@ void main() {
       find.widgetWithText(TextFormField, 'اسم الصيدلية'),
       'صيدلية النور',
     );
-    await tester.enterText(find.widgetWithText(TextFormField, 'اسمك'), 'أم أحمد');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'اسمك'),
+      'أم أحمد',
+    );
     await tester.tap(find.text('إنشاء والبدء'));
     await tester.pumpAndSettle();
 
@@ -126,7 +132,10 @@ void main() {
       find.widgetWithText(TextFormField, 'اسم الصيدلية'),
       'صيدلية النور',
     );
-    await tester.enterText(find.widgetWithText(TextFormField, 'اسمك'), 'أم أحمد');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'اسمك'),
+      'أم أحمد',
+    );
     await tester.tap(find.text('إنشاء والبدء'));
     await tester.pumpAndSettle();
 
@@ -136,7 +145,10 @@ void main() {
     // Set a PIN on the owner profile.
     await tester.tap(find.byIcon(Icons.lock_outline));
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'رمز الدخول'), '1234');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'رمز الدخول'),
+      '1234',
+    );
     await tester.enterText(
       find.widgetWithText(TextField, 'تأكيد رمز الدخول'),
       '1234',
@@ -168,7 +180,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('أدخل رمز الدخول'), findsOneWidget);
 
-    await tester.enterText(find.widgetWithText(TextField, 'رمز الدخول'), '0000');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'رمز الدخول'),
+      '0000',
+    );
     await tester.tap(find.text('حفظ'));
     await tester.pumpAndSettle();
     expect(find.text('رمز الدخول غير صحيح'), findsOneWidget);
@@ -177,7 +192,10 @@ void main() {
       'أبو أحمد',
     );
 
-    await tester.enterText(find.widgetWithText(TextField, 'رمز الدخول'), '1234');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'رمز الدخول'),
+      '1234',
+    );
     await tester.tap(find.text('حفظ'));
     await tester.pumpAndSettle();
     expect(
@@ -195,7 +213,10 @@ void main() {
       find.widgetWithText(TextFormField, 'اسم الصيدلية'),
       'صيدلية النور',
     );
-    await tester.enterText(find.widgetWithText(TextFormField, 'اسمك'), 'أم أحمد');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'اسمك'),
+      'أم أحمد',
+    );
     await tester.tap(find.text('إنشاء والبدء'));
     await tester.pumpAndSettle();
 
@@ -203,7 +224,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.lock_outline));
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'رمز الدخول'), '1234');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'رمز الدخول'),
+      '1234',
+    );
     await tester.enterText(
       find.widgetWithText(TextField, 'تأكيد رمز الدخول'),
       '1234',

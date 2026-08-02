@@ -20,28 +20,30 @@ void main() {
     await db.close();
   });
 
-  test('create stores money as integer minor units and optional expiry',
-      () async {
-    final product = await repository.create(
-      pharmacyId: pharmacyId,
-      name: 'باراسيتامول 500',
-      costMinor: 1500,
-      sellMinor: 2500,
-      expiryDate: DateTime(2027, 1, 1),
-    );
+  test(
+    'create stores money as integer minor units and optional expiry',
+    () async {
+      final product = await repository.create(
+        pharmacyId: pharmacyId,
+        name: 'باراسيتامول 500',
+        costMinor: 1500,
+        sellMinor: 2500,
+        expiryDate: DateTime(2027, 1, 1),
+      );
 
-    expect(product.costMinor, 1500);
-    expect(product.sellMinor, 2500);
-    expect(product.isActive, isTrue);
+      expect(product.costMinor, 1500);
+      expect(product.sellMinor, 2500);
+      expect(product.isActive, isTrue);
 
-    final noExpiry = await repository.create(
-      pharmacyId: pharmacyId,
-      name: 'فيتامين سي',
-      costMinor: 3000,
-      sellMinor: 4500,
-    );
-    expect(noExpiry.expiryDate, isNull);
-  });
+      final noExpiry = await repository.create(
+        pharmacyId: pharmacyId,
+        name: 'فيتامين سي',
+        costMinor: 3000,
+        sellMinor: 4500,
+      );
+      expect(noExpiry.expiryDate, isNull);
+    },
+  );
 
   test('update changes prices without touching identity fields', () async {
     final product = await repository.create(
@@ -56,8 +58,7 @@ void main() {
     expect(active.single.sellMinor, 3000);
   });
 
-  test('deactivate soft-removes: hidden from active, row retained',
-      () async {
+  test('deactivate soft-removes: hidden from active, row retained', () async {
     final product = await repository.create(
       pharmacyId: pharmacyId,
       name: 'مضاد حيوي',
@@ -70,9 +71,9 @@ void main() {
     final active = await repository.activeProducts(pharmacyId: pharmacyId);
     expect(active, isEmpty);
 
-    final row = await (db.select(db.products)
-          ..where((t) => t.id.equals(product.id)))
-        .getSingle();
+    final row = await (db.select(
+      db.products,
+    )..where((t) => t.id.equals(product.id))).getSingle();
     expect(row.isActive, isFalse);
     expect(row.name, 'مضاد حيوي');
   });

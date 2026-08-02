@@ -16,10 +16,10 @@ final identityRepositoryProvider = Provider<IdentityRepository>((ref) {
 /// The currently active profile — the attribution source every later
 /// feature reads ("who logged this sale/draw"), resolved via the public
 /// `identity.dart` barrel only.
-final activeProfileProvider = AsyncNotifierProvider<
-  ActiveProfileNotifier,
-  UserProfile?
->(ActiveProfileNotifier.new);
+final activeProfileProvider =
+    AsyncNotifierProvider<ActiveProfileNotifier, UserProfile?>(
+      ActiveProfileNotifier.new,
+    );
 
 class ActiveProfileNotifier extends AsyncNotifier<UserProfile?> {
   @override
@@ -42,7 +42,8 @@ class ActiveProfileNotifier extends AsyncNotifier<UserProfile?> {
 }
 
 /// All profiles on this device, for the switcher screen.
-final profileListProvider =
-    FutureProvider.autoDispose<List<UserProfile>>((ref) {
-      return ref.read(identityRepositoryProvider).getProfiles();
-    });
+final profileListProvider = FutureProvider.autoDispose<List<UserProfile>>((
+  ref,
+) {
+  return ref.read(identityRepositoryProvider).getProfiles();
+});

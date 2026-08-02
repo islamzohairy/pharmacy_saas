@@ -24,14 +24,16 @@ part 'app_database.g.dart';
 /// (`pharmacies`, `user_profiles`); version 3 adds the plan-03 entities
 /// (`products`, `suppliers`, `customers`, `ledger_entries`). The
 /// append-only ledger rule applies to the schema added in version 3.
-@DriftDatabase(tables: [
-  Pharmacies,
-  UserProfiles,
-  Products,
-  Suppliers,
-  Customers,
-  LedgerEntries,
-])
+@DriftDatabase(
+  tables: [
+    Pharmacies,
+    UserProfiles,
+    Products,
+    Suppliers,
+    Customers,
+    LedgerEntries,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 

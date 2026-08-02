@@ -40,9 +40,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ownerDisplayName: _ownerNameController.text,
     );
     await repository.setLastActiveProfile(created.owner);
-    await ref
-        .read(activeProfileProvider.notifier)
-        .switchTo(created.owner);
+    await ref.read(activeProfileProvider.notifier).switchTo(created.owner);
 
     if (!mounted) return;
     context.goNamed(AppRoutes.dashboard);
@@ -72,7 +70,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         border: const OutlineInputBorder(),
                       ),
                       textInputAction: TextInputAction.next,
-                      validator: (value) => (value == null || value.trim().isEmpty)
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
                           ? l10n.pharmacyNameRequired
                           : null,
                     ),
@@ -84,14 +83,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         border: const OutlineInputBorder(),
                       ),
                       textInputAction: TextInputAction.done,
-                      validator: (value) => (value == null || value.trim().isEmpty)
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
                           ? l10n.ownerDisplayNameRequired
                           : null,
                       onFieldSubmitted: (_) => _submitting ? null : _submit(),
                     ),
                     const SizedBox(height: 12),
-                    Text(l10n.currencyIsEgp,
-                        style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      l10n.currencyIsEgp,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: _submitting ? null : _submit,

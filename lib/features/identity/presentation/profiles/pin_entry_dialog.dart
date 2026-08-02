@@ -77,13 +77,11 @@ class _PinEntryDialogState extends State<_PinEntryDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () =>
-              Navigator.of(context).pop(PinEntryResult.forgot),
+          onPressed: () => Navigator.of(context).pop(PinEntryResult.forgot),
           child: Text(l10n.forgotPin),
         ),
         TextButton(
-          onPressed: () =>
-              Navigator.of(context).pop(PinEntryResult.cancelled),
+          onPressed: () => Navigator.of(context).pop(PinEntryResult.cancelled),
           child: Text(l10n.cancel),
         ),
         FilledButton(

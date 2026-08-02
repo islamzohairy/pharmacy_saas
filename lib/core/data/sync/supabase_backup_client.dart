@@ -24,12 +24,15 @@ class SupabaseRemoteBackupClient implements RemoteBackupClient {
     required String pharmacyName,
     required String currency,
   }) async {
-    await Supabase.instance.client.rpc<void>('register_device', params: {
-      'p_token': deviceToken,
-      'p_pharmacy_uuid': pharmacyUuid,
-      'p_pharmacy_name': pharmacyName,
-      'p_currency': currency,
-    });
+    await Supabase.instance.client.rpc<void>(
+      'register_device',
+      params: {
+        'p_token': deviceToken,
+        'p_pharmacy_uuid': pharmacyUuid,
+        'p_pharmacy_name': pharmacyName,
+        'p_currency': currency,
+      },
+    );
   }
 
   @override

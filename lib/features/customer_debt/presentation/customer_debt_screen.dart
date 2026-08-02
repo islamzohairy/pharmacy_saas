@@ -9,8 +9,6 @@ class CustomerDebtScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PlaceholderScaffold(
-      title: context.l10n.customerDebtTitle,
-    );
+    return PlaceholderScaffold(title: context.l10n.customerDebtTitle);
   }
 }

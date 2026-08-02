@@ -19,10 +19,7 @@ class BackupStatusIndicator extends ConsumerWidget {
     final l10n = context.l10n;
 
     final (icon, label) = switch (status.state) {
-      BackupSyncState.neverSynced => (
-        Icons.cloud_off,
-        l10n.backupNeverSynced,
-      ),
+      BackupSyncState.neverSynced => (Icons.cloud_off, l10n.backupNeverSynced),
       BackupSyncState.syncing => (Icons.cloud_sync, l10n.backupSyncing),
       BackupSyncState.synced => (
         Icons.cloud_done,

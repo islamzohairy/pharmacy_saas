@@ -60,9 +60,7 @@ void main() {
       ownerDisplayName: 'أم أحمد',
     );
 
-    final family = await repository.addFamilyProfile(
-      displayName: 'أبو أحمد',
-    );
+    final family = await repository.addFamilyProfile(displayName: 'أبو أحمد');
 
     expect(family.role, UserRole.family);
     expect(family.pharmacyId, created.pharmacy.id);
@@ -115,61 +113,63 @@ void main() {
     await repository.setPin(created.owner, '1234');
 
     // Secure storage holds material; the drift DB only holds the key ref.
-    final storedKeys = store
-        .read('pin_hash_${created.owner.id}')
-        .toString();
+    final storedKeys = store.read('pin_hash_${created.owner.id}').toString();
     expect(storedKeys, isNotEmpty);
     final rows = await db.select(db.userProfiles).get();
     expect(rows.single.pinHashRef, 'pin_hash_${created.owner.id}');
     expect(rows.single.pinHashRef, isNot(contains('1234')));
   });
 
-  test('onboarding generates a random remote uuid and a stable device token',
-      () async {
-    final created = await repository.createPharmacyAndOwner(
-      pharmacyName: 'صيدلية النور',
-      currency: 'EGP',
-      ownerDisplayName: 'أم أحمد',
-    );
+  test(
+    'onboarding generates a random remote uuid and a stable device token',
+    () async {
+      final created = await repository.createPharmacyAndOwner(
+        pharmacyName: 'صيدلية النور',
+        currency: 'EGP',
+        ownerDisplayName: 'أم أحمد',
+      );
 
-    final uuidPattern = RegExp(
-      r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-    );
-    expect(created.pharmacy.remoteUuid, matches(uuidPattern));
-    expect(
-      created.pharmacy.remoteUuid,
-      isNot(RegExp('^0+')),
-    );
+      final uuidPattern = RegExp(
+        r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+      );
+      expect(created.pharmacy.remoteUuid, matches(uuidPattern));
+      expect(created.pharmacy.remoteUuid, isNot(RegExp('^0+')));
 
-    final token1 = await repository.getDeviceToken();
-    final token2 = await repository.getDeviceToken();
-    expect(token1, isNotEmpty);
-    expect(token2, token1, reason: 'token must be stable across reads');
+      final token1 = await repository.getDeviceToken();
+      final token2 = await repository.getDeviceToken();
+      expect(token1, isNotEmpty);
+      expect(token2, token1, reason: 'token must be stable across reads');
 
-    expect(await repository.isDeviceRegistered(), isFalse);
-    await repository.markDeviceRegistered();
-    expect(await repository.isDeviceRegistered(), isTrue);
-  });
+      expect(await repository.isDeviceRegistered(), isFalse);
+      await repository.markDeviceRegistered();
+      expect(await repository.isDeviceRegistered(), isTrue);
+    },
+  );
 
-  test('wipeLocalIdentity removes profiles, pharmacy, and PIN material',
-      () async {
-    final created = await repository.createPharmacyAndOwner(
-      pharmacyName: 'صيدلية النور',
-      currency: 'EGP',
-      ownerDisplayName: 'أم أحمد',
-    );
-    await repository.setPin(created.owner, '1234');
-    await repository.setLastActiveProfile(created.owner);
-    await repository.markDeviceRegistered();
-    final token = await repository.getDeviceToken();
+  test(
+    'wipeLocalIdentity removes profiles, pharmacy, and PIN material',
+    () async {
+      final created = await repository.createPharmacyAndOwner(
+        pharmacyName: 'صيدلية النور',
+        currency: 'EGP',
+        ownerDisplayName: 'أم أحمد',
+      );
+      await repository.setPin(created.owner, '1234');
+      await repository.setLastActiveProfile(created.owner);
+      await repository.markDeviceRegistered();
+      final token = await repository.getDeviceToken();
 
-    await repository.wipeLocalIdentity();
+      await repository.wipeLocalIdentity();
 
-    expect(await repository.hasAnyProfile(), isFalse);
-    expect(await repository.getLastActiveProfile(), isNull);
-    expect(await store.read('pin_hash_${created.owner.id}'), isNull);
-    expect(await repository.isDeviceRegistered(), isFalse);
-    expect(await repository.getDeviceToken(), isNot(token),
-        reason: 'a fresh identity must get a fresh device token');
-  });
+      expect(await repository.hasAnyProfile(), isFalse);
+      expect(await repository.getLastActiveProfile(), isNull);
+      expect(await store.read('pin_hash_${created.owner.id}'), isNull);
+      expect(await repository.isDeviceRegistered(), isFalse);
+      expect(
+        await repository.getDeviceToken(),
+        isNot(token),
+        reason: 'a fresh identity must get a fresh device token',
+      );
+    },
+  );
 }

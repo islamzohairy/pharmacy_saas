@@ -174,17 +174,17 @@ class SyncScheduler {
     _backlogSubscription = ledgerRepository
         .watchUnsyncedCount(pharmacyId: pharmacyId)
         .listen((count) {
-      _debounceTimer?.cancel();
-      _debounceTimer = Timer(_writeDebounce, () {
-        status.update(
-          BackupStatus(
-            state: status.status.state,
-            lastSyncedAt: status.status.lastSyncedAt,
-            backlogCount: count,
-          ),
-        );
-        _run();
-      });
-    });
+          _debounceTimer?.cancel();
+          _debounceTimer = Timer(_writeDebounce, () {
+            status.update(
+              BackupStatus(
+                state: status.status.state,
+                lastSyncedAt: status.status.lastSyncedAt,
+                backlogCount: count,
+              ),
+            );
+            _run();
+          });
+        });
   }
 }

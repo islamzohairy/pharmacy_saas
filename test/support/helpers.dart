@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 
 import 'package:pharmacy_saas/core/data/app_database.dart';
+import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
 
 /// In-memory drift database — no SQLCipher needed in tests.
 Future<AppDatabase> createMemoryDb() async {
@@ -51,6 +52,72 @@ Future<int> seedProduct(
           name: name ?? 'باراسيتامول 500',
           costMinor: costMinor,
           sellMinor: sellMinor,
+        ),
+      );
+}
+
+/// Seeds a supplier row and returns its id.
+Future<int> seedSupplier(AppDatabase db, int pharmacyId, {String? name}) {
+  return db
+      .into(db.suppliers)
+      .insert(
+        SuppliersCompanion.insert(
+          pharmacyId: pharmacyId,
+          name: name ?? 'مورد الأدوية',
+        ),
+      );
+}
+
+/// Seeds a customer row and returns its id.
+Future<int> seedCustomer(AppDatabase db, int pharmacyId, {String? name}) {
+  return db
+      .into(db.customers)
+      .insert(
+        CustomersCompanion.insert(
+          pharmacyId: pharmacyId,
+          name: name ?? 'عميل الحي',
+        ),
+      );
+}
+
+/// Seeds one supplier-side ledger entry (debt or repayment) for the party.
+Future<int> seedSupplierEntry(
+  AppDatabase db,
+  int pharmacyId,
+  int supplierId, {
+  required LedgerEntryType type,
+  int amountMinor = 2500,
+}) {
+  return db
+      .into(db.ledgerEntries)
+      .insert(
+        LedgerEntriesCompanion.insert(
+          pharmacyId: pharmacyId,
+          type: type,
+          amountMinor: amountMinor,
+          supplierId: Value(supplierId),
+          occurredAt: DateTime.now(),
+        ),
+      );
+}
+
+/// Seeds one customer-side ledger entry (debt or repayment) for the party.
+Future<int> seedCustomerEntry(
+  AppDatabase db,
+  int pharmacyId,
+  int customerId, {
+  required LedgerEntryType type,
+  int amountMinor = 2500,
+}) {
+  return db
+      .into(db.ledgerEntries)
+      .insert(
+        LedgerEntriesCompanion.insert(
+          pharmacyId: pharmacyId,
+          type: type,
+          amountMinor: amountMinor,
+          customerId: Value(customerId),
+          occurredAt: DateTime.now(),
         ),
       );
 }

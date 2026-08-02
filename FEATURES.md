@@ -46,9 +46,22 @@
   `core/format/money.dart`, integer minor units end-to-end). Sales/
   products are route-reachable only — dashboard navigation is plan 07.
   Runtime-verified on the emulator (add/edit/validate/deactivate/sale).
+- 06_DEBT_AND_DRAW_TRACKING_PLAN — draws, supplier debt, customer debt:
+  draws screen (amount + optional note, `recordDraw` through the ledger),
+  supplier screen (live `supplierListWithBalancesProvider` merging
+  suppliers + debt/repayment ledger streams, create-supplier dialog,
+  record-debt/repayment dialogs, `رصيد دائن` credit display on
+  overpayment — never clamped), customer screen as the mirror image,
+  empty/error states, Arabic-Indic EGP amounts. UI-only by decision
+  (repos/use-cases shipped in 03/04); no delete path in P0 (soft-
+  deactivation deferred, destructive deletion blocked). Presentation
+  merge via `combineLatest3` (`core/streams/`), no rxdart.
+  Runtime-verified on the emulator (draw persisted across restart,
+  debt → repayment → credit, supplier + customer).
+  112 unit/widget tests green, analyzer clean.
 
 ## In progress
-None — next up: `PLANS/06_DEBT_AND_DRAW_TRACKING_PLAN.md`.
+None — next up: `PLANS/07_PROFIT_DASHBOARD_PLAN.md`.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |

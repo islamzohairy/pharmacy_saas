@@ -313,5 +313,109 @@
   "goToProducts": "الذهاب إلى المنتجات",
   "@goToProducts": {
     "description": "Button navigating from the sales empty state to the products screen"
+  },
+  "recordDraw": "تسجيل السحب",
+  "@recordDraw": {
+    "description": "Button that records a cash draw"
+  },
+  "drawAmountLabel": "مبلغ السحب",
+  "@drawAmountLabel": {
+    "description": "Label for the cash draw amount input"
+  },
+  "noteOptionalLabel": "ملاحظة (اختياري)",
+  "@noteOptionalLabel": {
+    "description": "Label for an optional free-text note"
+  },
+  "drawRecorded": "تم تسجيل السحب",
+  "@drawRecorded": {
+    "description": "Snackbar confirmation after a successful draw"
+  },
+  "drawFailed": "تعذر تسجيل السحب — حاول مرة أخرى",
+  "@drawFailed": {
+    "description": "Snackbar error after a failed draw"
+  },
+  "addSupplier": "إضافة مورد",
+  "@addSupplier": {
+    "description": "Action/button to create a new supplier"
+  },
+  "supplierNameLabel": "اسم المورد",
+  "@supplierNameLabel": {
+    "description": "Label for the supplier name input"
+  },
+  "supplierNameRequired": "أدخل اسم المورد",
+  "@supplierNameRequired": {
+    "description": "Validation error when the supplier name is empty"
+  },
+  "addCustomer": "إضافة عميل",
+  "@addCustomer": {
+    "description": "Action/button to create a new customer"
+  },
+  "customerNameLabel": "اسم العميل",
+  "@customerNameLabel": {
+    "description": "Label for the customer name input"
+  },
+  "customerNameRequired": "أدخل اسم العميل",
+  "@customerNameRequired": {
+    "description": "Validation error when the customer name is empty"
+  },
+  "confirmAdd": "إضافة",
+  "@confirmAdd": {
+    "description": "Confirm button of party-creation dialogs"
+  },
+  "recordSupplierDebt": "تسجيل دين",
+  "@recordSupplierDebt": {
+    "description": "Action that records a debt owed to a supplier"
+  },
+  "recordCustomerDebt": "تسجيل دين",
+  "@recordCustomerDebt": {
+    "description": "Action that records a debt a customer owes"
+  },
+  "recordRepayment": "تسجيل سداد",
+  "@recordRepayment": {
+    "description": "Action that records a repayment to/from a party"
+  },
+  "debtAmountLabel": "المبلغ",
+  "@debtAmountLabel": {
+    "description": "Label for the debt/repayment amount input"
+  },
+  "recordDebtTitle": "تسجيل دين",
+  "@recordDebtTitle": {
+    "description": "Title of the record-debt dialog"
+  },
+  "recordRepaymentTitle": "تسجيل سداد",
+  "@recordRepaymentTitle": {
+    "description": "Title of the record-repayment dialog"
+  },
+  "debtRecorded": "تم تسجيل الدين",
+  "@debtRecorded": {
+    "description": "Snackbar confirmation after recording a debt"
+  },
+  "repaymentRecorded": "تم تسجيل السداد",
+  "@repaymentRecorded": {
+    "description": "Snackbar confirmation after recording a repayment"
+  },
+  "recordFailed": "تعذر الحفظ — حاول مرة أخرى",
+  "@recordFailed": {
+    "description": "Snackbar error after a failed debt/repayment save"
+  },
+  "suppliersEmpty": "لا يوجد موردون بعد",
+  "@suppliersEmpty": {
+    "description": "Empty state title of the supplier list"
+  },
+  "suppliersEmptyHint": "أضف موردًا لتسجيل الديون المستحقة له",
+  "@suppliersEmptyHint": {
+    "description": "Empty state hint of the supplier list"
+  },
+  "customersEmpty": "لا يوجد عملاء بعد",
+  "@customersEmpty": {
+    "description": "Empty state title of the customer list"
+  },
+  "customersEmptyHint": "أضف عميلًا لتسجيل ديون العملاء",
+  "@customersEmptyHint": {
+    "description": "Empty state hint of the customer list"
+  },
+  "creditBalance": "رصيد دائن",
+  "@creditBalance": {
+    "description": "Label marking a negative balance as a credit (overpayment)"
   }
 }

@@ -405,3 +405,57 @@ binary's `fmt_*` tools (rejected — loses app-error forwarding and
 dynamic-tool registration the OS docs prescribe); the 4.0.0-dev train
 (rejected — prerelease, per upstream's own guidance).
 
+## 2026-08-02 — Plan 06 deviation: presentation-only; the plan file's data-layer sections are stale
+DECISION: Plan 06's "File Structure Impact"/data-layer sections predate
+plans 03 and 04 — the supplier/customer repositories and the four ledger
+use-cases they call for were already shipped there. The actual plan 06
+work was therefore UI-only: three screens (draws, supplier debt, customer
+debt) on the existing domain/data layers, plus presentation-layer balance
+providers. Where `PLANS/06` contradicts the shipped code, the code is the
+source of truth; the plan file is kept as-is for history.
+WHY: per `AGENT_BEHAVIOR.md`, verify before writing; re-implementing
+existing repositories would have duplicated plan 03/04 work.
+
+## 2026-08-02 — Plan 06 delete edge case superseded: no delete in P0, soft-deactivation deferred, destructive deletion blocked
+DECISION: PLANS/06's delete edge case ("a supplier/customer with ledger
+history and a delete intent") is NOT implemented in P0, superseding the
+earlier draft that would have shipped a confirm-and-delete path. No hard
+delete exists anywhere in the UI; soft-deactivation (the only acceptable
+alternative) requires an `is_active` schema change on
+`suppliers`/`customers`, which is outside plan 06's UI-only scope and is
+deferred to a later plan. Deletion is therefore blocked by construction:
+no repository/use-case exposes it, no UI affordance exists, and ledger
+history is preserved. (A ledger with the party reference would have made
+deletion a history-corrupting operation anyway.)
+WHY: preserves the append-only ledger and financial history; P0 has no
+deletion problem to solve — plans 03/04/06 never added a delete path.
+
+## 2026-08-02 — Plan 06 balance streams: presentation-layer merge, no new LedgerRepository API, no rxdart
+DECISION: supplier/customer balances are computed by a presentation-layer
+StreamProvider that merges three live streams — the party table
+(`watchAll`) and two type-filtered ledger streams (`supplierDebt` +
+`debtRepayment` / `customerDebt` + `debtRepayment`) — via a small
+`combineLatest3` helper in `core/streams/combine_latest.dart` (emits
+nothing until all three emit; cancels input subscriptions on cancel).
+Sorted non-zero balances first (|balance| desc, then name). rxdart was
+NOT added for this (checked the dependency tree; a hand-written
+`combineLatest3` is ~40 lines and avoids a transitive-tree addition for
+one merge).
+WHY: `LedgerRepository.watchEntries` filters by a single party type, so
+an owed amount needs both the debt and the repayment streams; keeping the
+merge at the presentation layer avoids a new repository API for one
+screen.
+
+## 2026-08-02 — Plan 06 tests: full-app pump convention over the plan's "stub the use-cases" line
+DECISION: plan 06's screens are tested with the project's established
+full-app convention — `FakeSecureStore` + in-memory Drift DB +
+`ProviderContainer` overrides + `buildRouter(initialLocation: ...)`,
+seeding suppliers/customers/ledger rows via helpers
+(`seedSupplier`, `seedCustomer`, `seedSupplierEntry`, `seedCustomerEntry`
+in `test/support/helpers.dart`) — instead of the plan's suggested
+use-case stubbing. The `combineLatest3` helper itself gets pure unit
+tests. 17 new tests (draws 3, supplier debt 6, customer debt 5, streams
+3).
+WHY: matches the plan 05 convention the suite is already built around;
+use-case stubbing would have created a second, weaker pattern and left
+the screens' integration with the real repositories untested.

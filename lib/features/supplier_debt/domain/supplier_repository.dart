@@ -1,8 +1,9 @@
 import 'supplier.dart';
 
-/// Supplier party access. Deleting a supplier is blocked at the database
-/// layer once any ledger entry references it (FK RESTRICT); the UI must
-/// additionally warn when a balance is outstanding (plan 06).
+/// Supplier party access. There is no delete path in P0 by decision:
+/// destructive deletion of a party is blocked (no UI affordance, and FK
+/// RESTRICT at the database layer once any ledger entry references it);
+/// soft deactivation is a deferred schema change (DECISIONS.md).
 abstract interface class SupplierRepository {
   Future<Supplier> create({required int pharmacyId, required String name});
 

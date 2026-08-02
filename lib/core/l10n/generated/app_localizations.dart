@@ -549,6 +549,162 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الذهاب إلى المنتجات'**
   String get goToProducts;
+
+  /// Button that records a cash draw
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل السحب'**
+  String get recordDraw;
+
+  /// Label for the cash draw amount input
+  ///
+  /// In ar, this message translates to:
+  /// **'مبلغ السحب'**
+  String get drawAmountLabel;
+
+  /// Label for an optional free-text note
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة (اختياري)'**
+  String get noteOptionalLabel;
+
+  /// Snackbar confirmation after a successful draw
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل السحب'**
+  String get drawRecorded;
+
+  /// Snackbar error after a failed draw
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تسجيل السحب — حاول مرة أخرى'**
+  String get drawFailed;
+
+  /// Action/button to create a new supplier
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة مورد'**
+  String get addSupplier;
+
+  /// Label for the supplier name input
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم المورد'**
+  String get supplierNameLabel;
+
+  /// Validation error when the supplier name is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل اسم المورد'**
+  String get supplierNameRequired;
+
+  /// Action/button to create a new customer
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة عميل'**
+  String get addCustomer;
+
+  /// Label for the customer name input
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم العميل'**
+  String get customerNameLabel;
+
+  /// Validation error when the customer name is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل اسم العميل'**
+  String get customerNameRequired;
+
+  /// Confirm button of party-creation dialogs
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة'**
+  String get confirmAdd;
+
+  /// Action that records a debt owed to a supplier
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل دين'**
+  String get recordSupplierDebt;
+
+  /// Action that records a debt a customer owes
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل دين'**
+  String get recordCustomerDebt;
+
+  /// Action that records a repayment to/from a party
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل سداد'**
+  String get recordRepayment;
+
+  /// Label for the debt/repayment amount input
+  ///
+  /// In ar, this message translates to:
+  /// **'المبلغ'**
+  String get debtAmountLabel;
+
+  /// Title of the record-debt dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل دين'**
+  String get recordDebtTitle;
+
+  /// Title of the record-repayment dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل سداد'**
+  String get recordRepaymentTitle;
+
+  /// Snackbar confirmation after recording a debt
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل الدين'**
+  String get debtRecorded;
+
+  /// Snackbar confirmation after recording a repayment
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل السداد'**
+  String get repaymentRecorded;
+
+  /// Snackbar error after a failed debt/repayment save
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر الحفظ — حاول مرة أخرى'**
+  String get recordFailed;
+
+  /// Empty state title of the supplier list
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد موردون بعد'**
+  String get suppliersEmpty;
+
+  /// Empty state hint of the supplier list
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف موردًا لتسجيل الديون المستحقة له'**
+  String get suppliersEmptyHint;
+
+  /// Empty state title of the customer list
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد عملاء بعد'**
+  String get customersEmpty;
+
+  /// Empty state hint of the customer list
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف عميلًا لتسجيل ديون العملاء'**
+  String get customersEmptyHint;
+
+  /// Label marking a negative balance as a credit (overpayment)
+  ///
+  /// In ar, this message translates to:
+  /// **'رصيد دائن'**
+  String get creditBalance;
 }
 
 class _AppLocalizationsDelegate

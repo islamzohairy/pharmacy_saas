@@ -103,6 +103,22 @@ the emulator done (add/edit/validate/deactivate/sale flows). Sales and
 products are route-reachable only — dashboard navigation is plan 07's
 job. See `FEATURES.md` for per-plan status.
 
+Plan 06 (draws + supplier/customer debt screens) is complete: the three
+screens are UI-only on the plan 03/04 domain+data layers (per decision,
+the plan file's data-layer sections are stale). Draws screen posts
+`recordDraw`; supplier/customer screens show live balances via
+presentation StreamProviders that merge the party table with the
+type-filtered ledger streams through `combineLatest3` (`core/streams/`),
+sorted non-zero first; overpayment renders `رصيد دائن` credit, never
+clamped. No delete path in P0 (soft-deactivation deferred, destructive
+deletion blocked). `supplierListWithBalancesProvider` /
+`customerListWithBalancesProvider` are exported through the feature
+barrels; dialogs/strings are in `app_ar.arb`. 112 unit/widget tests
+green (17 new: flows 14 + streams 3), analyzer clean; runtime pass on
+the emulator done (draw persisted across restart, debt → repayment →
+credit for both supplier and customer). Screens are route-reachable
+only — dashboard navigation is plan 07's job.
+
 ## Tooling (installed 2026-08-02, AI Engineering OS full setup)
 - Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`
   installed; `opencode.jsonc` now has the 8 CORE_SYSTEM files in
@@ -118,7 +134,7 @@ job. See `FEATURES.md` for per-plan status.
   critical flows (plan 06) uses it against a debug-mode running app.
 - In-app: `mcp_toolkit: ^3.0.0` added; `main.dart` boots through
   `MCPToolkitBinding.instance.bootstrapFlutter` (debug-only VM-service
-  extensions, inert in release). Analyzer clean, 95/95 tests still pass.
+  extensions, inert in release). Analyzer clean, 112/112 tests pass.
   See `DECISIONS.md` (dependency governance entry) for the package
   checks and the `codegen-init`/`init opencode` upstream gaps.
 

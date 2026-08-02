@@ -240,4 +240,82 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get goToProducts => 'الذهاب إلى المنتجات';
+
+  @override
+  String get recordDraw => 'تسجيل السحب';
+
+  @override
+  String get drawAmountLabel => 'مبلغ السحب';
+
+  @override
+  String get noteOptionalLabel => 'ملاحظة (اختياري)';
+
+  @override
+  String get drawRecorded => 'تم تسجيل السحب';
+
+  @override
+  String get drawFailed => 'تعذر تسجيل السحب — حاول مرة أخرى';
+
+  @override
+  String get addSupplier => 'إضافة مورد';
+
+  @override
+  String get supplierNameLabel => 'اسم المورد';
+
+  @override
+  String get supplierNameRequired => 'أدخل اسم المورد';
+
+  @override
+  String get addCustomer => 'إضافة عميل';
+
+  @override
+  String get customerNameLabel => 'اسم العميل';
+
+  @override
+  String get customerNameRequired => 'أدخل اسم العميل';
+
+  @override
+  String get confirmAdd => 'إضافة';
+
+  @override
+  String get recordSupplierDebt => 'تسجيل دين';
+
+  @override
+  String get recordCustomerDebt => 'تسجيل دين';
+
+  @override
+  String get recordRepayment => 'تسجيل سداد';
+
+  @override
+  String get debtAmountLabel => 'المبلغ';
+
+  @override
+  String get recordDebtTitle => 'تسجيل دين';
+
+  @override
+  String get recordRepaymentTitle => 'تسجيل سداد';
+
+  @override
+  String get debtRecorded => 'تم تسجيل الدين';
+
+  @override
+  String get repaymentRecorded => 'تم تسجيل السداد';
+
+  @override
+  String get recordFailed => 'تعذر الحفظ — حاول مرة أخرى';
+
+  @override
+  String get suppliersEmpty => 'لا يوجد موردون بعد';
+
+  @override
+  String get suppliersEmptyHint => 'أضف موردًا لتسجيل الديون المستحقة له';
+
+  @override
+  String get customersEmpty => 'لا يوجد عملاء بعد';
+
+  @override
+  String get customersEmptyHint => 'أضف عميلًا لتسجيل ديون العملاء';
+
+  @override
+  String get creditBalance => 'رصيد دائن';
 }

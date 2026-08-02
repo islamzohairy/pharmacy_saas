@@ -180,5 +180,138 @@
   "backupError": "تعذر النسخ الاحتياطي — سنحاول مرة أخرى",
   "@backupError": {
     "description": "Backup indicator: the last sync attempt failed"
+  },
+  "addProduct": "إضافة منتج",
+  "@addProduct": {
+    "description": "Action/button to create a new product"
+  },
+  "editProduct": "تعديل منتج",
+  "@editProduct": {
+    "description": "Action/title for editing an existing product"
+  },
+  "deactivateProduct": "تعطيل المنتج",
+  "@deactivateProduct": {
+    "description": "Action/title for soft-deactivating (hiding) a product"
+  },
+  "deactivateConfirmBody": "سيُخفى «{name}» من قوائم المنتجات ولن يُحذف سجل مبيعاته السابق.",
+  "@deactivateConfirmBody": {
+    "description": "Confirmation body when deactivating a product — soft delete, ledger history stays valid",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deactivateConfirmAction": "تعطيل",
+  "@deactivateConfirmAction": {
+    "description": "Confirm button of the deactivate dialog"
+  },
+  "productsEmpty": "لا توجد منتجات بعد",
+  "@productsEmpty": {
+    "description": "Empty state title of the products list"
+  },
+  "productsEmptyHint": "أضف أول منتج للبدء في تسجيل المبيعات",
+  "@productsEmptyHint": {
+    "description": "Empty state hint of the products list"
+  },
+  "loadError": "تعذر تحميل البيانات",
+  "@loadError": {
+    "description": "Generic load-error message with retry"
+  },
+  "retry": "إعادة المحاولة",
+  "@retry": {
+    "description": "Generic retry button"
+  },
+  "productNameLabel": "اسم المنتج",
+  "@productNameLabel": {
+    "description": "Label for the product name input"
+  },
+  "productNameRequired": "أدخل اسم المنتج",
+  "@productNameRequired": {
+    "description": "Validation error when product name is empty"
+  },
+  "costPriceLabel": "سعر الشراء",
+  "@costPriceLabel": {
+    "description": "Label for the purchase/cost price input"
+  },
+  "sellPriceLabel": "سعر البيع",
+  "@sellPriceLabel": {
+    "description": "Label for the sell price input"
+  },
+  "priceHelper": "مثال: 25.50",
+  "@priceHelper": {
+    "description": "Helper text under price inputs showing the accepted format"
+  },
+  "priceInvalid": "أدخل مبلغًا صحيحًا (مثال: 25.50)",
+  "@priceInvalid": {
+    "description": "Validation error when a price is not a valid number"
+  },
+  "priceRequired": "أدخل السعر",
+  "@priceRequired": {
+    "description": "Validation error when a price field is empty"
+  },
+  "priceMustBePositive": "يجب أن يكون السعر أكبر من صفر",
+  "@priceMustBePositive": {
+    "description": "Validation error when a price is zero or negative"
+  },
+  "expiryDateLabel": "تاريخ الانتهاء",
+  "@expiryDateLabel": {
+    "description": "Label for the optional expiry date input"
+  },
+  "expiryDateOptional": "اختياري",
+  "@expiryDateOptional": {
+    "description": "Helper text marking the expiry date as optional"
+  },
+  "clearExpiry": "إزالة التاريخ",
+  "@clearExpiry": {
+    "description": "Tooltip to remove the chosen expiry date"
+  },
+  "searchProducts": "ابحث عن منتج…",
+  "@searchProducts": {
+    "description": "Hint of the product search field in sales entry"
+  },
+  "totalLabel": "الإجمالي",
+  "@totalLabel": {
+    "description": "Label of the running sales total"
+  },
+  "lineTotal": "الإجمالي",
+  "@lineTotal": {
+    "description": "Label of a single sales line's total"
+  },
+  "confirmSale": "تأكيد البيع",
+  "@confirmSale": {
+    "description": "Button that commits all sales lines to the ledger"
+  },
+  "saleRecorded": "تم تسجيل البيع",
+  "@saleRecorded": {
+    "description": "Snackbar confirmation after a successful sale"
+  },
+  "saleFailed": "تعذر تسجيل البيع — حاول مرة أخرى",
+  "@saleFailed": {
+    "description": "Snackbar error after a failed sale"
+  },
+  "decreaseQuantity": "تقليل الكمية",
+  "@decreaseQuantity": {
+    "description": "Tooltip for decreasing a line quantity"
+  },
+  "increaseQuantity": "زيادة الكمية",
+  "@increaseQuantity": {
+    "description": "Tooltip for increasing a line quantity"
+  },
+  "removeLine": "إزالة الصنف",
+  "@removeLine": {
+    "description": "Tooltip for removing a line from the sale"
+  },
+  "salesEmpty": "لا توجد منتجات بعد",
+  "@salesEmpty": {
+    "description": "Empty state title of the sales screen"
+  },
+  "salesEmptyHint": "أضف منتجًا أولاً لتتمكن من تسجيل عملية بيع",
+  "@salesEmptyHint": {
+    "description": "Empty state hint of the sales screen"
+  },
+  "goToProducts": "الذهاب إلى المنتجات",
+  "@goToProducts": {
+    "description": "Button navigating from the sales empty state to the products screen"
   }
 }

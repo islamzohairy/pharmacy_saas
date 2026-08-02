@@ -357,6 +357,198 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تعذر النسخ الاحتياطي — سنحاول مرة أخرى'**
   String get backupError;
+
+  /// Action/button to create a new product
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة منتج'**
+  String get addProduct;
+
+  /// Action/title for editing an existing product
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل منتج'**
+  String get editProduct;
+
+  /// Action/title for soft-deactivating (hiding) a product
+  ///
+  /// In ar, this message translates to:
+  /// **'تعطيل المنتج'**
+  String get deactivateProduct;
+
+  /// Confirmation body when deactivating a product — soft delete, ledger history stays valid
+  ///
+  /// In ar, this message translates to:
+  /// **'سيُخفى «{name}» من قوائم المنتجات ولن يُحذف سجل مبيعاته السابق.'**
+  String deactivateConfirmBody(String name);
+
+  /// Confirm button of the deactivate dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'تعطيل'**
+  String get deactivateConfirmAction;
+
+  /// Empty state title of the products list
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد منتجات بعد'**
+  String get productsEmpty;
+
+  /// Empty state hint of the products list
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف أول منتج للبدء في تسجيل المبيعات'**
+  String get productsEmptyHint;
+
+  /// Generic load-error message with retry
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تحميل البيانات'**
+  String get loadError;
+
+  /// Generic retry button
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get retry;
+
+  /// Label for the product name input
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم المنتج'**
+  String get productNameLabel;
+
+  /// Validation error when product name is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل اسم المنتج'**
+  String get productNameRequired;
+
+  /// Label for the purchase/cost price input
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر الشراء'**
+  String get costPriceLabel;
+
+  /// Label for the sell price input
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر البيع'**
+  String get sellPriceLabel;
+
+  /// Helper text under price inputs showing the accepted format
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: 25.50'**
+  String get priceHelper;
+
+  /// Validation error when a price is not a valid number
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل مبلغًا صحيحًا (مثال: 25.50)'**
+  String get priceInvalid;
+
+  /// Validation error when a price field is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل السعر'**
+  String get priceRequired;
+
+  /// Validation error when a price is zero or negative
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب أن يكون السعر أكبر من صفر'**
+  String get priceMustBePositive;
+
+  /// Label for the optional expiry date input
+  ///
+  /// In ar, this message translates to:
+  /// **'تاريخ الانتهاء'**
+  String get expiryDateLabel;
+
+  /// Helper text marking the expiry date as optional
+  ///
+  /// In ar, this message translates to:
+  /// **'اختياري'**
+  String get expiryDateOptional;
+
+  /// Tooltip to remove the chosen expiry date
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة التاريخ'**
+  String get clearExpiry;
+
+  /// Hint of the product search field in sales entry
+  ///
+  /// In ar, this message translates to:
+  /// **'ابحث عن منتج…'**
+  String get searchProducts;
+
+  /// Label of the running sales total
+  ///
+  /// In ar, this message translates to:
+  /// **'الإجمالي'**
+  String get totalLabel;
+
+  /// Label of a single sales line's total
+  ///
+  /// In ar, this message translates to:
+  /// **'الإجمالي'**
+  String get lineTotal;
+
+  /// Button that commits all sales lines to the ledger
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد البيع'**
+  String get confirmSale;
+
+  /// Snackbar confirmation after a successful sale
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل البيع'**
+  String get saleRecorded;
+
+  /// Snackbar error after a failed sale
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تسجيل البيع — حاول مرة أخرى'**
+  String get saleFailed;
+
+  /// Tooltip for decreasing a line quantity
+  ///
+  /// In ar, this message translates to:
+  /// **'تقليل الكمية'**
+  String get decreaseQuantity;
+
+  /// Tooltip for increasing a line quantity
+  ///
+  /// In ar, this message translates to:
+  /// **'زيادة الكمية'**
+  String get increaseQuantity;
+
+  /// Tooltip for removing a line from the sale
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة الصنف'**
+  String get removeLine;
+
+  /// Empty state title of the sales screen
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد منتجات بعد'**
+  String get salesEmpty;
+
+  /// Empty state hint of the sales screen
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف منتجًا أولاً لتتمكن من تسجيل عملية بيع'**
+  String get salesEmptyHint;
+
+  /// Button navigating from the sales empty state to the products screen
+  ///
+  /// In ar, this message translates to:
+  /// **'الذهاب إلى المنتجات'**
+  String get goToProducts;
 }
 
 class _AppLocalizationsDelegate

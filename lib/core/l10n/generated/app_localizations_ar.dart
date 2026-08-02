@@ -142,4 +142,102 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get backupError => 'تعذر النسخ الاحتياطي — سنحاول مرة أخرى';
+
+  @override
+  String get addProduct => 'إضافة منتج';
+
+  @override
+  String get editProduct => 'تعديل منتج';
+
+  @override
+  String get deactivateProduct => 'تعطيل المنتج';
+
+  @override
+  String deactivateConfirmBody(String name) {
+    return 'سيُخفى «$name» من قوائم المنتجات ولن يُحذف سجل مبيعاته السابق.';
+  }
+
+  @override
+  String get deactivateConfirmAction => 'تعطيل';
+
+  @override
+  String get productsEmpty => 'لا توجد منتجات بعد';
+
+  @override
+  String get productsEmptyHint => 'أضف أول منتج للبدء في تسجيل المبيعات';
+
+  @override
+  String get loadError => 'تعذر تحميل البيانات';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
+  String get productNameLabel => 'اسم المنتج';
+
+  @override
+  String get productNameRequired => 'أدخل اسم المنتج';
+
+  @override
+  String get costPriceLabel => 'سعر الشراء';
+
+  @override
+  String get sellPriceLabel => 'سعر البيع';
+
+  @override
+  String get priceHelper => 'مثال: 25.50';
+
+  @override
+  String get priceInvalid => 'أدخل مبلغًا صحيحًا (مثال: 25.50)';
+
+  @override
+  String get priceRequired => 'أدخل السعر';
+
+  @override
+  String get priceMustBePositive => 'يجب أن يكون السعر أكبر من صفر';
+
+  @override
+  String get expiryDateLabel => 'تاريخ الانتهاء';
+
+  @override
+  String get expiryDateOptional => 'اختياري';
+
+  @override
+  String get clearExpiry => 'إزالة التاريخ';
+
+  @override
+  String get searchProducts => 'ابحث عن منتج…';
+
+  @override
+  String get totalLabel => 'الإجمالي';
+
+  @override
+  String get lineTotal => 'الإجمالي';
+
+  @override
+  String get confirmSale => 'تأكيد البيع';
+
+  @override
+  String get saleRecorded => 'تم تسجيل البيع';
+
+  @override
+  String get saleFailed => 'تعذر تسجيل البيع — حاول مرة أخرى';
+
+  @override
+  String get decreaseQuantity => 'تقليل الكمية';
+
+  @override
+  String get increaseQuantity => 'زيادة الكمية';
+
+  @override
+  String get removeLine => 'إزالة الصنف';
+
+  @override
+  String get salesEmpty => 'لا توجد منتجات بعد';
+
+  @override
+  String get salesEmptyHint => 'أضف منتجًا أولاً لتتمكن من تسجيل عملية بيع';
+
+  @override
+  String get goToProducts => 'الذهاب إلى المنتجات';
 }

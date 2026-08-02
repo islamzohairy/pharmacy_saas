@@ -82,8 +82,26 @@ assumption (PLANS/04 §Performance): in-memory calculation over a
 bounded, indexed query result is fine for P0 volumes; revisit by
 aggregating at the query level if dashboard queries ever pull unbounded
 history.
-Plan 05 (product + sales entry) is next. See `FEATURES.md` for
-per-plan status.
+Plan 05 (product + sales entry) is complete: product catalog —
+`ProductFormScreen` (name, cost/sell price, optional expiry date;
+required, positive prices parsed by `core/format/money.dart`
+`parseEgpToMinor` — Arabic/Western digits, 2 decimals max; form is a
+`pushNamed` route with `extra: Product?` for create-vs-edit),
+`ProductsScreen` (live `activeProductsProvider` StreamProvider over the
+active profile's pharmacy, soft-deactivate with confirm dialog —
+products are never hard-deleted), sales screen (case-insensitive
+search, cart lines with quantity steppers, running total via
+`formatEgp` — `NumberFormat('#,##0.00', 'ar_EG')` pinned because plain
+`ar` falls back to Latin digits outside localization delegates — each
+line writes one append-only `sale` row through `recordSale` at the
+current sell price, attributed to the active profile; per-line
+non-atomic appends by decision). Feature barrels now export their
+`presentation/` providers (`products.dart`,
+`ledger.dart` exports `ledger_providers.dart`) so screens only import
+barrels. 95 unit/widget tests green, analyzer clean; runtime pass on
+the emulator done (add/edit/validate/deactivate/sale flows). Sales and
+products are route-reachable only — dashboard navigation is plan 07's
+job. See `FEATURES.md` for per-plan status.
 
 ## Things intentionally NOT done (don't propose these as gaps)
 - No backend authentication — deliberate, see `ARCHITECTURE.md` §Identity.

@@ -35,9 +35,20 @@
   `calculateOwedByCustomer` — live-derived, overpayment → negative
   credit, never clamped). Unit-tested against an in-memory fake
   repository; no UI ships in this plan.
+- 05_PRODUCT_AND_SALES_PLAN — product catalog + sales entry: product
+  create/edit form (name, cost/sell price in EGP with Arabic-Indic
+  entry, optional expiry date, required positive prices), live products
+  list with soft-deactivate (confirm dialog, history preserved), sales
+  screen (case-insensitive product search, add-to-cart lines with
+  quantity steppers, running total, per-line append-only `sale` ledger
+  writes via `recordSale` at the current sell price, attributed to the
+  active profile), EGP money helper (`formatEgp`/`parseEgpToMinor` in
+  `core/format/money.dart`, integer minor units end-to-end). Sales/
+  products are route-reachable only — dashboard navigation is plan 07.
+  Runtime-verified on the emulator (add/edit/validate/deactivate/sale).
 
 ## In progress
-None — next up: `PLANS/05_PRODUCT_AND_SALES_PLAN.md`.
+None — next up: `PLANS/06_DEBT_AND_DRAW_TRACKING_PLAN.md`.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |

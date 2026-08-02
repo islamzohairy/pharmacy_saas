@@ -9,6 +9,8 @@ import 'package:pharmacy_saas/core/data/secure_store.dart';
 import 'package:pharmacy_saas/core/l10n/generated/app_localizations.dart';
 import 'package:pharmacy_saas/core/router/app_router.dart';
 
+import 'support/helpers.dart';
+
 class FakeSecureStore implements SecureStore {
   final Map<String, String> _values = {};
 
@@ -42,9 +44,7 @@ void main() {
     expect(directionality.textDirection, TextDirection.rtl);
   });
 
-  testWidgets('other P0 routes render RTL with Arabic strings', (
-    tester,
-  ) async {
+  testWidgets('other P0 routes render RTL with Arabic strings', (tester) async {
     final routes = <String, String>{
       '/products': 'المنتجات',
       '/sales': 'المبيعات',
@@ -55,11 +55,28 @@ void main() {
     };
 
     for (final entry in routes.entries) {
+      // Products and sales are DB-backed (plan 05) — seed a tenant with an
+      // active profile so their providers resolve; the rest render stubs.
+      final needsDb = entry.key == '/products' || entry.key == '/sales';
+      final db = needsDb ? await createMemoryDb() : null;
+      addTearDown(() => db?.close());
+      final store = FakeSecureStore();
+      if (db != null) {
+        final pharmacyId = await seedPharmacy(db);
+        final profileId = await seedProfile(db, pharmacyId);
+        await seedProduct(db, pharmacyId);
+        await store.write('last_active_profile_id', '$profileId');
+      }
+
       final router = buildRouter(initialLocation: entry.key);
       await tester.pumpWidget(
         ProviderScope(
+          // A fresh element per route: the override list differs between
+          // stub routes (1 override) and DB-backed routes (2).
+          key: ValueKey(entry.key),
           overrides: [
-            secureStoreProvider.overrideWithValue(FakeSecureStore()),
+            secureStoreProvider.overrideWithValue(store),
+            if (db != null) appDatabaseProvider.overrideWithValue(db),
           ],
           child: PharmacyApp(router: router),
         ),

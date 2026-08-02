@@ -304,3 +304,75 @@ ALTERNATIVES CONSIDERED: passing a `UserProfile` into the use-cases
 (rejected — forces a ledger→identity import); reading providers inside
 the use-case files (rejected — same violation, and breaks pure-function
 testability).
+
+## 2026-08-02 — Plan 05 money parsing: own helper, ar_EG pinned, reject >2 decimals
+DECISION: plan 05's money entry goes through a new core helper
+(`lib/core/format/money.dart`): `parseEgpToMinor` (Arabic/Western digits,
+`.` or `٫` decimal, strips thousands separators/whitespace, `FormatException`
+otherwise) and `formatEgp` (`NumberFormat('#,##0.00', 'ar_EG')` + ` ج.م`).
+`ar_EG` is pinned explicitly, not `ar`.
+WHY: `NumberFormat(..., 'ar')` resolves to Latin digits in any context
+that hasn't run the app localization delegates (bare Dart, notification
+strings) — `ar_EG` resolves to Arabic-Indic symbols everywhere. The parse
+contract (no signs, no letters, max 2 decimals) makes money entry a typed
+int at the form boundary, so the use-case layer still receives integer
+minor units with zero float exposure. Rejecting >2 decimals (rather than
+rounding) prevents a silently wrong amount.
+ALTERNATIVES CONSIDERED: letting `TextInputType.number` + `int.parse`
+handle entry (rejected — Arabic-Indic keyboards produce `٠١٢٣…` which
+`int.parse` rejects, and widget tests can't type them); a rounding parse
+(rejected — silent money mutation).
+
+## 2026-08-02 — Plan 05 recordSale: per-line appends, sellMinor from product
+DECISION: `recordSale(repository, {pharmacyId, productId, quantity,
+sellMinor, occurredAt, profileId, note})` writes exactly one append-only
+`sale` row per call (`amountMinor = sellMinor × quantity`); the sales
+screen loops the cart lines calling it once per line. `sellMinor` is the
+product's price read from the catalog at entry time — the ledger stores
+what happened, not a duplicated cost/price snapshot.
+WHY: the plan's literal signature took `saleTotal` (whole-cart) which
+cannot be expressed in the append-only ledger — a sale line must be one
+row with its own `product_id` or profit attribution breaks (PLANS/04).
+Per-line is also naturally non-atomic: each successful line is already
+in the ledger if a later one fails, which is correct append-only
+behaviour (the screen reports the failure; nothing is rolled back).
+`product_id` on the row (a plan addition) is what `calculateProfit`'
+s COGS injection resolves from (see the plan-04 profit decision).
+ALTERNATIVES CONSIDERED: a whole-cart `saleTotal` single row (rejected —
+loses per-product attribution); wrapping lines in a transaction (rejected
+— no transaction path exists or is wanted in an append-only ledger).
+
+## 2026-08-02 — Plan 05 scope extension: soft-deactivate, no inventory, no dashboard nav
+DECISION: plan 05 ships with product soft-deactivation (hide + confirm
+dialog, `is_active = 0`) even though the plan file did not list it;
+there is no inventory/stock workflow, and the dashboard gets no
+navigation to the new screens (sales/products are reached by their routes
+only until plan 07).
+WHY: without deactivate, an owner who mis-typed a product name or sells
+items she no longer carries would have to keep it forever — the plan
+itself blocks hard delete. Soft-deactivate is the smallest safe
+complement (row retained, ledger refs stay valid). Inventory and
+dashboard nav are deliberate plan-06/07 scope, not omissions.
+ALTERNATIVES CONSIDERED: full delete (rejected — destroys ledger
+attribution); an edit-only workaround (rejected — a renamed product
+still shows in the picker); shipping nav now (rejected — plan 07 owns
+the dashboard).
+
+## 2026-08-02 — Plan 05 screens reach the providers through feature barrels
+DECISION: the products feature barrel (`products.dart`) exports its
+`presentation/products_providers.dart` (plan file listed "Modified: none"
+for products); the ledger barrel (`ledger.dart`) exports
+`presentation/ledger_providers.dart`; the sales screen imports
+`ledger.dart` + `products.dart` + the identity barrel — never feature
+internals. The product form routes via `pushNamed` (back stack), not
+`goNamed`.
+WHY: the sales screen needs the ledger repository (to append) and the
+active catalog — the only legal paths are the barrels. The plan's own
+"no cross-feature internal imports" rule makes the barrel export the
+required mechanism even though the plan didn't list the file change.
+`pushNamed` for the form gives Android back-button/back-gesture
+behaviour; `goNamed` replaces the route, leaving nothing to pop.
+ALTERNATIVES CONSIDERED: sales screen constructing
+`DriftLedgerRepository` itself (rejected — duplicate wiring, provider
+overrides in tests would not apply); `goNamed` for the form (rejected —
+no back stack, save-then-pop throws).

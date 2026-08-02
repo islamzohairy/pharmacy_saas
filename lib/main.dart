@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
@@ -11,6 +12,11 @@ import 'features/identity/data/identity_repository_impl.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Arabic date/number symbols for intl (NumberFormat/DateFormat with the
+  // `ar` locale) — the localization delegates also load these, but this
+  // covers any non-widget use.
+  await initializeDateFormatting('ar');
 
   await SupabaseBootstrap.initializeIfConfigured();
 

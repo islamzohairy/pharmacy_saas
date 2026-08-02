@@ -5,6 +5,8 @@ import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/draws/presentation/draws_screen.dart';
 import '../../features/identity/presentation/onboarding/onboarding_screen.dart';
 import '../../features/identity/presentation/profiles/profile_switcher_screen.dart';
+import '../../features/products/domain/product.dart';
+import '../../features/products/presentation/product_form_screen.dart';
 import '../../features/products/presentation/products_screen.dart';
 import '../../features/sales/presentation/sales_screen.dart';
 import '../../features/supplier_debt/presentation/supplier_debt_screen.dart';
@@ -13,6 +15,7 @@ import '../../features/supplier_debt/presentation/supplier_debt_screen.dart';
 abstract final class AppRoutes {
   static const onboarding = 'onboarding';
   static const products = 'products';
+  static const productForm = 'product-form';
   static const sales = 'sales';
   static const draws = 'draws';
   static const supplierDebt = 'supplier-debt';
@@ -39,6 +42,12 @@ GoRouter buildRouter({required String initialLocation}) {
         path: '/products',
         name: AppRoutes.products,
         builder: (context, state) => const ProductsScreen(),
+      ),
+      GoRoute(
+        path: '/product-form',
+        name: AppRoutes.productForm,
+        builder: (context, state) =>
+            ProductFormScreen(product: state.extra as Product?),
       ),
       GoRoute(
         path: '/sales',

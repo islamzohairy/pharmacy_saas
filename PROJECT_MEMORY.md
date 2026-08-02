@@ -62,7 +62,27 @@ Credentials live only in gitignored `.env.local`; test_live/ sits
 outside test/ so CI can't run it. 46 unit/widget tests green, analyzer
 clean, debug APK builds. Sync is ledger-only by decision — products/
 suppliers/customers stay local in P0.
-Plan 04 (financial ledger use cases) is next. See `FEATURES.md` for
+Plan 04 (financial ledger domain layer) is complete: four record
+use-cases in `lib/features/ledger/domain/usecases/` (`recordDraw`,
+`recordSupplierDebt`, `recordCustomerDebt`, `recordRepayment` — each
+validates input (positive amount; exactly-one-party for repayments)
+before reaching `LedgerRepository.append`, then writes one append-only
+entry; they're `async` so validation errors land in the returned
+future); three pure calculators in
+`lib/features/ledger/domain/calculations/` (`calculateProfit` returning
+a `ProfitBreakdown` of sales/cost/draws/net, `calculateOwedToSupplier`,
+`calculateOwedByCustomer` — debt minus repayments per party; overpayment
+yields a negative credit balance, never clamped, per the plan's edge-
+case decision). `calculateProfit` takes an injected `costMinorOf`
+resolver because COGS is read from `products.cost_minor` at calculation
+time (PLANS/05), not stored in the ledger row — this keeps the
+calculators free of drift/feature imports. Use-cases and calculators are
+exported through the `ledger.dart` barrel for plan 06's screens. Volume
+assumption (PLANS/04 §Performance): in-memory calculation over a
+bounded, indexed query result is fine for P0 volumes; revisit by
+aggregating at the query level if dashboard queries ever pull unbounded
+history.
+Plan 05 (product + sales entry) is next. See `FEATURES.md` for
 per-plan status.
 
 ## Things intentionally NOT done (don't propose these as gaps)

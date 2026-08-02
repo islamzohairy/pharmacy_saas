@@ -1,4 +1,10 @@
 export '../../../core/data/tables/ledger_entry_type.dart' show LedgerEntryType;
 export 'data/ledger_repository_impl.dart';
+export 'domain/calculations/balance_calculator.dart';
+export 'domain/calculations/profit_calculator.dart';
 export 'domain/ledger_entry.dart';
 export 'domain/ledger_repository.dart';
+export 'domain/usecases/record_customer_debt.dart';
+export 'domain/usecases/record_draw.dart';
+export 'domain/usecases/record_repayment.dart';
+export 'domain/usecases/record_supplier_debt.dart';

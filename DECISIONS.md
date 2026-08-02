@@ -260,3 +260,47 @@ The scheduler never throws (errors land in the status, not the UI).
 ALTERNATIVES CONSIDERED: settings/backup screen (rejected — another
 route to build and maintain for one boolean-ish signal in P0); toast on
 failure (rejected — transient, disappears before the user can act).
+
+## 2026-08-02 — Profit COGS is injected into calculateProfit, not stored in the ledger row
+DECISION: `calculateProfit` (PLANS/04) takes an injected
+`int? Function(int productId) costMinorOf` resolver and returns a
+`ProfitBreakdown` (sales/cost/draws/net) instead of the plan's literal
+`calculateProfit(entries, dateRange)` single-number signature. COGS for
+each `sale` entry is read from the referenced product's `cost_minor` at
+calculation time; a sale with no resolvable product cost counts as zero
+cost.
+WHY: the plan's literal signature is unimplementable as written —
+`LedgerEntry` has no cost field, and plan 05 explicitly forbids
+duplicating cost into the ledger row ("the ledger stores what happened,
+not a derived number"). Injection keeps the calculator a pure function
+over `List<LedgerEntry>` with no drift or products-feature import, which
+is what the plan's own testability requirement demands. The breakdown
+return type (not a single int) is what plan 07's dashboard actually
+renders (sales total, cost total, draws total, net profit as separate
+figures).
+ALTERNATIVES CONSIDERED: storing COGS on the sale row (rejected —
+contradicts plan 05's explicit design and would go stale on a product
+cost change); resolving costs inside the calculator via a repository
+import (rejected — breaks the no-drift-import rule the plan states as an
+acceptance criterion).
+
+## 2026-08-02 — Plan 04 attribution: caller-resolved profileId, barrel exports
+DECISION: the plan-04 record use-cases take `int? profileId` (and
+`pharmacyId`) as plain parameters resolved by the caller from
+`activeProfileProvider` — not a `UserProfile` object and not the provider
+itself. The ledger domain stays free of any provider/identity-feature
+dependency. Additionally, the ledger feature barrel (`ledger.dart`) gained
+exports for the use-cases and calculators, which the plan's "Modified:
+none" section did not list.
+WHY: the plan's literal wording ("taking validated input +
+activeProfileProvider's current profile") would force ledger domain code
+to import the identity feature — a direct no-cross-feature-imports
+violation (ARCHITECTURE.md). Passing the id keeps the use-cases pure and
+trivially testable; plan 06's screens resolve the active profile and pass
+its `id`/`pharmacyId`. The barrel exports are the feature's public API —
+screens must import through `ledger.dart` only, per the feature-first
+rule.
+ALTERNATIVES CONSIDERED: passing a `UserProfile` into the use-cases
+(rejected — forces a ledger→identity import); reading providers inside
+the use-case files (rejected — same violation, and breaks pure-function
+testability).

@@ -27,9 +27,17 @@
   Verified against the live project (migration applied; e2e + 8 server
   checks passed). Unsynced-only ledger backup — products/suppliers/
   customers stay local by plan scope.
+- 04_FINANCIAL_LEDGER_PLAN — financial domain layer: four record
+  use-cases (`recordDraw`, `recordSupplierDebt`, `recordCustomerDebt`,
+  `recordRepayment` — validated, attributed, append-only) and three pure
+  calculators (`calculateProfit` with sales/cost/draws breakdown via an
+  injected cost resolver, `calculateOwedToSupplier`,
+  `calculateOwedByCustomer` — live-derived, overpayment → negative
+  credit, never clamped). Unit-tested against an in-memory fake
+  repository; no UI ships in this plan.
 
 ## In progress
-None — next up: `PLANS/04_FINANCIAL_LEDGER_PLAN.md`.
+None — next up: `PLANS/05_PRODUCT_AND_SALES_PLAN.md`.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |

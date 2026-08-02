@@ -1,0 +1,43 @@
+# Features — Pharmacy Profit Control Platform
+
+## Shipped
+None yet.
+
+## In progress
+None yet — start with `PLANS/01_PROJECT_FOUNDATION_PLAN.md`. Update this
+section to name the active plan once work begins, e.g.:
+`01_PROJECT_FOUNDATION_PLAN — in progress, blocked on: <if anything>`.
+
+## Roadmap — P0 (build order; each plan states its own dependencies)
+| # | Plan | Confirmed problem it answers |
+|---|---|---|
+| 01 | `PLANS/01_PROJECT_FOUNDATION_PLAN.md` | scaffolding — no direct product answer |
+| 02 | `PLANS/02_IDENTITY_AND_ACCESS_PLAN.md` | flexible access model |
+| 03 | `PLANS/03_DATA_AND_SYNC_PLAN.md` | schema + backup (data-loss risk) |
+| 04 | `PLANS/04_FINANCIAL_LEDGER_PLAN.md` | draws, supplier debt, customer debt, profit calc |
+| 05 | `PLANS/05_PRODUCT_AND_SALES_PLAN.md` | product entry, sales entry |
+| 06 | `PLANS/06_DEBT_AND_DRAW_TRACKING_PLAN.md` | draw/debt screens |
+| 07 | `PLANS/07_PROFIT_DASHBOARD_PLAN.md` | "where does my money go" |
+| 08 | `PLANS/08_TESTING_AND_RELEASE_HARDENING_PLAN.md` | pilot readiness gate |
+
+## Roadmap — P1 (not started, not yet planned in detail)
+- Expiry alerting logic (data field already ships in P0 — see
+  `PROJECT_MEMORY.md`) — gated on Sprint 0 interview confirmation.
+- Employee-restriction enforcement (role field already ships in P0) —
+  gated on ICP-B or trust/control confirmation.
+- Detailed batch tracking, purchase-order workflow, expense tracking,
+  reports beyond dashboard, shift/handoff summary.
+- E-invoicing/e-receipt (ETA) compliance — gated behind `COMPLIANCE.md`,
+  not a normal backlog item; do not plan implementation before that file
+  shows `confirmed-by-counsel`.
+
+## Roadmap — P2+ (not started)
+Customer profiles/refill reminders, WhatsApp order intake, multi-branch
+management, forecasting/AI recommendations.
+
+## Explicitly out of scope
+Full accounting suite, customer-facing app, delivery, insurance, AI
+diagnosis — regardless of future evidence tier (per product spec §11).
+
+## Release history
+None yet.

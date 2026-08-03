@@ -417,5 +417,49 @@
   "creditBalance": "رصيد دائن",
   "@creditBalance": {
     "description": "Label marking a negative balance as a credit (overpayment)"
+  },
+  "dashboardRangeToday": "اليوم",
+  "@dashboardRangeToday": {
+    "description": "Date-range option: today (the default dashboard view)"
+  },
+  "dashboardRangeWeek": "هذا الأسبوع",
+  "@dashboardRangeWeek": {
+    "description": "Date-range option: this week (starts Saturday, Egyptian calendar)"
+  },
+  "dashboardRangeMonth": "هذا الشهر",
+  "@dashboardRangeMonth": {
+    "description": "Date-range option: this month"
+  },
+  "dashboardNetProfit": "صافي الربح",
+  "@dashboardNetProfit": {
+    "description": "Dashboard headline figure: sales minus cost minus draws"
+  },
+  "dashboardCost": "تكلفة البضاعة",
+  "@dashboardCost": {
+    "description": "Dashboard figure: cost of goods sold in the selected range"
+  },
+  "dashboardCurrentBalances": "الأرصدة الحالية",
+  "@dashboardCurrentBalances": {
+    "description": "Dashboard section header: all-time supplier/customer debt balances"
+  },
+  "dashboardOwedToSuppliers": "المستحق للموردين",
+  "@dashboardOwedToSuppliers": {
+    "description": "Dashboard figure: total currently owed to all suppliers"
+  },
+  "dashboardOwedByCustomers": "المستحق من العملاء",
+  "@dashboardOwedByCustomers": {
+    "description": "Dashboard figure: total currently owed by all customers"
+  },
+  "dashboardEmptyTitle": "ابدأ بتسجيل أول عملية بيع",
+  "@dashboardEmptyTitle": {
+    "description": "Dashboard empty-state title shown on first day of use"
+  },
+  "dashboardEmptyHint": "ستظهر أرقامك هنا: المبيعات، التكلفة، السحوبات، وصافي الربح — كلها محسوبة من سجلاتك مباشرة",
+  "@dashboardEmptyHint": {
+    "description": "Dashboard empty-state hint explaining what appears once data is logged"
+  },
+  "dashboardEmptyAction": "تسجيل عملية بيع",
+  "@dashboardEmptyAction": {
+    "description": "Dashboard empty-state button navigating to the sales screen"
   }
 }

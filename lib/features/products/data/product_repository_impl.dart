@@ -62,6 +62,14 @@ class DriftProductRepository implements ProductRepository {
   }
 
   @override
+  Stream<List<Product>> watchAll({required int pharmacyId}) {
+    final query = _db.select(_db.products)
+      ..where((t) => t.pharmacyId.equals(pharmacyId))
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    return query.watch().map((rows) => rows.map(_toDomain).toList());
+  }
+
+  @override
   Future<List<Product>> activeProducts({required int pharmacyId}) {
     final query = _db.select(_db.products)
       ..where((t) => t.pharmacyId.equals(pharmacyId) & t.isActive.equals(true))

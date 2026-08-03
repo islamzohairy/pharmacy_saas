@@ -318,4 +318,38 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get creditBalance => 'رصيد دائن';
+
+  @override
+  String get dashboardRangeToday => 'اليوم';
+
+  @override
+  String get dashboardRangeWeek => 'هذا الأسبوع';
+
+  @override
+  String get dashboardRangeMonth => 'هذا الشهر';
+
+  @override
+  String get dashboardNetProfit => 'صافي الربح';
+
+  @override
+  String get dashboardCost => 'تكلفة البضاعة';
+
+  @override
+  String get dashboardCurrentBalances => 'الأرصدة الحالية';
+
+  @override
+  String get dashboardOwedToSuppliers => 'المستحق للموردين';
+
+  @override
+  String get dashboardOwedByCustomers => 'المستحق من العملاء';
+
+  @override
+  String get dashboardEmptyTitle => 'ابدأ بتسجيل أول عملية بيع';
+
+  @override
+  String get dashboardEmptyHint =>
+      'ستظهر أرقامك هنا: المبيعات، التكلفة، السحوبات، وصافي الربح — كلها محسوبة من سجلاتك مباشرة';
+
+  @override
+  String get dashboardEmptyAction => 'تسجيل عملية بيع';
 }

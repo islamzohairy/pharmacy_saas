@@ -77,4 +77,31 @@ void main() {
     expect(row.isActive, isFalse);
     expect(row.name, 'مضاد حيوي');
   });
+
+  test(
+    'watchAll includes deactivated products, watchActive does not',
+    () async {
+      final active = await repository.create(
+        pharmacyId: pharmacyId,
+        name: 'باراسيتامول',
+        costMinor: 1500,
+        sellMinor: 2500,
+      );
+      final retired = await repository.create(
+        pharmacyId: pharmacyId,
+        name: 'مضاد حيوي',
+        costMinor: 5000,
+        sellMinor: 8000,
+      );
+      await repository.deactivate(retired.id);
+
+      final all = await repository.watchAll(pharmacyId: pharmacyId).first;
+      expect(all.map((p) => p.id), containsAll([active.id, retired.id]));
+
+      final actives = await repository
+          .watchActive(pharmacyId: pharmacyId)
+          .first;
+      expect(actives.map((p) => p.id), [active.id]);
+    },
+  );
 }

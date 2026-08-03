@@ -10,6 +10,8 @@ import 'package:pharmacy_saas/core/data/secure_store.dart';
 import 'package:pharmacy_saas/core/router/app_router.dart';
 import 'package:pharmacy_saas/features/identity/identity.dart';
 
+import '../../support/helpers.dart';
+
 class FakeSecureStore implements SecureStore {
   final Map<String, String> _values = {};
 
@@ -256,5 +258,9 @@ void main() {
       isFalse,
     );
     expect(await container.read(activeProfileProvider.future), isNull);
+    // The onboarding creation flow lands on the dashboard, whose autoDispose
+    // drift-watch providers are disposed when this test navigates away; their
+    // close timers must fire inside the body (see unmountAndFlushDriftTimers).
+    await unmountAndFlushDriftTimers(tester);
   });
 }

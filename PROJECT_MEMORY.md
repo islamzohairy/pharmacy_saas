@@ -119,6 +119,33 @@ the emulator done (draw persisted across restart, debt → repayment →
 credit for both supplier and customer). Screens are route-reachable
 only — dashboard navigation is plan 07's job.
 
+Plan 07 (profit dashboard) is complete: `DashboardScreen` (default route
+when a profile is active) with a `SegmentedButton<DashboardRange>`
+(today / this week / this month; week starts Saturday — Egyptian
+calendar), a profit card (net = sales − cost − draws, computed live via
+`calculateProfit` with COGS resolved from `products.cost_minor` per sale
+entry — plan 04 semantics), an all-time balances card (total owed to
+suppliers / by customers — deliberately NOT range-scoped, per
+`DECISIONS.md` 2026-08-03), and a five-tile nav hub to sales, products,
+draws, supplier debt, customer debt. Data flows through
+`dashboardProvider` — an autoDispose StreamProvider combining
+`watchEntries(range)` + `watchEntries(all)` + `watchAll(products)`
+(products `watchAll` includes deactivated rows so historical sales still
+resolve COGS) via `combineLatest3`. `DashboardRange`/`rangeOf` are pure
+and unit-tested. `DashboardData.empty()` renders the onboarding-style
+empty state with a CTA to sales. Widget-test lesson (see `DECISIONS.md`
+2026-08-03): the onboarding creation flow lands on the dashboard, so
+identity flow tests dispose the dashboard's drift-watch providers when
+they navigate away — `test/support/helpers.dart` now provides
+`unmountAndFlushDriftTimers` (runAsync + pump interleave) for any test
+that navigates away from a drift-watching screen. 132 unit/widget tests
+green, analyzer clean; runtime pass on the emulator done (real-data
+figures verified: today −150.50 vs month −50.50 = 152.00 sales − 52.00
+cost − 150.50 draws; range switch + nav hub navigation live; no new
+runtime errors — the main.dart:48 "Zone mismatch" assert is pre-existing
+MCPToolkit dev-tooling noise). Plan 07 closes P0's "where does my money
+go" problem; next: `PLANS/08_TESTING_AND_RELEASE_HARDENING_PLAN.md`.
+
 ## Tooling (installed 2026-08-02, AI Engineering OS full setup)
 - Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`
   installed; `opencode.jsonc` now has the 8 CORE_SYSTEM files in

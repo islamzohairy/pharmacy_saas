@@ -81,4 +81,71 @@ void main() {
       expect(calculateOwedByCustomer(entries: const [], customerId: 5), 0);
     });
   });
+
+  group('calculateTotalOwedToSuppliers', () {
+    test('sums debts across all suppliers and subtracts their repayments', () {
+      final entries = [
+        entry(type: LedgerEntryType.supplierDebt, amount: 5000, supplierId: 1),
+        entry(type: LedgerEntryType.supplierDebt, amount: 2000, supplierId: 2),
+        entry(type: LedgerEntryType.debtRepayment, amount: 1500, supplierId: 1),
+        // Customer-side repayment and sales never affect the supplier total.
+        entry(type: LedgerEntryType.debtRepayment, amount: 9999, customerId: 9),
+        entry(type: LedgerEntryType.sale, amount: 9999),
+      ];
+
+      expect(calculateTotalOwedToSuppliers(entries: entries), 5500);
+    });
+
+    test('matches the sum of the per-party calculator', () {
+      final entries = [
+        entry(type: LedgerEntryType.supplierDebt, amount: 5000, supplierId: 1),
+        entry(type: LedgerEntryType.supplierDebt, amount: 2000, supplierId: 2),
+        entry(type: LedgerEntryType.debtRepayment, amount: 1500, supplierId: 1),
+      ];
+      final perPartySum = [1, 2].fold<int>(
+        0,
+        (sum, id) =>
+            sum + calculateOwedToSupplier(entries: entries, supplierId: id),
+      );
+
+      expect(calculateTotalOwedToSuppliers(entries: entries), perPartySum);
+    });
+
+    test('empty ledger owes zero, not an error', () {
+      expect(calculateTotalOwedToSuppliers(entries: const []), 0);
+    });
+  });
+
+  group('calculateTotalOwedByCustomers', () {
+    test('sums debts across all customers and subtracts their repayments', () {
+      final entries = [
+        entry(type: LedgerEntryType.customerDebt, amount: 800, customerId: 9),
+        entry(type: LedgerEntryType.customerDebt, amount: 200, customerId: 8),
+        entry(type: LedgerEntryType.debtRepayment, amount: 300, customerId: 9),
+        // Supplier-side repayment never affects the customer total.
+        entry(type: LedgerEntryType.debtRepayment, amount: 9999, supplierId: 3),
+      ];
+
+      expect(calculateTotalOwedByCustomers(entries: entries), 700);
+    });
+
+    test('matches the sum of the per-party calculator', () {
+      final entries = [
+        entry(type: LedgerEntryType.customerDebt, amount: 800, customerId: 9),
+        entry(type: LedgerEntryType.customerDebt, amount: 200, customerId: 8),
+        entry(type: LedgerEntryType.debtRepayment, amount: 300, customerId: 9),
+      ];
+      final perPartySum = [8, 9].fold<int>(
+        0,
+        (sum, id) =>
+            sum + calculateOwedByCustomer(entries: entries, customerId: id),
+      );
+
+      expect(calculateTotalOwedByCustomers(entries: entries), perPartySum);
+    });
+
+    test('empty ledger owes zero, not an error', () {
+      expect(calculateTotalOwedByCustomers(entries: const []), 0);
+    });
+  });
 }

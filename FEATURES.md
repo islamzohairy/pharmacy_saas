@@ -59,9 +59,22 @@
   Runtime-verified on the emulator (draw persisted across restart,
   debt → repayment → credit, supplier + customer).
   112 unit/widget tests green, analyzer clean.
+- 07_PROFIT_DASHBOARD_PLAN — profit dashboard (default landing when a
+  profile is active): range selector (today / this week / this month,
+  week starts Saturday), live profit card (net = sales − cost − draws
+  with per-sale-entry COGS resolution, deactivated products still
+  resolve historical cost via `watchAll`), all-time supplier/customer
+  debt totals (deliberately not range-scoped, per DECISIONS.md), empty
+  state with CTA, five-tile nav hub to sales/products/draws/supplier
+  debt/customer debt, backup indicator + profile entry retained.
+  Widget-test fix: shared `unmountAndFlushDriftTimers` helper for tests
+  that navigate away from drift-watching screens (drift close timers
+  under fake_async — see DECISIONS.md lesson). 132 unit/widget tests
+  green, analyzer clean. Runtime-verified on the emulator (real-data
+  figures, range switch recomputes, nav hub navigation).
 
 ## In progress
-None — next up: `PLANS/07_PROFIT_DASHBOARD_PLAN.md`.
+None — next up: `PLANS/08_TESTING_AND_RELEASE_HARDENING_PLAN.md`.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |

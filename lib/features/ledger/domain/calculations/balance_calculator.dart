@@ -44,3 +44,46 @@ int calculateOwedByCustomer({
   }
   return owedMinor;
 }
+
+/// Total currently owed to **all** suppliers combined:
+/// sum(`supplierDebt`) − sum(`debtRepayment` entries referencing a
+/// supplier). The dashboard's "who do I owe, total" figure (PLANS/07).
+///
+/// Accepts the pharmacy's full entry stream and ignores everything but
+/// supplier-side entries. Mathematically equal to summing
+/// [calculateOwedToSupplier] over every supplier, because each repayment
+/// references exactly one party (validated at write, PLANS/04) — so this
+/// total can never drift from what the plan 06 supplier screen shows.
+/// Same live-derived, never-clamped semantics as the per-party version.
+int calculateTotalOwedToSuppliers({required List<LedgerEntry> entries}) {
+  var owedMinor = 0;
+  for (final entry in entries) {
+    owedMinor += switch (entry.type) {
+      LedgerEntryType.supplierDebt => entry.amountMinor,
+      LedgerEntryType.debtRepayment when entry.supplierId != null =>
+        -entry.amountMinor,
+      _ => 0,
+    };
+  }
+  return owedMinor;
+}
+
+/// Total currently owed by **all** customers combined:
+/// sum(`customerDebt`) − sum(`debtRepayment` entries referencing a
+/// customer). The dashboard's "who owes me, total" figure (PLANS/07).
+///
+/// Mirror image of [calculateTotalOwedToSuppliers] — same live-derived,
+/// never-clamped semantics; equal to summing [calculateOwedByCustomer]
+/// over every customer.
+int calculateTotalOwedByCustomers({required List<LedgerEntry> entries}) {
+  var owedMinor = 0;
+  for (final entry in entries) {
+    owedMinor += switch (entry.type) {
+      LedgerEntryType.customerDebt => entry.amountMinor,
+      LedgerEntryType.debtRepayment when entry.customerId != null =>
+        -entry.amountMinor,
+      _ => 0,
+    };
+  }
+  return owedMinor;
+}

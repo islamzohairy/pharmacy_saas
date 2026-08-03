@@ -34,6 +34,21 @@ default despite this being a money-movement app is recorded in
 `DECISIONS.md` (the audit-trail need is met by the ledger design, not by
 switching state management).
 
+## Discovery and scope control (user directive 2026-08-03)
+Applies to every plan in this project:
+- Follow the existing plan instructions first. Do not expand scope or
+  change the implementation direction based on discoveries without
+  reporting them and getting confirmation.
+- New findings triage:
+  - Required to satisfy the existing plan/DoD → proceed, and document
+    the reason in `DECISIONS.md`.
+  - Changes scope, architecture, or previous decisions → stop and ask
+    first.
+  - Keep every deviation recorded in `DECISIONS.md`.
+Why this lives here and not in CORE_SYSTEM: the rule depends on this
+project's PLANS/DECISIONS/FEATURES workflow — see `DECISIONS.md`
+2026-08-03 entry.
+
 ## Where to look first
 - `ARCHITECTURE.md` — structure and key decisions in force
 - `PROJECT_MEMORY.md` — durable facts a fresh session needs

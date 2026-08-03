@@ -705,6 +705,72 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'رصيد دائن'**
   String get creditBalance;
+
+  /// Date-range option: today (the default dashboard view)
+  ///
+  /// In ar, this message translates to:
+  /// **'اليوم'**
+  String get dashboardRangeToday;
+
+  /// Date-range option: this week (starts Saturday, Egyptian calendar)
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الأسبوع'**
+  String get dashboardRangeWeek;
+
+  /// Date-range option: this month
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الشهر'**
+  String get dashboardRangeMonth;
+
+  /// Dashboard headline figure: sales minus cost minus draws
+  ///
+  /// In ar, this message translates to:
+  /// **'صافي الربح'**
+  String get dashboardNetProfit;
+
+  /// Dashboard figure: cost of goods sold in the selected range
+  ///
+  /// In ar, this message translates to:
+  /// **'تكلفة البضاعة'**
+  String get dashboardCost;
+
+  /// Dashboard section header: all-time supplier/customer debt balances
+  ///
+  /// In ar, this message translates to:
+  /// **'الأرصدة الحالية'**
+  String get dashboardCurrentBalances;
+
+  /// Dashboard figure: total currently owed to all suppliers
+  ///
+  /// In ar, this message translates to:
+  /// **'المستحق للموردين'**
+  String get dashboardOwedToSuppliers;
+
+  /// Dashboard figure: total currently owed by all customers
+  ///
+  /// In ar, this message translates to:
+  /// **'المستحق من العملاء'**
+  String get dashboardOwedByCustomers;
+
+  /// Dashboard empty-state title shown on first day of use
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ بتسجيل أول عملية بيع'**
+  String get dashboardEmptyTitle;
+
+  /// Dashboard empty-state hint explaining what appears once data is logged
+  ///
+  /// In ar, this message translates to:
+  /// **'ستظهر أرقامك هنا: المبيعات، التكلفة، السحوبات، وصافي الربح — كلها محسوبة من سجلاتك مباشرة'**
+  String get dashboardEmptyHint;
+
+  /// Dashboard empty-state button navigating to the sales screen
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل عملية بيع'**
+  String get dashboardEmptyAction;
 }
 
 class _AppLocalizationsDelegate

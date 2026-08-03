@@ -459,3 +459,87 @@ tests. 17 new tests (draws 3, supplier debt 6, customer debt 5, streams
 WHY: matches the plan 05 convention the suite is already built around;
 use-case stubbing would have created a second, weaker pattern and left
 the screens' integration with the real repositories untested.
+
+## 2026-08-03 — Plan 07 dashboard: single autoDispose StreamProvider + combineLatest3, no new repository API
+DECISION: the dashboard reads everything it shows through one
+`dashboardProvider` — an autoDispose StreamProvider that combines three
+streams (`watchEntries(range)` for the profit card, `watchEntries(all)`
+for the all-time debt totals, `watchAll(products)` for the COGS cost
+resolver) via the existing `combineLatest3` helper from plan 06. Range
+state is a tiny `StateProvider<DashboardRange>` defaulting to today;
+`DashboardRange` + `rangeOf` live in the dashboard domain and are pure.
+WHY: reuses the plan 06 presentation-merge pattern instead of inventing
+a new repository API for one screen; autoDispose keeps the provider from
+living on after navigation (the identity tests below are the reason this
+matters at all).
+
+## 2026-08-03 — Plan 07 debt card: totals are all-time, NOT range-scoped (user-confirmed deviation from plan text)
+DECISION: the dashboard's supplier/customer balances card always shows
+the all-time totals (owed to suppliers / owed by customers), regardless
+of the selected range. The plan's suggested range-scoped wording was
+confirmed with the user, who wanted a fixed, stable debt picture on the
+dashboard; range scoping belongs to future reports. Implemented by
+feeding `watchEntries(all)` into the balance totals while the profit
+card uses the range-filtered stream. An overdue-debt callout is deferred
+to plan 08+.
+WHY: product-level correction before implementation, recorded so a
+future session doesn't "fix" this back to range-scoped.
+
+## 2026-08-03 — Plan 07 week range starts on Saturday (user-confirmed)
+DECISION: "this week" on the dashboard runs Saturday→Friday (Egyptian
+week), implemented as `DashboardRange.week` filtering `from` =
+startOfWeek(weekday: DateTime.saturday) rather than Dart's
+Monday-based `DateTime` convention. Unit-tested in `dashboard_range_test`.
+WHY: the user's actual working week is Saturday-based; a Monday-based
+week would split their week across two ranges.
+
+## 2026-08-03 — Plan 07 COGS: per-sale-entry cost resolution, deactivated products still resolve (plan-04 line confirmed)
+DECISION: profit cost is the sum of `products.cost_minor` resolved per
+`sale` entry at calculation time (plan 04/05 semantics — cost is not
+stored in the ledger row). Because an entry's product may be
+deactivated since the sale, the products stream feeds `watchAll`
+(including deactivated rows), not the active-only list; the repository's
+new `watchAll` mirrors the existing per-pharmacy isolation. Deactivated
+rows never appear in the products *screen* (unchanged), only in
+cost resolution.
+WHY: resolves deactivated-products COGS for history without changing
+ledger schema; screen behavior unchanged.
+
+## 2026-08-03 — lesson: drift + fake_async test hang — tests that navigate away from a drift-watching screen must flush close timers
+LESSON: `identity_flow_test`'s forgot-PIN case started hanging
+("did not complete") only after plan 07 landed, because the onboarding
+creation flow now lands on the real `DashboardScreen`: navigating away
+mid-test disposes its autoDispose drift-watch providers, and
+`StreamQueryStore.close()` awaits drift-close timers (scheduled via
+`markAsClosed`) that never fire while the zone's fake timers are
+suspended — flutter_tester wedges. Bisect-proven (git worktree at
+plan-06 HEAD passes in ~2s; adding the dashboard feature reproduces the
+hang) — it was NOT a pre-existing flake. Fix: shared
+`unmountAndFlushDriftTimers(WidgetTester)` in `test/support/helpers.dart`
+— pumps an empty widget and interleaves `tester.runAsync` (real-async
+progress) with short pumps (fake-zone elapse) ~10 times, forcing the
+cancel chain to complete. Used by both the identity forgot-PIN test and
+the dashboard nav tests. Any new test that starts on a drift-watching
+screen and then navigates away must end with this call.
+WHY: recorded so the failure mode (hang, "did not complete", 10-minute
+suite) is recognized instantly instead of re-diagnosed.
+
+## 2026-08-03 — Plan 07 known edge (reviewer note, deferred): dashboard left open across midnight keeps the prior "today"
+NOTE: `rangeOf(..., DateTime.now())` is captured at provider rebuild, so a
+dashboard left open across midnight keeps showing the previous "today"
+until any ledger/range/profile change triggers a rebuild. Consistent with
+the "recompute on change" design; the home screen is typically not left
+open overnight. If a midnight rollover is wanted, that's a plan 08
+decision, not a plan 07 fix.
+
+## 2026-08-03 — Working rule: plan-first discovery triage (user directive)
+DECISION: added a "Discovery and scope control" section to this project's
+`AGENTS.md` (user directive, applies to every plan here): follow the
+existing plan instructions first — no scope expansion or direction change
+based on discoveries without reporting and confirmation. Findings triage:
+required by the existing plan/DoD → proceed and document the reason here;
+changes scope, architecture, or previous decisions → stop and ask first;
+every deviation stays recorded in `DECISIONS.md`.
+WHY: the user chose project scope over CORE_SYSTEM — the rule depends on
+this project's PLANS/DECISIONS/FEATURES workflow and should not affect
+unrelated projects. CORE_SYSTEM deliberately unchanged.

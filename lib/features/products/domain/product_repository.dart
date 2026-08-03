@@ -24,5 +24,14 @@ abstract interface class ProductRepository {
   /// Live list of active products, newest first.
   Stream<List<Product>> watchActive({required int pharmacyId});
 
+  /// Live list of **all** products for the pharmacy, deactivated ones
+  /// included, newest first.
+  ///
+  /// Profit must resolve the cost of historical sales even after a
+  /// product is soft-deactivated: COGS is read from `cost_minor` at
+  /// calculation time, never stored in the ledger row (PLANS/04,
+  /// PLANS/07) — the dashboard's cost map relies on this.
+  Stream<List<Product>> watchAll({required int pharmacyId});
+
   Future<List<Product>> activeProducts({required int pharmacyId});
 }

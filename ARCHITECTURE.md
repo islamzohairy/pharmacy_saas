@@ -17,8 +17,18 @@ deviation.
 - **Local:** `drift` (not raw `sqflite`) — compile-time-checked queries,
   matters given money correctness. Encrypted at rest (`sqlcipher`).
   Local DB is always the source of truth for reads.
-- **Remote:** Supabase (managed Postgres + Auth + Storage). Same logical
-  schema as local, plus Row-Level Security scoped to `pharmacy_id`.
+- **Remote:** Supabase managed Postgres — storage only; Supabase Auth is
+  **not used in P0** (deferred; identity is the local device profile, see
+  below). The anon role has no direct table access: all
+  select/insert/update/delete privileges are revoked, RLS is enabled on
+  every table, and there are no direct-table policies. The only server
+  surface anon can reach is two SECURITY DEFINER functions,
+  `register_device` and `push_ledger_entries`. Backup auth is a per-install
+  256-bit device token in secure storage (the server stores only its
+  SHA-256 hash; the tenant is derived from the token hash, never from the
+  payload). The server-side ledger is append-only — the push function only
+  inserts, idempotent on the composite `(pharmacy_id, id)` key. Full model
+  and live verification: `SECURITY.md` §Backup write path.
 - **Sync model:** local-first writes, one-way best-effort background
   backup (local → remote) on foreground + connectivity. No real-time sync,
   no multi-device conflict resolution yet — deliberately deferred, not an

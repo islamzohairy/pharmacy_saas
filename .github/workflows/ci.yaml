@@ -1,32 +1,28 @@
+# P0 gate (PLANS/08 step 1): analyze + full test suite + release APK build.
+# Release builds use the template's debug-signing fallback (build.gradle.kts)
+# — no signing secrets are ever needed in CI; signed pilot builds are produced
+# locally via gitignored key.properties (see SUPPORT_AND_ROLLBACK.md runbook).
 name: ci
 
 on:
   push:
-    branches: [main]
   pull_request:
 
 jobs:
-  analyze-and-test:
+  gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Generate localizations
-        run: flutter gen-l10n
-
-      - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Test
-        run: flutter test
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --timeout 60s
+      - run: flutter build apk --release

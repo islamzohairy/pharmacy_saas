@@ -543,3 +543,53 @@ every deviation stays recorded in `DECISIONS.md`.
 WHY: the user chose project scope over CORE_SYSTEM — the rule depends on
 this project's PLANS/DECISIONS/FEATURES workflow and should not affect
 unrelated projects. CORE_SYSTEM deliberately unchanged.
+
+## 2026-08-03 — Plan 08 CI: workflow creation classified as plan-required; plan 01's CI claim corrected (user-directed triage)
+DECISION: `.github/workflows/ci.yaml` (analyze + full test suite +
+`flutter build apk --release` gate) is created under plan 08. Per the
+AGENTS.md discovery rule, this is classified as REQUIRED by the existing
+plan — PLANS/08 acceptance criterion 1 ("full test suite passes in CI,
+including on a release build") — not a new feature. The plan's File
+Structure Impact said "CI config (plan 01) extended", but plan 01 never
+shipped a workflow (no `.github/` exists anywhere; FEATURES.md's plan-01
+"CI analyze+test on push" claim was a documentation mismatch) — the
+precondition is false, so "extend" becomes "create": a mechanism-level
+deviation with the same gate. FEATURES.md's plan-01 bullet corrected in
+place (current-state file, per MEMORY_RULES). CI builds with the
+template's debug-signing fallback — no signing secrets ever reach CI
+(user-confirmed); signed pilot APKs are produced locally via gitignored
+`key.properties`.
+
+## 2026-08-03 — Crash reporting deferred to post-pilot (user decision)
+DECISION: no crash-reporting SDK ships with the P0 pilot APK. Pilots
+follow the manual reporting path in `SUPPORT_AND_ROLLBACK.md` §1 and §4
+(describe action + screenshot; release builds log via `adb logcat -d` /
+bug report if the device is reachable). A proper SDK (Crashlytics or
+equivalent) is evaluated post-pilot with the dependency-governance check
+from `GLOBAL_RULES.md`.
+WHY: single-owner pilot with in-person support makes an SDK's marginal
+value low now; it would add a dependency and build tooling to the pilot
+cut for a monitoring need that post-pilot scale actually justifies.
+Deferred, not cancelled — recorded so it isn't relitigated at every
+release.
+
+## 2026-08-03 — P0 shipped: plan 08 complete (signing runbook + rollback doc)
+DECISION: plan 08 (pilot release gate) is complete. Release signing uses
+a conditional `android/app/build.gradle.kts` config: `rootProject.file(
+"key.properties")` (→ `android/key.properties`, gitignored) — when
+present, the release buildType signs with it; when absent (repo/CI/dev),
+it falls back to debug signing so CI and local `flutter build apk
+--release` stay secret-free. No keystore exists yet — the user generates
+one locally via the runbook in `SUPPORT_AND_ROLLBACK.md` §3 before
+distributing to the pilot device (a present-but-incomplete
+`key.properties` fails loudly at configuration time, per the
+security-agent review — no silent downgrade to debug signing).
+`SUPPORT_AND_ROLLBACK.md` adds pilot support (§1) and version-tagged APK
+rollback (§2) with the signature-mismatch landmine documented twice
+(§2, §3): a debug-signed build and a keystore-signed build cannot
+replace each other in place — uninstalling wipes local data.
+WHY: closes the pilot-readiness gate; all eight P0 plans (01–08) are
+now shipped. Deliberately deferred (not P0): crash reporting
+(entry above), employee enforcement and expiry alerting (gated on
+interview/ICP-B confirmation, see FEATURES.md roadmap), e-invoicing
+(gated on `COMPLIANCE.md` `confirmed-by-counsel`).

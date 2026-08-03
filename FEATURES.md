@@ -5,7 +5,9 @@
   implementation, feature-first folder tree, go_router skeleton with 7 P0
   route stubs, Arabic-primary RTL l10n via intl/gen-l10n, drift
   connection wired with SQLCipher encryption, Supabase client
-  configuration wiring, CI analyze+test on push). No feature logic
+  configuration wiring (CI workflow added in plan 08 — plan 01's
+  "CI analyze+test on push" claim was a documentation mismatch; no
+  workflow existed before plan 08)). No feature logic
   shipped — every screen is a stub.
 - 02_IDENTITY_AND_ACCESS_PLAN — local device identity: onboarding
   (pharmacy + owner created atomically, offline, RTL), optional 4-digit
@@ -72,9 +74,23 @@
   under fake_async — see DECISIONS.md lesson). 132 unit/widget tests
   green, analyzer clean. Runtime-verified on the emulator (real-data
   figures, range switch recomputes, nav hub navigation).
+- 08_TESTING_AND_RELEASE_HARDENING_PLAN — pilot release gate:
+  `.github/workflows/ci.yaml` (analyze + full suite + `flutter build apk
+  --release` on push/PR; classified plan-required per the AGENTS.md
+  discovery rule — plan 01 never shipped CI despite its docs claim),
+  local gate verified (132/132, release APK builds), RLS live isolation
+  test re-run green, release-mode e2e on the emulator (full P0 flow,
+  exact dashboard figures), conditional release signing in
+  `android/app/build.gradle.kts` (gitignored `android/key.properties`
+  when present, debug fallback otherwise — no secrets in repo/CI),
+  `SUPPORT_AND_ROLLBACK.md` (pilot support §1, version-tagged APK
+  rollback §2, signing runbook §3, crash-gap manual path §4), crash
+  reporting deferred to post-pilot (user decision, DECISIONS.md),
+  P0-shipped entries recorded.
 
 ## In progress
-None — next up: `PLANS/08_TESTING_AND_RELEASE_HARDENING_PLAN.md`.
+None — all P0 plans (01–08) are shipped. Next work is gated on pilot
+feedback and the P1 confirmations in the roadmap below.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |

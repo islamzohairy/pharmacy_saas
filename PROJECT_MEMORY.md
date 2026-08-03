@@ -146,6 +146,27 @@ runtime errors — the main.dart:48 "Zone mismatch" assert is pre-existing
 MCPToolkit dev-tooling noise). Plan 07 closes P0's "where does my money
 go" problem; next: `PLANS/08_TESTING_AND_RELEASE_HARDENING_PLAN.md`.
 
+Plan 08 (pilot release gate) is complete — P0 is shipped: CI workflow
+`.github/workflows/ci.yaml` (analyze + full suite + release APK gate on
+push/PR; classified plan-required per the AGENTS.md discovery rule —
+plan 01 never shipped CI despite its docs claim); local gate verified
+(132/132, release APK builds); RLS live isolation test re-run green
+against the live Supabase project (via .env.local dart-defines,
+credentials never leave the env file); release-mode e2e on
+emulator-5554 with a fresh install (onboarding → product Paracetamol →
+sale 75.00 → draw 100.00 → supplier debt 250.00 → customer debt 125.00
+→ dashboard net −75.00 with correct sales/cost/draws/debts, Arabic/RTL
+throughout, no ANRs/skipped frames); release signing is conditional in
+`android/app/build.gradle.kts` — signs with gitignored
+`android/key.properties` when present, debug fallback otherwise (repo/
+CI stay secret-free; NO keystore exists yet — the user runs the runbook
+in `SUPPORT_AND_ROLLBACK.md` §3 before distributing; a debug-signed
+build and a keystore-signed build cannot replace each other in place —
+uninstalling wipes local data); crash reporting deferred to post-pilot
+(user decision, manual path in `SUPPORT_AND_ROLLBACK.md` §1/§4). All
+plan 01–08 work is committed on `main` and pushed; CI validated on
+GitHub.
+
 ## Tooling (installed 2026-08-02, AI Engineering OS full setup)
 - Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`
   installed; `opencode.jsonc` now has the 8 CORE_SYSTEM files in

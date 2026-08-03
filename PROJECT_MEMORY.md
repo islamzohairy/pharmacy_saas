@@ -207,9 +207,12 @@ rethrows in error state — read `valueOrNull` for best-effort surfaces.
   `~/.zshrc`); wired into this project's `opencode.json` as the
   `flutter-mcp-toolkit` MCP server (`serve`). Runtime verification of
   critical flows (plan 06) uses it against a debug-mode running app.
-- In-app: `mcp_toolkit: ^3.0.0` added; `main.dart` boots through
-  `MCPToolkitBinding.instance.bootstrapFlutter` (debug-only VM-service
-  extensions, inert in release). Analyzer clean, 112/112 tests pass.
+- In-app: `mcp_toolkit: ^3.0.0` added; `main.dart` initializes the toolkit
+  via `MCPToolkitBinding.instance..initialize()..initializeFlutterToolkit()`
+  inside the same guarded zone as the binding (not `bootstrapFlutter` —
+  that method creates its own zone and tripped `runApp`'s debug zone-match
+  assert; see `DECISIONS.md` 2026-08-03). Debug-only VM-service extensions,
+  inert in release). Analyzer clean, 142/142 tests pass.
   See `DECISIONS.md` (dependency governance entry) for the package
   checks and the `codegen-init`/`init opencode` upstream gaps.
 

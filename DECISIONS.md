@@ -659,3 +659,39 @@ pharmacy_id"; reality is deny-all + two SECURITY DEFINER functions +
 device-token model — now matches `SECURITY.md`) and `.flutter_mcp/`
 hygiene (tracked binary cache removed via `git rm --cached`,
 `.flutter_mcp/` gitignored).
+
+## 2026-08-03 — Bug fix: MCP startup zone mismatch (surfaced by plan 09's capture)
+DECISION: replaced `MCPToolkitBinding.instance.bootstrapFlutter(...)` in
+`main.dart` with the package's documented pattern — `..initialize()
+..initializeFlutterToolkit()` followed directly by `runApp` — inside the
+existing single `runZonedGuarded` zone; the zone handler now chains
+`MCPToolkitBinding.instance.handleZoneError` before `reportZoneErrors`.
+`error_log_capture.dart` is untouched (install order unchanged, so the
+`FlutterError.onError` chain stays MCP → our log → original).
+WHY: `bootstrapFlutter` creates its OWN `runZonedGuarded` zone and calls
+`runApp` inside it; the binding's init zone is recorded at
+`ensureInitialized`, so `runApp`'s debug-only `debugCheckZone('runApp')`
+assert reported "Zone mismatch" every debug launch (verified pre-existing:
+`git show 0e619a6:lib/main.dart` booted through `bootstrapFlutter` with no
+wrapper, binding in the root zone — console-only noise plan 09's capture
+made visible). Root cause is MCP behavior, not the plan-09 wrapper — the
+wrapper only changed which zone the binding initialized in, never matching
+bootstrap's inner zone. Release was never affected (assert stripped), which
+is why plan-09's release runtime check was clean. Fix keeps all startup
+steps, order, and both capture layers identical; debug now records app-
+runtime zone escapes in our log too (previously they went to MCP's monitor
+only, since the app ran in bootstrap's zone). API verified against pinned
+mcp_toolkit 3.0.0 source before the change: `initialize()`,
+`initializeFlutterToolkit()` (extension; registers the same
+`getFlutterMcpToolkitEntries` set bootstrap registered — confirmed by
+"MCPToolkit Posted tool registration events: 18 tools" in the debug run),
+and `handleZoneError` all exist with the assumed signatures.
+VERIFIED: analyzer clean; 142/142 tests; release build (71.3MB) boots on
+emulator-5554 with no FATAL; debug run on emulator-5554 shows no "Zone
+mismatch" in logcat, all 18 MCP tools registered, on-device onboarding →
+dashboard completes with the error indicator absent (fresh data; the "1"
+seen on a reused-data install was the pre-fix entry persisted in the
+append-only log).
+ROLLBACK: single `git revert` of the fix commit restores the previous
+bootstrap. lesson: crash visibility working as designed — the first error
+it surfaced was a real, pre-existing integration bug.

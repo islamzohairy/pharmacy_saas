@@ -18,7 +18,12 @@ import 'features/identity/data/identity_repository_impl.dart';
 /// escape Flutter's framework handlers still reach the local error log
 /// (PLANS/09 layer 1 — see [installErrorLogCapture]).
 void main() {
-  runZonedGuarded(_startup, reportZoneErrors);
+  // Zone errors keep flowing to MCP's monitor (as bootstrapFlutter's default
+  // onZoneError provided) before our log — see DECISIONS.md 2026-08-03 entry.
+  runZonedGuarded(_startup, (error, stack) {
+    MCPToolkitBinding.instance.handleZoneError(error, stack);
+    reportZoneErrors(error, stack);
+  });
 }
 
 Future<void> _startup() async {
@@ -53,15 +58,18 @@ Future<void> _startup() async {
   // backend is configured (see SyncScheduler).
   container.read(syncSchedulerProvider).start();
 
-  // MCPToolkitBinding.bootstrapFlutter wraps runApp: it ensures the binding,
-  // initializes the toolkit (VM-service extensions, debug-only), forwards
-  // zone errors, then calls runApp. Inert in release builds.
-  await MCPToolkitBinding.instance.bootstrapFlutter(
-    runApp: () => runApp(
-      UncontrolledProviderScope(
-        container: container,
-        child: PharmacyApp(router: router),
-      ),
+  // MCP toolkit (VM-service extensions, debug-only, inert in release) — the
+  // package's documented bootstrap pattern. Runs in the same zone as the
+  // binding: bootstrapFlutter creates its own inner zone, which trips
+  // runApp's debugCheckZone('runApp') zone-mismatch assert.
+  MCPToolkitBinding.instance
+    ..initialize()
+    ..initializeFlutterToolkit();
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: PharmacyApp(router: router),
     ),
   );
 }

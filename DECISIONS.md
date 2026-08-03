@@ -593,3 +593,24 @@ now shipped. Deliberately deferred (not P0): crash reporting
 (entry above), employee enforcement and expiry alerting (gated on
 interview/ICP-B confirmation, see FEATURES.md roadmap), e-invoicing
 (gated on `COMPLIANCE.md` `confirmed-by-counsel`).
+
+## 2026-08-03 — Known edge (user-reported, deferred): hub navigation has no back stack
+NOTED: every hub tile and dashboard/sales CTA uses `context.goNamed(...)`
+(dashboard_screen.dart:208 hub, :246 empty-state CTA;
+sales_screen.dart:129) — go_router `go` replaces the location, so there
+is no previous entry to pop to; system back and the AppBar back arrow
+(only auto-shown when a route can pop) exit the app instead of returning
+to the dashboard. Only the product form uses `pushNamed` (pops
+correctly); onboarding→dashboard and profile-switcher transitions are
+deliberate replacement flows. User reported this on the pilot-ready
+build (2026-08-03).
+DECISION: deferred, not fixed now — recorded as a candidate for the next
+plan. Fix direction already scoped: switch the hub tile + dashboard/
+sales CTAs to `context.pushNamed` (every target screen already has a
+plain AppBar, so Flutter auto-adds the RTL-correct back arrow; no
+per-screen edits needed), keep `goNamed` for the replacement flows
+above, add a nav-hub back-navigation widget test. Tracked in
+`FEATURES.md` "Known issues (deferred)".
+WHY: user opted to park it for review in the next plan rather than
+expand the closed-out plan 08. Recorded so a future session recognizes
+the cause instantly and doesn't relitigate the go() vs push() choice.

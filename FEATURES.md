@@ -92,6 +92,15 @@
 None — all P0 plans (01–08) are shipped. Next work is gated on pilot
 feedback and the P1 confirmations in the roadmap below.
 
+## Known issues (deferred)
+- Back navigation: hub tiles and dashboard/sales CTAs use `goNamed`
+  (dashboard_screen.dart:208/246, sales_screen.dart:129), which replaces
+  the go_router stack — system/AppBar back exits the app instead of
+  returning to the dashboard. Candidate for the next plan (fix direction
+  recorded in `DECISIONS.md` 2026-08-03): switch those calls to
+  `pushNamed`; keep `goNamed` for onboarding→dashboard and profile
+  selection; add a nav-hub back-navigation widget test.
+
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |
 |---|---|---|

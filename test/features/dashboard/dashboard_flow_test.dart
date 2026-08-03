@@ -305,5 +305,58 @@ void main() {
       // Flush drift's close timers (see the sales test).
       await unmountAndFlushDriftTimers(tester);
     });
+
+    testWidgets('back from a hub screen returns to the dashboard', (
+      tester,
+    ) async {
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.sale,
+        amountMinor: 1000,
+      );
+      await pumpDashboardApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.widgetWithText(ListTile, 'المبيعات'));
+      await tester.pumpAndSettle();
+      expect(find.text('الذهاب إلى المنتجات'), findsOneWidget);
+
+      // Hub navigation is a push (DECISIONS.md 2026-08-03), so the system
+      // back gesture returns to the dashboard instead of exiting the app.
+      // `tester.pageBack()` only matches the English 'Back' tooltip; the
+      // RTL app localizes it, so tap the BackButton type directly.
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('صافي الربح'), findsOneWidget);
+      await unmountAndFlushDriftTimers(tester);
+    });
+
+    testWidgets('back from the sales products CTA returns to sales', (
+      tester,
+    ) async {
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.sale,
+        amountMinor: 1000,
+      );
+      await pumpDashboardApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.widgetWithText(ListTile, 'المبيعات'));
+      await tester.pumpAndSettle();
+      // Sales empty state → its CTA pushes products (was goNamed).
+      await tester.tap(find.text('الذهاب إلى المنتجات'));
+      await tester.pumpAndSettle();
+      expect(find.text('إضافة منتج'), findsOneWidget);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      // Back lands on the sales screen it was pushed from, not on the
+      // dashboard — the CTA route is pushed on top of sales.
+      expect(find.text('الذهاب إلى المنتجات'), findsOneWidget);
+      await unmountAndFlushDriftTimers(tester);
+    });
   });
 }

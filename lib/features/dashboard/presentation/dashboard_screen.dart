@@ -205,7 +205,7 @@ class _NavTile extends StatelessWidget {
       leading: Icon(icon),
       title: Text(label),
       trailing: const Icon(Icons.chevron_left),
-      onTap: () => context.goNamed(route),
+      onTap: () => context.pushNamed(route),
     );
   }
 }
@@ -243,7 +243,7 @@ class _DashboardEmpty extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => context.goNamed(AppRoutes.sales),
+              onPressed: () => context.pushNamed(AppRoutes.sales),
               icon: const Icon(Icons.point_of_sale),
               label: Text(l10n.dashboardEmptyAction),
             ),

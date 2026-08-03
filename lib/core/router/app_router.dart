@@ -11,7 +11,9 @@ import '../../features/products/presentation/products_screen.dart';
 import '../../features/sales/presentation/sales_screen.dart';
 import '../../features/supplier_debt/presentation/supplier_debt_screen.dart';
 
-/// Route names — used for [GoRouter.goNamed] navigation.
+/// Route names — used with `goNamed` for replacement flows
+/// (onboarding→dashboard, profile switching) and `pushNamed` for hub/CTA
+/// navigation that must be back-able (DECISIONS.md 2026-08-03).
 abstract final class AppRoutes {
   static const onboarding = 'onboarding';
   static const products = 'products';

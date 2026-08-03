@@ -126,7 +126,7 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
         ),
         data: (_) => products.isEmpty
             ? _NoProducts(
-                onGoToProducts: () => context.goNamed(AppRoutes.products),
+                onGoToProducts: () => context.pushNamed(AppRoutes.products),
               )
             : Column(
                 children: [

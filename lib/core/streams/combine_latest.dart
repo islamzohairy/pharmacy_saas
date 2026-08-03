@@ -1,5 +1,53 @@
 import 'dart:async';
 
+/// Emits the latest value of [first] and [second] whenever either emits,
+/// once both have emitted at least once (combineLatest semantics).
+///
+/// The first emission happens only after every input has produced a value —
+/// before that the output stays silent. Subscriptions to the input streams
+/// are canceled when the returned stream is canceled, so callers may hand
+/// the result to a Riverpod provider without leaking drift query listeners.
+Stream<(A, B)> combineLatest2<A, B>(Stream<A> first, Stream<B> second) {
+  final subscriptions = <StreamSubscription<dynamic>>[];
+  late final StreamController<(A, B)> controller;
+  controller = StreamController<(A, B)>(
+    onCancel: () async {
+      for (final subscription in subscriptions) {
+        await subscription.cancel();
+      }
+    },
+  );
+
+  A? firstValue;
+  B? secondValue;
+  var firstReady = false;
+  var secondReady = false;
+
+  void emitIfReady() {
+    if (firstReady && secondReady) {
+      controller.add((firstValue!, secondValue!));
+    }
+  }
+
+  subscriptions
+    ..add(
+      first.listen((value) {
+        firstValue = value;
+        firstReady = true;
+        emitIfReady();
+      }, onError: controller.addError),
+    )
+    ..add(
+      second.listen((value) {
+        secondValue = value;
+        secondReady = true;
+        emitIfReady();
+      }, onError: controller.addError),
+    );
+
+  return controller.stream;
+}
+
 /// Emits the latest value of [first], [second] and [third] whenever any of
 /// them emits, once all three have emitted at least once (combineLatest
 /// semantics).

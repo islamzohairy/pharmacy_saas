@@ -26,6 +26,17 @@ class FakeSecureStore implements SecureStore {
   Future<void> delete(String key) async => _values.remove(key);
 }
 
+/// Waits a real 1.1s so an away-write's `occurred_at` (stored by drift at
+/// unix-second granularity) falls strictly after the dashboard provider's
+/// frozen `to` boundary. Without the gap, a write landing in the same
+/// wall-clock second as the provider's creation slips inside the stale
+/// window and the pre-fix bug stops reproducing deterministically.
+Future<void> waitPastProviderSecond(WidgetTester tester) async {
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 1100)),
+  );
+}
+
 /// Pumps the full app on a memory DB with one seeded pharmacy and an
 /// active profile, starting on the dashboard — the plan 07 default route.
 Future<ProviderContainer> pumpDashboardApp(
@@ -276,9 +287,11 @@ void main() {
       // Sales empty state (no products yet) — unambiguous marker of the
       // sales screen after navigation.
       expect(find.text('الذهاب إلى المنتجات'), findsOneWidget);
-      // Navigating disposes the autoDispose dashboard providers, which
-      // schedules drift's zero-duration close timers; flush them inside the
-      // body (see unmountAndFlushDriftTimers).
+      // Flush drift's close timers before teardown (see
+      // unmountAndFlushDriftTimers). Navigation alone doesn't dispose the
+      // dashboard providers — the hub is a push, so the dashboard stays
+      // mounted beneath it (DECISIONS.md 2026-08-03); the flush is for the
+      // end-of-test unmount.
       await unmountAndFlushDriftTimers(tester);
     });
 
@@ -358,5 +371,202 @@ void main() {
       expect(find.text('الذهاب إلى المنتجات'), findsOneWidget);
       await unmountAndFlushDriftTimers(tester);
     });
+
+    testWidgets(
+      'a sale recorded on the sales screen shows after returning to the '
+      'dashboard',
+      (tester) async {
+        final productId = await seedProduct(
+          db,
+          pharmacyId,
+          costMinor: 2000,
+          sellMinor: 2550,
+        );
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.sale,
+          amountMinor: 2550,
+          productId: productId,
+        );
+        await pumpDashboardApp(tester, db, profileId: profileId);
+        expect(find.text('٢٥٫٥٠ ج.م'), findsOneWidget);
+
+        await tester.tap(find.widgetWithText(ListTile, 'المبيعات'));
+        await tester.pumpAndSettle();
+        // Sales screen with the seeded product listed — unambiguous against
+        // the offstage dashboard beneath the push.
+        expect(find.text('باراسيتامول 500'), findsOneWidget);
+
+        // Write AFTER the dashboard provider was created: the provider's
+        // captured `to` boundary (pre-fix) excludes this row.
+        await waitPastProviderSecond(tester);
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.sale,
+          amountMinor: 5100,
+          productId: productId,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        // 25.50 + 51.00 — the away-write must be live on return.
+        expect(find.text('٧٦٫٥٠ ج.م'), findsOneWidget);
+        await unmountAndFlushDriftTimers(tester);
+      },
+    );
+
+    testWidgets(
+      'a draw recorded on the draws screen shows after returning to the '
+      'dashboard',
+      (tester) async {
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.sale,
+          amountMinor: 2550,
+        );
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.cashDraw,
+          amountMinor: 1000,
+        );
+        await pumpDashboardApp(tester, db, profileId: profileId);
+        // Sales 25.50 vs draws 10.00 — distinct figures.
+        expect(find.text('٢٥٫٥٠ ج.م'), findsOneWidget);
+        expect(find.text('١٠٫٠٠ ج.م'), findsOneWidget);
+
+        await tester.ensureVisible(
+          find.widgetWithText(ListTile, 'السحوبات'),
+        );
+        await tester.pump();
+        await tester.tap(find.widgetWithText(ListTile, 'السحوبات'));
+        await tester.pumpAndSettle();
+        // Draws form marker — unambiguous against the dashboard beneath.
+        expect(find.text('تسجيل السحب'), findsOneWidget);
+
+        await waitPastProviderSecond(tester);
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.cashDraw,
+          amountMinor: 5000,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        // 10.00 + 50.00 — the away-write must be live on return.
+        expect(find.text('٦٠٫٠٠ ج.م'), findsOneWidget);
+        await unmountAndFlushDriftTimers(tester);
+      },
+    );
+
+    testWidgets(
+      'a supplier debt recorded on the supplier screen shows after '
+      'returning to the dashboard',
+      (tester) async {
+        final supplierId = await seedSupplier(db, pharmacyId);
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.supplierDebt,
+          amountMinor: 2500,
+          supplierId: supplierId,
+        );
+        await pumpDashboardApp(tester, db, profileId: profileId);
+        expect(find.text('٢٥٫٠٠ ج.م'), findsOneWidget);
+
+        await tester.ensureVisible(
+          find.widgetWithText(ListTile, 'ديون الموردين'),
+        );
+        await tester.pump();
+        await tester.tap(find.widgetWithText(ListTile, 'ديون الموردين'));
+        await tester.pumpAndSettle();
+        // The seeded supplier's tile — never rendered on the dashboard.
+        expect(find.text('مورد الأدوية'), findsOneWidget);
+
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.supplierDebt,
+          amountMinor: 5000,
+          supplierId: supplierId,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        // 25.00 + 50.00 — the away-write must be live on return.
+        expect(find.text('٧٥٫٠٠ ج.م'), findsOneWidget);
+        await unmountAndFlushDriftTimers(tester);
+      },
+    );
+
+    testWidgets(
+      'a sale written while away lands inside the week range without '
+      'moving the week boundary',
+      (tester) async {
+        final now = DateTime.now();
+        final (weekStart, _) = rangeOf(DashboardRange.week, now);
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.sale,
+          amountMinor: 3300,
+          occurredAt: weekStart,
+        );
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.cashDraw,
+          amountMinor: 3000,
+          occurredAt: weekStart,
+        );
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.sale,
+          amountMinor: 4400,
+          occurredAt: weekStart.subtract(const Duration(seconds: 1)),
+        );
+        await pumpDashboardApp(tester, db, profileId: profileId);
+
+        await tester.tap(find.text('هذا الأسبوع'));
+        await tester.pumpAndSettle();
+        // Sales 33.00, draws 30.00 — distinct figures so the range is provable.
+        expect(find.text('٣٣٫٠٠ ج.م'), findsOneWidget);
+        expect(find.text('٣٠٫٠٠ ج.م'), findsOneWidget);
+        expect(find.text('٤٤٫٠٠ ج.م'), findsNothing);
+
+        await tester.tap(find.widgetWithText(ListTile, 'المبيعات'));
+        await tester.pumpAndSettle();
+        // The provider's `to` was captured at the range switch above — wait
+        // past that second so the away-write is deterministically excluded.
+        await waitPastProviderSecond(tester);
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.sale,
+          amountMinor: 2000,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        // 33.00 + 20.00 = 53.00 — the away-write is in-window; the
+        // pre-week-start sale (44.00) must still be filtered out.
+        expect(find.text('٥٣٫٠٠ ج.م'), findsOneWidget);
+        expect(find.text('٤٤٫٠٠ ج.م'), findsNothing);
+        await unmountAndFlushDriftTimers(tester);
+      },
+    );
   });
 }

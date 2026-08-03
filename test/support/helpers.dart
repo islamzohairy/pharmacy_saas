@@ -155,14 +155,17 @@ Future<int> seedLedgerEntry(
 /// Unmounts the app and fires every drift close timer that provider disposal
 /// schedules, inside the test body where fake_async can elapse them. Drift's
 /// `StreamQueryStore.markAsClosed` schedules one zero-duration `Timer.run`
-/// per canceled watch stream. Navigating away from a screen whose autoDispose
-/// providers watch drift (e.g. the dashboard) triggers the cancels, and the
-/// dispose + cancel chain interleaves real-async steps with fake-zone timer
-/// creation, so real-async progress (`runAsync`) and fake elapse (`pump`)
-/// must alternate until teardown — which runs in real async and cannot elapse
-/// fake timers — never sees a pending timer (the flutter_tester then wedges
-/// on `Database.close()`/finalization and the test reports "did not
-/// complete").
+/// per canceled watch stream. Teardown — which runs in real async and cannot
+/// elapse fake timers — unmounts the whole app and disposes every provider,
+/// scheduling those timers; this helper unmounts early and interleaves
+/// real-async progress (`runAsync`) with fake elapse (`pump`) so teardown
+/// never sees a pending timer (the flutter_tester then wedges on
+/// `Database.close()`/finalization and the test reports "did not complete").
+///
+/// Note: hub navigation is a push and the dashboard stays mounted beneath it
+/// (DECISIONS.md 2026-08-03), so navigating alone no longer disposes the
+/// autoDispose dashboard providers — calls after navigation are conservative
+/// — but the flush is still required before teardown.
 Future<void> unmountAndFlushDriftTimers(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox());
   for (var i = 0; i < 10; i++) {

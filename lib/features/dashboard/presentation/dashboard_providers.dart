@@ -60,21 +60,32 @@ final dashboardRangeProvider = StateProvider<DashboardRange>(
 /// (all products, deactivated included — historical sales must still
 /// resolve cost), debt totals via the all-time aggregate calculators.
 /// No writes occur on this screen.
+///
+/// The range window is NOT frozen at provider creation: `(from, to)` is
+/// recomputed from `DateTime.now()` on every emission, so a sale recorded
+/// on a pushed hub screen lands inside the window the moment its drift
+/// stream re-emits (DECISIONS.md 2026-08-03). Entries stream all-time (the
+/// same query shape the debt screens use) and the range filter runs in
+/// Dart — a SQL `to` bound would go stale the instant a row was appended
+/// after it, since a watch stream re-executes with its creation-time bounds.
 final dashboardProvider = StreamProvider.autoDispose<DashboardData>((ref) {
   final pharmacyId = ref.watch(activeProfileProvider).value?.pharmacyId;
   if (pharmacyId == null) return Stream.value(const DashboardData.empty());
   final repository = ref.watch(ledgerRepositoryProvider);
-  final (from, to) = rangeOf(ref.watch(dashboardRangeProvider), DateTime.now());
-  return combineLatest3(
-    // Range-scoped entries for the profit breakdown — bounded by the
-    // plan 03 `(pharmacy_id, occurred_at)` index (PLANS/07 performance).
-    repository.watchEntries(pharmacyId: pharmacyId, from: from, to: to),
-    // All-time entries for the debt totals and the empty-state check.
+  final range = ref.watch(dashboardRangeProvider);
+  return combineLatest2(
+    // All-time entries for the range-scoped profit, the all-time debt
+    // totals and the empty-state check — served by the (pharmacy_id,
+    // occurred_at) index's tenant prefix.
     repository.watchEntries(pharmacyId: pharmacyId),
     ref.watch(productRepositoryProvider).watchAll(pharmacyId: pharmacyId),
   ).map((parts) {
-    final (rangeEntries, allEntries, products) = parts;
+    final (allEntries, products) = parts;
     if (allEntries.isEmpty) return const DashboardData.empty();
+    final (from, to) = rangeOf(range, DateTime.now());
+    final rangeEntries = allEntries
+        .where((e) => !e.occurredAt.isBefore(from) && !e.occurredAt.isAfter(to))
+        .toList();
     final costs = {
       for (final product in products) product.id: product.costMinor,
     };

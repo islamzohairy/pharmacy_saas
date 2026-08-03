@@ -695,3 +695,38 @@ append-only log).
 ROLLBACK: single `git revert` of the fix commit restores the previous
 bootstrap. lesson: crash visibility working as designed — the first error
 it surfaced was a real, pre-existing integration bug.
+
+## 2026-08-03 — Dashboard stale on back from hub screens: live range boundary
+DIAG: `dashboardProvider` captured `rangeOf(range, DateTime.now())` once at
+  provider creation; since hub nav became pushNamed (earlier 2026-08-03 entry)
+  the dashboard stays mounted beneath pushed routes and its autoDispose
+  provider is NOT disposed, so entries written on a pushed screen fell outside
+  the frozen `to` window and the dashboard showed stale figures on return.
+  Masked whenever the range re-selected (rebuild captured a fresh `now`); only
+  the no-state-change round trip surfaced it. lesson: don't freeze "now" into a
+  reactive read — a stream built with a creation-time time boundary goes stale
+  the moment an append passes it.
+FIX: single all-time `watchEntries(pharmacyId:)` stream (same query shape the
+  debt screens already run) + products via a new `combineLatest2` helper; the
+  `(from, to)` window is recomputed from `DateTime.now()` inside `.map` per
+  emission and applied in Dart. Drift re-emits on insert, so a row written
+  while away lands in-window on return. Purely reactive — no timers, no
+  manual refresh, no invalidation.
+TRADEOFF — SQL-bounded streaming removed: a `watchEntries(from:,to:)` stream
+  re-queries with its creation-time bound, so `to` cannot follow the ledger; a
+  live `to` requires the filter in Dart. Accepted at P0 scale: the all-time
+  query is still served by the `(pharmacy_id, occurred_at)` index's tenant
+  prefix, and the in-memory O(rows) range filter per insert is expected to
+  stay sub-ms at realistic single-owner pilot volume — to be verified and
+  documented against real pilot data. Supersedes the PLANS/07 "bounded by the
+  (pharmacy_id, occurred_at) index" note.
+FUTURE if ledger volume ever grows past that: (1) pre-materialized period
+  aggregates rebuildable from the append-only ledger; (2) a "now" clock
+  stream that widens an SQL window at day/week boundaries (a stream, not a
+  timer — deferred by choice); (3) partitioned tables. None are P0.
+VERIFIED: 14/14 dashboard widget tests (three new regression tests red before
+  the fix — sale/draw/week away-writes froze on return — green after); full
+  suite + analyzer pass; regression timing behavior documented: drift stores
+  `occurred_at` at unix-second precision, so writes in the same wall-clock
+  second as provider creation slip inside a frozen `to` — tests wait a real
+  1.1s before the away-write to keep the red reproducible.

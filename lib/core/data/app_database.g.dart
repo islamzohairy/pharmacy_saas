@@ -2546,6 +2546,427 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
   }
 }
 
+class $ErrorLogEntriesTable extends ErrorLogEntries
+    with TableInfo<$ErrorLogEntriesTable, StoredErrorLogEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ErrorLogEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _occurredAtMeta = const VerificationMeta(
+    'occurredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+    'occurred_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _errorTypeMeta = const VerificationMeta(
+    'errorType',
+  );
+  @override
+  late final GeneratedColumn<String> errorType = GeneratedColumn<String>(
+    'error_type',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 128,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _messageMeta = const VerificationMeta(
+    'message',
+  );
+  @override
+  late final GeneratedColumn<String> message = GeneratedColumn<String>(
+    'message',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 2048,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stackTraceMeta = const VerificationMeta(
+    'stackTrace',
+  );
+  @override
+  late final GeneratedColumn<String> stackTrace = GeneratedColumn<String>(
+    'stack_trace',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 8192,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reportedAtMeta = const VerificationMeta(
+    'reportedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> reportedAt = GeneratedColumn<DateTime>(
+    'reported_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    occurredAt,
+    errorType,
+    message,
+    stackTrace,
+    reportedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'error_log_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StoredErrorLogEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+        _occurredAtMeta,
+        occurredAt.isAcceptableOrUnknown(data['occurred_at']!, _occurredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    if (data.containsKey('error_type')) {
+      context.handle(
+        _errorTypeMeta,
+        errorType.isAcceptableOrUnknown(data['error_type']!, _errorTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_errorTypeMeta);
+    }
+    if (data.containsKey('message')) {
+      context.handle(
+        _messageMeta,
+        message.isAcceptableOrUnknown(data['message']!, _messageMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_messageMeta);
+    }
+    if (data.containsKey('stack_trace')) {
+      context.handle(
+        _stackTraceMeta,
+        stackTrace.isAcceptableOrUnknown(data['stack_trace']!, _stackTraceMeta),
+      );
+    }
+    if (data.containsKey('reported_at')) {
+      context.handle(
+        _reportedAtMeta,
+        reportedAt.isAcceptableOrUnknown(data['reported_at']!, _reportedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StoredErrorLogEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StoredErrorLogEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      occurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}occurred_at'],
+      )!,
+      errorType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_type'],
+      )!,
+      message: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}message'],
+      )!,
+      stackTrace: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stack_trace'],
+      ),
+      reportedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}reported_at'],
+      ),
+    );
+  }
+
+  @override
+  $ErrorLogEntriesTable createAlias(String alias) {
+    return $ErrorLogEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class StoredErrorLogEntry extends DataClass
+    implements Insertable<StoredErrorLogEntry> {
+  final int id;
+  final DateTime occurredAt;
+  final String errorType;
+  final String message;
+  final String? stackTrace;
+  final DateTime? reportedAt;
+  const StoredErrorLogEntry({
+    required this.id,
+    required this.occurredAt,
+    required this.errorType,
+    required this.message,
+    this.stackTrace,
+    this.reportedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['occurred_at'] = Variable<DateTime>(occurredAt);
+    map['error_type'] = Variable<String>(errorType);
+    map['message'] = Variable<String>(message);
+    if (!nullToAbsent || stackTrace != null) {
+      map['stack_trace'] = Variable<String>(stackTrace);
+    }
+    if (!nullToAbsent || reportedAt != null) {
+      map['reported_at'] = Variable<DateTime>(reportedAt);
+    }
+    return map;
+  }
+
+  ErrorLogEntriesCompanion toCompanion(bool nullToAbsent) {
+    return ErrorLogEntriesCompanion(
+      id: Value(id),
+      occurredAt: Value(occurredAt),
+      errorType: Value(errorType),
+      message: Value(message),
+      stackTrace: stackTrace == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stackTrace),
+      reportedAt: reportedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reportedAt),
+    );
+  }
+
+  factory StoredErrorLogEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StoredErrorLogEntry(
+      id: serializer.fromJson<int>(json['id']),
+      occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
+      errorType: serializer.fromJson<String>(json['errorType']),
+      message: serializer.fromJson<String>(json['message']),
+      stackTrace: serializer.fromJson<String?>(json['stackTrace']),
+      reportedAt: serializer.fromJson<DateTime?>(json['reportedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'occurredAt': serializer.toJson<DateTime>(occurredAt),
+      'errorType': serializer.toJson<String>(errorType),
+      'message': serializer.toJson<String>(message),
+      'stackTrace': serializer.toJson<String?>(stackTrace),
+      'reportedAt': serializer.toJson<DateTime?>(reportedAt),
+    };
+  }
+
+  StoredErrorLogEntry copyWith({
+    int? id,
+    DateTime? occurredAt,
+    String? errorType,
+    String? message,
+    Value<String?> stackTrace = const Value.absent(),
+    Value<DateTime?> reportedAt = const Value.absent(),
+  }) => StoredErrorLogEntry(
+    id: id ?? this.id,
+    occurredAt: occurredAt ?? this.occurredAt,
+    errorType: errorType ?? this.errorType,
+    message: message ?? this.message,
+    stackTrace: stackTrace.present ? stackTrace.value : this.stackTrace,
+    reportedAt: reportedAt.present ? reportedAt.value : this.reportedAt,
+  );
+  StoredErrorLogEntry copyWithCompanion(ErrorLogEntriesCompanion data) {
+    return StoredErrorLogEntry(
+      id: data.id.present ? data.id.value : this.id,
+      occurredAt: data.occurredAt.present
+          ? data.occurredAt.value
+          : this.occurredAt,
+      errorType: data.errorType.present ? data.errorType.value : this.errorType,
+      message: data.message.present ? data.message.value : this.message,
+      stackTrace: data.stackTrace.present
+          ? data.stackTrace.value
+          : this.stackTrace,
+      reportedAt: data.reportedAt.present
+          ? data.reportedAt.value
+          : this.reportedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StoredErrorLogEntry(')
+          ..write('id: $id, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('errorType: $errorType, ')
+          ..write('message: $message, ')
+          ..write('stackTrace: $stackTrace, ')
+          ..write('reportedAt: $reportedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, occurredAt, errorType, message, stackTrace, reportedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StoredErrorLogEntry &&
+          other.id == this.id &&
+          other.occurredAt == this.occurredAt &&
+          other.errorType == this.errorType &&
+          other.message == this.message &&
+          other.stackTrace == this.stackTrace &&
+          other.reportedAt == this.reportedAt);
+}
+
+class ErrorLogEntriesCompanion extends UpdateCompanion<StoredErrorLogEntry> {
+  final Value<int> id;
+  final Value<DateTime> occurredAt;
+  final Value<String> errorType;
+  final Value<String> message;
+  final Value<String?> stackTrace;
+  final Value<DateTime?> reportedAt;
+  const ErrorLogEntriesCompanion({
+    this.id = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+    this.errorType = const Value.absent(),
+    this.message = const Value.absent(),
+    this.stackTrace = const Value.absent(),
+    this.reportedAt = const Value.absent(),
+  });
+  ErrorLogEntriesCompanion.insert({
+    this.id = const Value.absent(),
+    required DateTime occurredAt,
+    required String errorType,
+    required String message,
+    this.stackTrace = const Value.absent(),
+    this.reportedAt = const Value.absent(),
+  }) : occurredAt = Value(occurredAt),
+       errorType = Value(errorType),
+       message = Value(message);
+  static Insertable<StoredErrorLogEntry> custom({
+    Expression<int>? id,
+    Expression<DateTime>? occurredAt,
+    Expression<String>? errorType,
+    Expression<String>? message,
+    Expression<String>? stackTrace,
+    Expression<DateTime>? reportedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+      if (errorType != null) 'error_type': errorType,
+      if (message != null) 'message': message,
+      if (stackTrace != null) 'stack_trace': stackTrace,
+      if (reportedAt != null) 'reported_at': reportedAt,
+    });
+  }
+
+  ErrorLogEntriesCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime>? occurredAt,
+    Value<String>? errorType,
+    Value<String>? message,
+    Value<String?>? stackTrace,
+    Value<DateTime?>? reportedAt,
+  }) {
+    return ErrorLogEntriesCompanion(
+      id: id ?? this.id,
+      occurredAt: occurredAt ?? this.occurredAt,
+      errorType: errorType ?? this.errorType,
+      message: message ?? this.message,
+      stackTrace: stackTrace ?? this.stackTrace,
+      reportedAt: reportedAt ?? this.reportedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    if (errorType.present) {
+      map['error_type'] = Variable<String>(errorType.value);
+    }
+    if (message.present) {
+      map['message'] = Variable<String>(message.value);
+    }
+    if (stackTrace.present) {
+      map['stack_trace'] = Variable<String>(stackTrace.value);
+    }
+    if (reportedAt.present) {
+      map['reported_at'] = Variable<DateTime>(reportedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ErrorLogEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('errorType: $errorType, ')
+          ..write('message: $message, ')
+          ..write('stackTrace: $stackTrace, ')
+          ..write('reportedAt: $reportedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2555,6 +2976,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SuppliersTable suppliers = $SuppliersTable(this);
   late final $CustomersTable customers = $CustomersTable(this);
   late final $LedgerEntriesTable ledgerEntries = $LedgerEntriesTable(this);
+  late final $ErrorLogEntriesTable errorLogEntries = $ErrorLogEntriesTable(
+    this,
+  );
   late final Index idxLedgerPharmacyOccurredAt = Index(
     'idx_ledger_pharmacy_occurred_at',
     'CREATE INDEX idx_ledger_pharmacy_occurred_at ON ledger_entries (pharmacy_id, occurred_at)',
@@ -2574,6 +2998,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     suppliers,
     customers,
     ledgerEntries,
+    errorLogEntries,
     idxLedgerPharmacyOccurredAt,
     idxLedgerPharmacyType,
   ];
@@ -5721,6 +6146,235 @@ typedef $$LedgerEntriesTableProcessedTableManager =
         bool profileId,
       })
     >;
+typedef $$ErrorLogEntriesTableCreateCompanionBuilder =
+    ErrorLogEntriesCompanion Function({
+      Value<int> id,
+      required DateTime occurredAt,
+      required String errorType,
+      required String message,
+      Value<String?> stackTrace,
+      Value<DateTime?> reportedAt,
+    });
+typedef $$ErrorLogEntriesTableUpdateCompanionBuilder =
+    ErrorLogEntriesCompanion Function({
+      Value<int> id,
+      Value<DateTime> occurredAt,
+      Value<String> errorType,
+      Value<String> message,
+      Value<String?> stackTrace,
+      Value<DateTime?> reportedAt,
+    });
+
+class $$ErrorLogEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $ErrorLogEntriesTable> {
+  $$ErrorLogEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get errorType => $composableBuilder(
+    column: $table.errorType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stackTrace => $composableBuilder(
+    column: $table.stackTrace,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get reportedAt => $composableBuilder(
+    column: $table.reportedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ErrorLogEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ErrorLogEntriesTable> {
+  $$ErrorLogEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get errorType => $composableBuilder(
+    column: $table.errorType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stackTrace => $composableBuilder(
+    column: $table.stackTrace,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get reportedAt => $composableBuilder(
+    column: $table.reportedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ErrorLogEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ErrorLogEntriesTable> {
+  $$ErrorLogEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get errorType =>
+      $composableBuilder(column: $table.errorType, builder: (column) => column);
+
+  GeneratedColumn<String> get message =>
+      $composableBuilder(column: $table.message, builder: (column) => column);
+
+  GeneratedColumn<String> get stackTrace => $composableBuilder(
+    column: $table.stackTrace,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get reportedAt => $composableBuilder(
+    column: $table.reportedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$ErrorLogEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ErrorLogEntriesTable,
+          StoredErrorLogEntry,
+          $$ErrorLogEntriesTableFilterComposer,
+          $$ErrorLogEntriesTableOrderingComposer,
+          $$ErrorLogEntriesTableAnnotationComposer,
+          $$ErrorLogEntriesTableCreateCompanionBuilder,
+          $$ErrorLogEntriesTableUpdateCompanionBuilder,
+          (
+            StoredErrorLogEntry,
+            BaseReferences<
+              _$AppDatabase,
+              $ErrorLogEntriesTable,
+              StoredErrorLogEntry
+            >,
+          ),
+          StoredErrorLogEntry,
+          PrefetchHooks Function()
+        > {
+  $$ErrorLogEntriesTableTableManager(
+    _$AppDatabase db,
+    $ErrorLogEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ErrorLogEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ErrorLogEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ErrorLogEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime> occurredAt = const Value.absent(),
+                Value<String> errorType = const Value.absent(),
+                Value<String> message = const Value.absent(),
+                Value<String?> stackTrace = const Value.absent(),
+                Value<DateTime?> reportedAt = const Value.absent(),
+              }) => ErrorLogEntriesCompanion(
+                id: id,
+                occurredAt: occurredAt,
+                errorType: errorType,
+                message: message,
+                stackTrace: stackTrace,
+                reportedAt: reportedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required DateTime occurredAt,
+                required String errorType,
+                required String message,
+                Value<String?> stackTrace = const Value.absent(),
+                Value<DateTime?> reportedAt = const Value.absent(),
+              }) => ErrorLogEntriesCompanion.insert(
+                id: id,
+                occurredAt: occurredAt,
+                errorType: errorType,
+                message: message,
+                stackTrace: stackTrace,
+                reportedAt: reportedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ErrorLogEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ErrorLogEntriesTable,
+      StoredErrorLogEntry,
+      $$ErrorLogEntriesTableFilterComposer,
+      $$ErrorLogEntriesTableOrderingComposer,
+      $$ErrorLogEntriesTableAnnotationComposer,
+      $$ErrorLogEntriesTableCreateCompanionBuilder,
+      $$ErrorLogEntriesTableUpdateCompanionBuilder,
+      (
+        StoredErrorLogEntry,
+        BaseReferences<
+          _$AppDatabase,
+          $ErrorLogEntriesTable,
+          StoredErrorLogEntry
+        >,
+      ),
+      StoredErrorLogEntry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5737,4 +6391,6 @@ class $AppDatabaseManager {
       $$CustomersTableTableManager(_db, _db.customers);
   $$LedgerEntriesTableTableManager get ledgerEntries =>
       $$LedgerEntriesTableTableManager(_db, _db.ledgerEntries);
+  $$ErrorLogEntriesTableTableManager get errorLogEntries =>
+      $$ErrorLogEntriesTableTableManager(_db, _db.errorLogEntries);
 }

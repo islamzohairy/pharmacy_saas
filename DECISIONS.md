@@ -614,3 +614,48 @@ above, add a nav-hub back-navigation widget test. Tracked in
 WHY: user opted to park it for review in the next plan rather than
 expand the closed-out plan 08. Recorded so a future session recognizes
 the cause instantly and doesn't relitigate the go() vs push() choice.
+
+## 2026-08-03 — Back navigation implemented (supersedes the entry above)
+DECISION: the deferred back-navigation fix shipped with plan 09, per the
+staff-engineer review priority: hub tiles and dashboard/sales CTAs now
+use `context.pushNamed` (dashboard_screen.dart hub + empty-state CTA,
+sales_screen.dart products CTA). `goNamed` remains ONLY for replacement
+flows: onboarding→dashboard, the dashboard AppBar profile entry, profile
+selection, and wipe→onboarding. Added back-nav widget tests (tap
+`BackButton` by type — `tester.pageBack()` only matches the English
+'Back' tooltip and fails under Arabic localization). Two notes worth
+keeping: (1) with push, the dashboard stays mounted beneath pushed
+routes, so its drift-watch providers are NOT disposed on navigation — the
+fake_async close-timer helper calls in hub tests are now conservative
+no-ops, and (2) `AsyncValue.value` rethrows in error state — the
+indicator reads `valueOrNull` so a missing-DB test render is a quiet
+no-op, never a thrown build.
+WHY: closes the user-reported symptom (back exits the app instead of
+returning to the dashboard) with the standard push model.
+
+## 2026-08-03 — Plan 09: local crash visibility (staff-review follow-up)
+DECISION: no crash-reporting SDK; instead a LOCAL error log —
+`runZonedGuarded` + chained `FlutterError.onError` and
+`PlatformDispatcher.instance.onError` handlers writing to a new
+append-only drift table (`error_log_entries`, schema v4, SQLCipher-
+encrypted like everything else), surfaced by `ErrorLogIndicator` on the
+dashboard bottom bar: unreported count (hidden at zero), tap → dialog →
+"نسخ التقرير" copies a plain-text report (timestamp/type/message/
+truncated stack) to the clipboard via Flutter's core `Clipboard` — zero
+new dependencies — and "تم التبليغ" marks entries reported. The count is
+cleared ONLY by that explicit action; opening the dashboard never
+swallows a crash. LOCAL-ONLY by decision: diagnostics never ride the
+ledger sync surface (no new RPC; like products/suppliers/customers).
+WHY: the reviewer's real gap was "the only signal path is a non-technical
+owner noticing and mentioning it"; a local artifact turns invisible into
+visible-with-evidence at near-zero cost. Crashlytics (or equivalent)
+would make reporting automatic rather than visible but needs a new
+Firebase project, a governance-checked dependency, and a network path —
+against this app's local-first posture — for one pilot device; REVISIT
+the SDK decision when pilot count moves past one device, not before.
+Also fixed under plan 09: `ARCHITECTURE.md`'s Remote/Authorization
+paragraph (it still described "Supabase Auth + RLS scoped to
+pharmacy_id"; reality is deny-all + two SECURITY DEFINER functions +
+device-token model — now matches `SECURITY.md`) and `.flutter_mcp/`
+hygiene (tracked binary cache removed via `git rm --cached`,
+`.flutter_mcp/` gitignored).

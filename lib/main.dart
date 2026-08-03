@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -7,11 +9,19 @@ import 'app.dart';
 import 'core/config/app_config.dart';
 import 'core/data/app_database.dart';
 import 'core/data/database_providers.dart';
+import 'core/data/error_log_capture.dart';
 import 'core/data/sync/sync_providers.dart';
 import 'core/router/app_router.dart';
 import 'features/identity/data/identity_repository_impl.dart';
 
-Future<void> main() async {
+/// The app runs inside a guarded zone so that async/zone errors that
+/// escape Flutter's framework handlers still reach the local error log
+/// (PLANS/09 layer 1 — see [installErrorLogCapture]).
+void main() {
+  runZonedGuarded(_startup, reportZoneErrors);
+}
+
+Future<void> _startup() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Arabic date/number symbols for intl (NumberFormat/DateFormat with the
@@ -22,6 +32,8 @@ Future<void> main() async {
   await SupabaseBootstrap.initializeIfConfigured();
 
   final database = await openAppDatabase();
+  installErrorLogCapture(database);
+
   final container = ProviderContainer(
     overrides: [appDatabaseProvider.overrideWithValue(database)],
   );

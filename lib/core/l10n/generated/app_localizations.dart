@@ -771,6 +771,48 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تسجيل عملية بيع'**
   String get dashboardEmptyAction;
+
+  /// Label (with count) on the dashboard error-log indicator for unreported crashes
+  ///
+  /// In ar, this message translates to:
+  /// **'أخطاء غير مُبلَّغ عنها'**
+  String get errorLogUnreported;
+
+  /// Title of the error-log export dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل الأخطاء المحلي'**
+  String get errorLogDialogTitle;
+
+  /// Button that copies the error report as plain text to the clipboard
+  ///
+  /// In ar, this message translates to:
+  /// **'نسخ التقرير'**
+  String get errorLogExportReport;
+
+  /// Button marking the error log as externally reported/dismissed (clears the indicator)
+  ///
+  /// In ar, this message translates to:
+  /// **'تم التبليغ'**
+  String get errorLogReportedDismiss;
+
+  /// Snackbar shown after the error report is copied
+  ///
+  /// In ar, this message translates to:
+  /// **'تم نسخ تقرير الأخطاء إلى الحافظة'**
+  String get errorLogCopiedSnackbar;
+
+  /// Header line of the exported plain-text report
+  ///
+  /// In ar, this message translates to:
+  /// **'تقرير أخطاء التطبيق'**
+  String get errorLogReportHeader;
+
+  /// Empty state in the error-log dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد أخطاء مُسجَّلة'**
+  String get errorLogNoEntries;
 }
 
 class _AppLocalizationsDelegate

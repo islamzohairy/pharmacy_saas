@@ -6,6 +6,7 @@ import '../../../core/format/money.dart';
 import '../../../core/l10n/app_l10n.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/backup_status_indicator.dart';
+import '../../../core/widgets/error_log_indicator.dart';
 import 'dashboard_providers.dart';
 import 'dashboard_range_selector.dart';
 
@@ -46,7 +47,14 @@ class DashboardScreen extends ConsumerWidget {
       bottomNavigationBar: const SafeArea(
         child: Padding(
           padding: EdgeInsets.all(12),
-          child: BackupStatusIndicator(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ErrorLogIndicator(),
+              SizedBox(height: 4),
+              BackupStatusIndicator(),
+            ],
+          ),
         ),
       ),
     );

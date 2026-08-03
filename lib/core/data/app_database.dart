@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'secure_store.dart';
 import 'tables/customers_table.dart';
+import 'tables/error_log_table.dart';
 import 'tables/ledger_entries_table.dart';
 import 'tables/pharmacies_table.dart';
 import 'tables/products_table.dart';
@@ -22,7 +23,8 @@ part 'app_database.g.dart';
 ///
 /// Schema version 1 (foundation) had no tables; version 2 adds identity
 /// (`pharmacies`, `user_profiles`); version 3 adds the plan-03 entities
-/// (`products`, `suppliers`, `customers`, `ledger_entries`). The
+/// (`products`, `suppliers`, `customers`, `ledger_entries`); version 4
+/// adds the local error log (`error_log_entries`, PLANS/09). The
 /// append-only ledger rule applies to the schema added in version 3.
 @DriftDatabase(
   tables: [
@@ -32,13 +34,14 @@ part 'app_database.g.dart';
     Suppliers,
     Customers,
     LedgerEntries,
+    ErrorLogEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -49,6 +52,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createTable(suppliers);
       await m.createTable(customers);
       await m.createTable(ledgerEntries);
+      await m.createTable(errorLogEntries);
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -60,6 +64,9 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(suppliers);
         await m.createTable(customers);
         await m.createTable(ledgerEntries);
+      }
+      if (from < 4) {
+        await m.createTable(errorLogEntries);
       }
     },
     beforeOpen: (details) async {

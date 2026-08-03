@@ -11,14 +11,20 @@ The pilot customer has no in-app support, chat, or help desk. Incident path:
 
 1. Contact happens manually (phone/WhatsApp) — keep a contact note for the
    pilot owner outside this repo.
-2. Before escalating, collect:
-   - What she was doing when it happened (screen, action)
-   - Whether the app restarted on its own
-   - The device model and Android version (Settings → About)
-   - If reproducible: a screen recording or photo of the error text
-3. Because crash reporting is deferred (see §4), a crash with no photo is
-   invisible — prioritize collecting the above while she still has the phone
-   in hand.
+2. Ask her for the in-app error report FIRST (plan 09): on the dashboard,
+   tap the red error line ("أخطاء غير مُبلَّغ عنها (N)") below the top
+   bar → "نسخ التقرير" → paste the clipboard text into the message
+   (WhatsApp). This is a timestamped plain-text artifact of what crashed
+   — no reconstruction from memory needed. If she then taps "تم التبليغ",
+   the indicator clears (the report is already in your hands).
+3. If no report is available, collect from memory/screen: what she was
+   doing (screen, action), whether the app restarted on its own, the
+   device model and Android version (Settings → About), and a photo of
+   any error text.
+4. A crash she never sees (app closes instantly) still shows the
+   indicator on next successful open — the count is never auto-cleared by
+   opening the dashboard, so ask her to check the dashboard's error line
+   even after a restart.
 
 ## 2. Rollback plan
 
@@ -83,15 +89,22 @@ debug-signing fallback and has no access to signing material.
 
 ## 4. Crash reporting gap (deferred decision, post-pilot)
 
-Crash reporting was deliberately deferred to post-pilot (user decision
-2026-08-03, `DECISIONS.md`) — no Crashlytics/Sentry dependency in P0. Until
-it ships:
+Crashlytics/Sentry were deliberately deferred to post-pilot (user decision
+2026-08-03, `DECISIONS.md`) — but plan 09 ships the LOCAL half of crash
+visibility now:
 
-- A pilot crash is only visible if the pilot owner reports it — §1's
-  collection habit is the compensating control.
-- If the device is in reach: `adb logcat -d` (needs USB debugging enabled)
-  or a bug report capture the stack; otherwise the error text on screen is
-  all we get.
-- Post-pilot: wire a crash-reporting SDK (Firebase Crashlytics or
-  equivalent, dependency-governance check first), with the SDK's own
-  crash screen for the owner.
+- Every unhandled error is written to the on-device error log
+  (`error_log_entries`, encrypted with the rest of the local DB) and
+  surfaced by the dashboard indicator — a crash is visible to her next
+  open, and exportable as plain text (§1 step 2). This is the P0
+  compensating control; it does not require network, USB, or the team's
+  presence.
+- What the local log does NOT cover: errors during the first seconds
+  before the DB opens (dropped by design), and anything that prevents the
+  app from rendering the dashboard at all (e.g. a startup crash) — for
+  those, `adb logcat -d` (USB debugging enabled) or a bug report still
+  applies if the device is reachable.
+- Post-pilot: evaluate a crash-reporting SDK (Firebase Crashlytics or
+  equivalent, dependency-governance check first) — automatic delivery
+  replaces manual copy-paste; revisit when pilot count moves past one
+  device.

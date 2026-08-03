@@ -461,5 +461,33 @@
   "dashboardEmptyAction": "تسجيل عملية بيع",
   "@dashboardEmptyAction": {
     "description": "Dashboard empty-state button navigating to the sales screen"
+  },
+  "errorLogUnreported": "أخطاء غير مُبلَّغ عنها",
+  "@errorLogUnreported": {
+    "description": "Label (with count) on the dashboard error-log indicator for unreported crashes"
+  },
+  "errorLogDialogTitle": "سجل الأخطاء المحلي",
+  "@errorLogDialogTitle": {
+    "description": "Title of the error-log export dialog"
+  },
+  "errorLogExportReport": "نسخ التقرير",
+  "@errorLogExportReport": {
+    "description": "Button that copies the error report as plain text to the clipboard"
+  },
+  "errorLogReportedDismiss": "تم التبليغ",
+  "@errorLogReportedDismiss": {
+    "description": "Button marking the error log as externally reported/dismissed (clears the indicator)"
+  },
+  "errorLogCopiedSnackbar": "تم نسخ تقرير الأخطاء إلى الحافظة",
+  "@errorLogCopiedSnackbar": {
+    "description": "Snackbar shown after the error report is copied"
+  },
+  "errorLogReportHeader": "تقرير أخطاء التطبيق",
+  "@errorLogReportHeader": {
+    "description": "Header line of the exported plain-text report"
+  },
+  "errorLogNoEntries": "لا توجد أخطاء مُسجَّلة",
+  "@errorLogNoEntries": {
+    "description": "Empty state in the error-log dialog"
   }
 }

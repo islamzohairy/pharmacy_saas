@@ -167,6 +167,33 @@ uninstalling wipes local data); crash reporting deferred to post-pilot
 plan 01–08 work is committed on `main` and pushed; CI validated on
 GitHub.
 
+Plan 09 (local crash visibility, staff-review follow-up) is complete:
+all unhandled errors — zone (`runZonedGuarded` in `main`), framework
+(`FlutterError.onError`, previous handler chained so MCPToolkit's debug
+forwarding survives), and platform (`PlatformDispatcher.instance.onError`,
+prior result returned so crash semantics are unchanged) — write to a new
+append-only `error_log_entries` drift table (schemaVersion 4, SQLCipher-
+encrypted; LOCAL-ONLY — never on the ledger sync surface) via
+`core/data/error_log_repository.dart`. `ErrorLogIndicator`
+(`core/widgets/`) sits above `BackupStatusIndicator` on the dashboard
+bottom bar: unreported count hidden at zero; tap → dialog → "نسخ التقرير"
+copies a plain-text report (timestamp/type/message/truncated stack) via
+Flutter's core Clipboard (no new dependency) → "تم التبليغ" marks
+reported. Count clears ONLY on that explicit action — dashboard view
+never clears it. Errors before the DB opens are dropped; write failures
+are swallowed (a logging bug can't crash the app); long values are
+truncated at write. Also shipped under plan 09: hub/CTA navigation is now
+`pushNamed` (back returns to the dashboard; `goNamed` remains only for
+onboarding→dashboard, the dashboard AppBar profile entry, profile
+selection, wipe→onboarding — the user-reported back-navigation issue is
+closed); `ARCHITECTURE.md` Remote/Authorization paragraph corrected to
+the deny-all + two SECURITY DEFINER functions + device-token model;
+`.flutter_mcp/` stripped from git and ignored. 142 unit/widget tests
+green; release-mode runtime pass done; work pushed; CI re-validated.
+Test-suite notes: `tester.pageBack()` matches only the English 'Back'
+tooltip — use `find.byType(BackButton)` under Arabic; `AsyncValue.value`
+rethrows in error state — read `valueOrNull` for best-effort surfaces.
+
 ## Tooling (installed 2026-08-02, AI Engineering OS full setup)
 - Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`
   installed; `opencode.jsonc` now has the 8 CORE_SYSTEM files in

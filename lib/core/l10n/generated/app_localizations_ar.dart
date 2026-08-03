@@ -352,4 +352,25 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dashboardEmptyAction => 'تسجيل عملية بيع';
+
+  @override
+  String get errorLogUnreported => 'أخطاء غير مُبلَّغ عنها';
+
+  @override
+  String get errorLogDialogTitle => 'سجل الأخطاء المحلي';
+
+  @override
+  String get errorLogExportReport => 'نسخ التقرير';
+
+  @override
+  String get errorLogReportedDismiss => 'تم التبليغ';
+
+  @override
+  String get errorLogCopiedSnackbar => 'تم نسخ تقرير الأخطاء إلى الحافظة';
+
+  @override
+  String get errorLogReportHeader => 'تقرير أخطاء التطبيق';
+
+  @override
+  String get errorLogNoEntries => 'لا توجد أخطاء مُسجَّلة';
 }

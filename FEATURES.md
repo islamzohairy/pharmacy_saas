@@ -87,19 +87,21 @@
   rollback §2, signing runbook §3, crash-gap manual path §4), crash
   reporting deferred to post-pilot (user decision, DECISIONS.md),
   P0-shipped entries recorded.
+- 09_CRASH_VISIBILITY_PLAN — local crash visibility (staff-review
+  follow-up): local error capture (zone guard + chained
+  FlutterError/PlatformDispatcher handlers) into a drift
+  `error_log_entries` table (schema v4), LOCAL-ONLY by decision (sync
+  surface untouched); `ErrorLogIndicator` on the dashboard bottom bar
+  (unreported count, hidden at zero; tap → export plain-text report to
+  clipboard — no new dependency, no privacy surface — and explicit
+  report action; dashboard view never clears the count). Also closed the
+  back-navigation gap (hub/CTA now `pushNamed` — system/AppBar back
+  returns to the dashboard) and fixed `ARCHITECTURE.md`'s stale Remote/
+  Authorization paragraph. 142 tests green; release-mode runtime pass.
 
 ## In progress
-None — all P0 plans (01–08) are shipped. Next work is gated on pilot
+None — all P0 plans (01–09) are shipped. Next work is gated on pilot
 feedback and the P1 confirmations in the roadmap below.
-
-## Known issues (deferred)
-- Back navigation: hub tiles and dashboard/sales CTAs use `goNamed`
-  (dashboard_screen.dart:208/246, sales_screen.dart:129), which replaces
-  the go_router stack — system/AppBar back exits the app instead of
-  returning to the dashboard. Candidate for the next plan (fix direction
-  recorded in `DECISIONS.md` 2026-08-03): switch those calls to
-  `pushNamed`; keep `goNamed` for onboarding→dashboard and profile
-  selection; add a nav-hub back-navigation widget test.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |
@@ -112,6 +114,7 @@ feedback and the P1 confirmations in the roadmap below.
 | 06 | `PLANS/06_DEBT_AND_DRAW_TRACKING_PLAN.md` | draw/debt screens |
 | 07 | `PLANS/07_PROFIT_DASHBOARD_PLAN.md` | "where does my money go" |
 | 08 | `PLANS/08_TESTING_AND_RELEASE_HARDENING_PLAN.md` | pilot readiness gate |
+| 09 | `PLANS/09_CRASH_VISIBILITY_PLAN.md` | crash visibility for the pilot (post-review) |
 
 ## Roadmap — P1 (not started, not yet planned in detail)
 - Expiry alerting logic (data field already ships in P0 — see

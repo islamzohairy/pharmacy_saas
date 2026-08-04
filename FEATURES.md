@@ -98,10 +98,24 @@
   back-navigation gap (hub/CTA now `pushNamed` — system/AppBar back
   returns to the dashboard) and fixed `ARCHITECTURE.md`'s stale Remote/
   Authorization paragraph. 142 tests green; release-mode runtime pass.
+- 10_EXPENSES_ACTIVITY_AND_SETTINGS_PLAN — expenses, activity history,
+  compliance-prep settings: `cashDraw` → `expense` with a `category`
+  column (`ExpenseCategory`: ownerDraw/rent/utilities/supplies/other,
+  local schema v5 + migration backfilling stored draws), `draws` feature
+  replaced by `expenses` (category picker with Owner Draw default, past-
+  expenses list; profit net of every expense — not just owner draws),
+  activity feed (last 100 entries + recorder names, new 6th hub tile),
+  settings screen (dashboard AppBar icon; pharmacy tax registration
+  number + legal business name, inert compliance-prep capture).
+  Wire-format phase shipped separately on main as PR #1 (camelCase →
+  snake_case `LedgerEntryType.wireName`). **Deploy gate:** cleared 2026-08-04 —
+  `supabase/migrations/0002_expense_category.sql` applied to the live project,
+  `rls_isolation_test.sql` re-run green. 159 tests green, analyzer clean;
+  backfill verified via raw-seeded fixtures (no real pilot DB copy).
 
 ## In progress
-None — all P0 plans (01–09) are shipped. Next work is gated on pilot
-feedback and the P1 confirmations in the roadmap below.
+None — all P0 plans (01–09) and plan 10 are complete. Next work is gated
+on pilot feedback and the P1 confirmations in the roadmap below.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |
@@ -115,14 +129,15 @@ feedback and the P1 confirmations in the roadmap below.
 | 07 | `PLANS/07_PROFIT_DASHBOARD_PLAN.md` | "where does my money go" |
 | 08 | `PLANS/08_TESTING_AND_RELEASE_HARDENING_PLAN.md` | pilot readiness gate |
 | 09 | `PLANS/09_CRASH_VISIBILITY_PLAN.md` | crash visibility for the pilot (post-review) |
+| 10 | `PLANS/10_EXPENSES_ACTIVITY_AND_SETTINGS_PLAN.md` | where money goes beyond draws; activity visibility; ETA prep |
 
 ## Roadmap — P1 (not started, not yet planned in detail)
 - Expiry alerting logic (data field already ships in P0 — see
   `PROJECT_MEMORY.md`) — gated on Sprint 0 interview confirmation.
 - Employee-restriction enforcement (role field already ships in P0) —
   gated on ICP-B or trust/control confirmation.
-- Detailed batch tracking, purchase-order workflow, expense tracking,
-  reports beyond dashboard, shift/handoff summary.
+- Detailed batch tracking, purchase-order workflow, reports beyond
+  dashboard, shift/handoff summary.
 - E-invoicing/e-receipt (ETA) compliance — gated behind `COMPLIANCE.md`,
   not a normal backlog item; do not plan implementation before that file
   shows `confirmed-by-counsel`.

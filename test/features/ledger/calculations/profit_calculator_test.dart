@@ -44,7 +44,7 @@ void main() {
           productId: 99,
           occurredAt: DateTime(2026, 8, 5, 9),
         ),
-        entry(type: LedgerEntryType.cashDraw, amount: 700),
+        entry(type: LedgerEntryType.expense, amount: 700),
         entry(
           type: LedgerEntryType.supplierDebt,
           amount: 5000,
@@ -67,7 +67,7 @@ void main() {
           occurredAt: DateTime(2026, 7, 1, 9),
         ),
         entry(
-          type: LedgerEntryType.cashDraw,
+          type: LedgerEntryType.expense,
           amount: 500,
           occurredAt: DateTime(2026, 9, 1, 9),
         ),
@@ -81,11 +81,11 @@ void main() {
       );
 
       // sales = 5000 + 3000 + 1000 + 2000; cost = 2000 + 500 + 0 (no
-      // product) + 0 (unknown product); draws = 700. Debt entries are
+      // product) + 0 (unknown product); expenses = 700. Debt entries are
       // ignored by profit entirely.
       expect(profit.salesMinor, 11000);
       expect(profit.costMinor, 2500);
-      expect(profit.drawsMinor, 700);
+      expect(profit.expensesMinor, 700);
       expect(profit.netMinor, 7800);
     });
 
@@ -116,19 +116,19 @@ void main() {
 
       expect(profit.salesMinor, 0);
       expect(profit.costMinor, 0);
-      expect(profit.drawsMinor, 0);
+      expect(profit.expensesMinor, 0);
       expect(profit.netMinor, 0);
     });
 
     test('range with draws and no sales subtracts draws from zero', () {
       final profit = calculateProfit(
-        entries: [entry(type: LedgerEntryType.cashDraw, amount: 700)],
+        entries: [entry(type: LedgerEntryType.expense, amount: 700)],
         costMinorOf: (_) => 0,
       );
 
       expect(profit.salesMinor, 0);
       expect(profit.costMinor, 0);
-      expect(profit.drawsMinor, 700);
+      expect(profit.expensesMinor, 700);
       expect(profit.netMinor, -700);
     });
 
@@ -143,9 +143,37 @@ void main() {
 
       expect(profit.salesMinor, 0);
       expect(profit.costMinor, 0);
-      expect(profit.drawsMinor, 0);
+      expect(profit.expensesMinor, 0);
       expect(profit.netMinor, 0);
     });
+
+    test(
+      'expensesMinor sums expense entries across mixed categories '
+      '(plan 10: profit is net of every expense, not just owner draws)',
+      () {
+        final profit = calculateProfit(
+          entries: [
+            entry(type: LedgerEntryType.expense, amount: 700),
+            entry(
+              type: LedgerEntryType.expense,
+              amount: 1200,
+              occurredAt: DateTime(2026, 8, 3, 10),
+            ),
+            entry(
+              type: LedgerEntryType.expense,
+              amount: 300,
+              occurredAt: DateTime(2026, 9, 1, 9),
+            ),
+          ],
+          from: DateTime(2026, 8, 1),
+          to: DateTime(2026, 8, 31, 23, 59),
+          costMinorOf: (_) => 0,
+        );
+
+        expect(profit.expensesMinor, 1900);
+        expect(profit.netMinor, -1900);
+      },
+    );
 
     test('a sale outside the range is excluded from both amount and cost', () {
       final entries = [

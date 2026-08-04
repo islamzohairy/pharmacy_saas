@@ -24,8 +24,10 @@ part 'app_database.g.dart';
 /// Schema version 1 (foundation) had no tables; version 2 adds identity
 /// (`pharmacies`, `user_profiles`); version 3 adds the plan-03 entities
 /// (`products`, `suppliers`, `customers`, `ledger_entries`); version 4
-/// adds the local error log (`error_log_entries`, PLANS/09). The
-/// append-only ledger rule applies to the schema added in version 3.
+/// adds the local error log (`error_log_entries`, PLANS/09); version 5
+/// renames `cashDraw` → `expense` with a `category` column and adds
+/// compliance-prep fields to `pharmacies` (PLANS/10). The append-only
+/// ledger rule applies to the schema added in version 3.
 @DriftDatabase(
   tables: [
     Pharmacies,
@@ -41,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -67,6 +69,23 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.createTable(errorLogEntries);
+      }
+      if (from < 5) {
+        await m.addColumn(ledgerEntries, ledgerEntries.category);
+        await m.addColumn(pharmacies, pharmacies.taxRegistrationNumber);
+        await m.addColumn(pharmacies, pharmacies.legalBusinessName);
+        // One-time schema-correction backfill: the pre-v5 local rows used
+        // the `cashDraw` enum name as their stored type. The new enum
+        // member is `expense` and drift serializes by name, so without
+        // this UPDATE existing draws would fail to deserialize. This is a
+        // migration, not an app-level ledger edit — it does not go
+        // through LedgerRepository and the append-only rule governs the
+        // normal write surface only (PLANS/10 Phase 1). Existing draws
+        // become owner-draw expenses (their only valid meaning).
+        await customStatement(
+          "UPDATE ledger_entries SET type = 'expense', "
+          "category = 'ownerDraw' WHERE type = 'cashDraw'",
+        );
       }
     },
     beforeOpen: (details) async {

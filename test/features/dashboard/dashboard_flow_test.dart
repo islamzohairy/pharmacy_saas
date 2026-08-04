@@ -106,7 +106,7 @@ void main() {
       await seedLedgerEntry(
         db,
         pharmacyId,
-        type: LedgerEntryType.cashDraw,
+        type: LedgerEntryType.expense,
         amountMinor: 1000,
       );
       // Outside today: must not appear in the profit figures.
@@ -166,7 +166,7 @@ void main() {
       await seedLedgerEntry(
         db,
         pharmacyId,
-        type: LedgerEntryType.cashDraw,
+        type: LedgerEntryType.expense,
         amountMinor: 1000,
         occurredAt: weekStart,
       );
@@ -202,7 +202,7 @@ void main() {
       await seedLedgerEntry(
         db,
         pharmacyId,
-        type: LedgerEntryType.cashDraw,
+        type: LedgerEntryType.expense,
         amountMinor: 1000,
         occurredAt: monthStart,
       );
@@ -420,7 +420,7 @@ void main() {
     );
 
     testWidgets(
-      'a draw recorded on the draws screen shows after returning to the '
+      'a draw recorded on the expenses screen shows after returning to the '
       'dashboard',
       (tester) async {
         await seedLedgerEntry(
@@ -432,28 +432,28 @@ void main() {
         await seedLedgerEntry(
           db,
           pharmacyId,
-          type: LedgerEntryType.cashDraw,
+          type: LedgerEntryType.expense,
           amountMinor: 1000,
         );
         await pumpDashboardApp(tester, db, profileId: profileId);
-        // Sales 25.50 vs draws 10.00 — distinct figures.
+        // Sales 25.50 vs expenses 10.00 — distinct figures.
         expect(find.text('٢٥٫٥٠ ج.م'), findsOneWidget);
         expect(find.text('١٠٫٠٠ ج.م'), findsOneWidget);
 
         await tester.ensureVisible(
-          find.widgetWithText(ListTile, 'السحوبات'),
+          find.widgetWithText(ListTile, 'المصروفات'),
         );
         await tester.pump();
-        await tester.tap(find.widgetWithText(ListTile, 'السحوبات'));
+        await tester.tap(find.widgetWithText(ListTile, 'المصروفات'));
         await tester.pumpAndSettle();
-        // Draws form marker — unambiguous against the dashboard beneath.
-        expect(find.text('تسجيل السحب'), findsOneWidget);
+        // Expenses form marker — unambiguous against the dashboard beneath.
+        expect(find.text('تسجيل المصروف'), findsOneWidget);
 
         await waitPastProviderSecond(tester);
         await seedLedgerEntry(
           db,
           pharmacyId,
-          type: LedgerEntryType.cashDraw,
+          type: LedgerEntryType.expense,
           amountMinor: 5000,
         );
         await tester.pumpAndSettle();
@@ -461,7 +461,12 @@ void main() {
         await tester.tap(find.byType(BackButton));
         await tester.pumpAndSettle();
 
-        // 10.00 + 50.00 — the away-write must be live on return.
+        // The dashboard restored its pre-navigation scroll position (scrolled
+        // down to the expenses tile), so the profit card with the live figure
+        // is off-screen and not built by the lazy list — drag back toward the
+        // top before asserting the away-write is live on return.
+        await tester.drag(find.byType(ListView).first, const Offset(0, 800));
+        await tester.pumpAndSettle();
         expect(find.text('٦٠٫٠٠ ج.م'), findsOneWidget);
         await unmountAndFlushDriftTimers(tester);
       },
@@ -525,7 +530,7 @@ void main() {
         await seedLedgerEntry(
           db,
           pharmacyId,
-          type: LedgerEntryType.cashDraw,
+          type: LedgerEntryType.expense,
           amountMinor: 3000,
           occurredAt: weekStart,
         );

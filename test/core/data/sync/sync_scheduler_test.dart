@@ -46,6 +46,7 @@ class FakeLedger implements LedgerRepository {
     DateTime? from,
     DateTime? to,
     LedgerEntryType? type,
+    int? limit,
   }) => const Stream.empty();
 
   @override
@@ -98,6 +99,14 @@ class FakeIdentity implements IdentityRepository {
     final p = pharmacy;
     if (p == null) throw StateError('No pharmacy on this device yet');
     return p;
+  }
+
+  @override
+  Future<Pharmacy> updatePharmacySettings({
+    required String? taxRegistrationNumber,
+    required String? legalBusinessName,
+  }) {
+    throw UnimplementedError();
   }
 
   @override
@@ -315,7 +324,7 @@ Pharmacy _pharmacy() => Pharmacy(
 LedgerEntry _entry(int id) => LedgerEntry(
   id: id,
   pharmacyId: 1,
-  type: LedgerEntryType.cashDraw,
+  type: LedgerEntryType.expense,
   amountMinor: 100,
   occurredAt: DateTime(2026, 8, 2, 10),
 );

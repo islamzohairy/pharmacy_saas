@@ -31,6 +31,7 @@ class DriftLedgerRepository implements LedgerRepository {
               supplierId: Value(draft.supplierId),
               customerId: Value(draft.customerId),
               profileId: Value(draft.profileId),
+              category: Value(draft.category),
               occurredAt: draft.occurredAt,
               note: Value(draft.note),
             ),
@@ -45,6 +46,7 @@ class DriftLedgerRepository implements LedgerRepository {
     DateTime? from,
     DateTime? to,
     LedgerEntryType? type,
+    int? limit,
   }) {
     final query = _db.select(_db.ledgerEntries)
       ..where((t) {
@@ -64,6 +66,9 @@ class DriftLedgerRepository implements LedgerRepository {
         (t) => OrderingTerm.desc(t.occurredAt),
         (t) => OrderingTerm.desc(t.id),
       ]);
+    if (limit != null) {
+      query.limit(limit);
+    }
     return query.watch().map((rows) => rows.map(_toDomain).toList());
   }
 
@@ -139,6 +144,7 @@ class DriftLedgerRepository implements LedgerRepository {
     supplierId: row.supplierId,
     customerId: row.customerId,
     profileId: row.profileId,
+    category: row.category,
     occurredAt: row.occurredAt,
     note: row.note,
     syncedAt: row.syncedAt,

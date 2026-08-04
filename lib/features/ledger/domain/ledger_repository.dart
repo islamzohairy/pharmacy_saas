@@ -18,12 +18,15 @@ abstract interface class LedgerRepository {
   Future<LedgerEntry> append(LedgerEntryDraft draft);
 
   /// Live view of entries for one pharmacy, optionally filtered by
-  /// occurrence range (inclusive) and/or type.
+  /// occurrence range (inclusive) and/or type, newest first. [limit]
+  /// caps the number of rows when set (default `null` = unbounded —
+  /// dashboard's all-time aggregation relies on that).
   Stream<List<LedgerEntry>> watchEntries({
     required int pharmacyId,
     DateTime? from,
     DateTime? to,
     LedgerEntryType? type,
+    int? limit,
   });
 
   /// Entries referencing a specific party (supplier or customer), used

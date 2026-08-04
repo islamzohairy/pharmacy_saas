@@ -1,8 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:pharmacy_saas/core/data/tables/expense_category.dart';
 import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
 import 'package:pharmacy_saas/features/ledger/domain/usecases/record_customer_debt.dart';
-import 'package:pharmacy_saas/features/ledger/domain/usecases/record_draw.dart';
+import 'package:pharmacy_saas/features/ledger/domain/usecases/record_expense.dart';
 import 'package:pharmacy_saas/features/ledger/domain/usecases/record_repayment.dart';
 import 'package:pharmacy_saas/features/ledger/domain/usecases/record_supplier_debt.dart';
 
@@ -18,13 +19,15 @@ void main() {
     repository = FakeLedgerRepository();
   });
 
-  group('recordDraw', () {
-    test('appends exactly one attributed cashDraw entry', () async {
+  group('recordExpense', () {
+    test('appends exactly one attributed expense entry with its category',
+        () async {
       final occurredAt = DateTime(2026, 8, 2, 18, 30);
 
-      final entry = await recordDraw(
+      final entry = await recordExpense(
         repository,
         pharmacyId: pharmacyId,
+        category: ExpenseCategory.ownerDraw,
         amountMinor: 5000,
         occurredAt: occurredAt,
         profileId: profileId,
@@ -33,7 +36,8 @@ void main() {
 
       expect(repository.entries, hasLength(1));
       expect(entry.id, 1);
-      expect(entry.type, LedgerEntryType.cashDraw);
+      expect(entry.type, LedgerEntryType.expense);
+      expect(entry.category, ExpenseCategory.ownerDraw);
       expect(entry.amountMinor, 5000);
       expect(entry.occurredAt, occurredAt);
       expect(entry.profileId, profileId);
@@ -42,11 +46,29 @@ void main() {
       expect(entry.note, 'مصروف شخصي');
     });
 
+    test('records each category without mixing them up', () async {
+      for (final category in ExpenseCategory.values) {
+        await recordExpense(
+          repository,
+          pharmacyId: pharmacyId,
+          category: category,
+          amountMinor: 100,
+        );
+      }
+
+      expect(repository.entries, hasLength(ExpenseCategory.values.length));
+      for (final entry in repository.entries) {
+        expect(entry.type, LedgerEntryType.expense);
+        expect(entry.category, isNotNull);
+      }
+    });
+
     test('defaults occurredAt to now when omitted', () async {
       final before = DateTime.now();
-      final entry = await recordDraw(
+      final entry = await recordExpense(
         repository,
         pharmacyId: pharmacyId,
+        category: ExpenseCategory.other,
         amountMinor: 100,
       );
       final after = DateTime.now();
@@ -59,11 +81,21 @@ void main() {
       'rejects zero and negative amounts before reaching the repository',
       () async {
         await expectLater(
-          recordDraw(repository, pharmacyId: pharmacyId, amountMinor: 0),
+          recordExpense(
+            repository,
+            pharmacyId: pharmacyId,
+            category: ExpenseCategory.rent,
+            amountMinor: 0,
+          ),
           throwsArgumentError,
         );
         await expectLater(
-          recordDraw(repository, pharmacyId: pharmacyId, amountMinor: -1),
+          recordExpense(
+            repository,
+            pharmacyId: pharmacyId,
+            category: ExpenseCategory.rent,
+            amountMinor: -1,
+          ),
           throwsArgumentError,
         );
         expect(repository.entries, isEmpty);

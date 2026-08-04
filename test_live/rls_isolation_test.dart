@@ -12,11 +12,14 @@
 //     --dart-define=SUPABASE_URL=https://<project>.supabase.co \
 //     --dart-define=SUPABASE_ANON_KEY=<anon key>
 //
-// Prerequisite: supabase/migrations/0001_pharmacy_schema.sql applied.
-// The script self-checks the client contract: registration, idempotent
-// push, tenant isolation (each token maps to its own pharmacy), and
-// refusal of unknown tokens. Server-side row-level assertions are the
-// SQL test in supabase/tests/rls_isolation_test.sql.
+// Prerequisite: supabase/migrations/0001_pharmacy_schema.sql applied, then
+// 0002_expense_category.sql (PLANS/10 — must be live before any client
+// build sends `expense`). The script self-checks the client contract:
+// registration, idempotent push (both whitelisted types — historical
+// `cash_draw` and current `expense` with category), tenant isolation
+// (each token maps to its own pharmacy), and refusal of unknown tokens /
+// invalid categories. Server-side row-level assertions are the SQL test
+// in supabase/tests/rls_isolation_test.sql.
 //
 // Note: anon has no delete grants, so the rows created here stay in the
 // project. Run against a throwaway project or accept test tenants.
@@ -67,24 +70,54 @@ void main() {
     });
     expect(pharmacyA, isNotNull);
 
-    // 2) First push inserts; identical re-push inserts nothing.
-    final entry = {
-      'id': 1,
-      'type': 'cash_draw',
-      'amount_minor': 500,
-      'occurred_at': '2026-08-02T10:00:00Z',
-      'note': 'draw',
-    };
+    // 2) First push inserts; identical re-push inserts nothing. Both
+    //    whitelisted types are covered: historical `cash_draw` and the
+    //    plan-10 `expense` with a category (0002 must be live).
+    final entries = [
+      {
+        'id': 1,
+        'type': 'cash_draw',
+        'amount_minor': 500,
+        'occurred_at': '2026-08-02T10:00:00Z',
+        'note': 'draw',
+      },
+      {
+        'id': 2,
+        'type': 'expense',
+        'amount_minor': 1250,
+        'category': 'owner_draw',
+        'occurred_at': '2026-08-02T10:05:00Z',
+        'note': 'rent',
+      },
+    ];
     final firstPush = await client.rpc<int>('push_ledger_entries', params: {
       'p_token': tokenA,
-      'p_entries': [entry],
+      'p_entries': entries,
     });
-    expect(firstPush, 1);
+    expect(firstPush, 2);
     final secondPush = await client.rpc<int>('push_ledger_entries', params: {
       'p_token': tokenA,
-      'p_entries': [entry],
+      'p_entries': entries,
     });
     expect(secondPush, 0, reason: 'retry must not duplicate rows');
+
+    // 2b) Invalid expense category refused by the server CHECK.
+    await expectLater(
+      client.rpc<int>('push_ledger_entries', params: {
+        'p_token': tokenA,
+        'p_entries': [
+          {
+            'id': 3,
+            'type': 'expense',
+            'amount_minor': 100,
+            'category': 'bogus',
+            'occurred_at': '2026-08-02T10:06:00Z',
+          },
+        ],
+      }),
+      throwsA(isA<PostgrestException>()),
+      reason: 'a category outside the whitelist must be rejected',
+    );
 
     // 3) Tenant isolation: a second device pushes the SAME local id and
     //    gets its own pharmacy; the first tenant's data is untouched by
@@ -113,7 +146,7 @@ void main() {
     await expectLater(
       client.rpc<int>('push_ledger_entries', params: {
         'p_token': 'definitely-not-a-real-token',
-        'p_entries': [entry],
+        'p_entries': entries,
       }),
       throwsA(
         isA<PostgrestException>().having(

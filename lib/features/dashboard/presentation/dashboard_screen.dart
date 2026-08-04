@@ -31,6 +31,11 @@ class DashboardScreen extends ConsumerWidget {
         title: Text(l10n.dashboardTitle),
         actions: [
           IconButton(
+            tooltip: l10n.settingsTooltip,
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.pushNamed(AppRoutes.settings),
+          ),
+          IconButton(
             tooltip: l10n.profilesTooltip,
             icon: const Icon(Icons.person),
             onPressed: () => context.goNamed(AppRoutes.profiles),
@@ -106,8 +111,8 @@ class _DashboardBody extends StatelessWidget {
                 ),
                 const Divider(),
                 _FigureRow(
-                  label: l10n.drawsTitle,
-                  amountMinor: data.drawsMinor,
+                  label: l10n.expensesTitle,
+                  amountMinor: data.expensesMinor,
                 ),
               ],
             ),
@@ -153,9 +158,9 @@ class _DashboardBody extends StatelessWidget {
                 route: AppRoutes.products,
               ),
               _NavTile(
-                icon: Icons.payments_outlined,
-                label: l10n.drawsTitle,
-                route: AppRoutes.draws,
+                icon: Icons.receipt_long_outlined,
+                label: l10n.expensesTitle,
+                route: AppRoutes.expenses,
               ),
               _NavTile(
                 icon: Icons.local_shipping_outlined,
@@ -166,6 +171,11 @@ class _DashboardBody extends StatelessWidget {
                 icon: Icons.people_outline,
                 label: l10n.customerDebtTitle,
                 route: AppRoutes.customerDebt,
+              ),
+              _NavTile(
+                icon: Icons.history,
+                label: l10n.activityTitle,
+                route: AppRoutes.activity,
               ),
             ],
           ),

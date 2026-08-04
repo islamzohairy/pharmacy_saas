@@ -6,19 +6,21 @@ import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
 /// once returned `name` — Dart's camelCase identifier (`cashDraw`,
 /// `supplierDebt`, ...) — while the remote whitelist enforces snake_case
 /// (`cash_draw`, `supplier_debt`, ...). Only `sale` matches either way,
-/// which is why the bug survived ad hoc testing.
+/// which is why the bug survived ad hoc testing. After PLANS/10 Phase 1
+/// the enum member is `expense` (which happens to match its wire form).
 ///
 /// These literals are the server-side whitelist:
 ///   * CHECK constraint — supabase/migrations/0001_pharmacy_schema.sql
 ///     (the `type in (...)` list, and the same list inside
 ///     push_ledger_entries' validation)
-///   * 0002_expense_category.sql will add `expense` to both lists — when
-///     that lands, extend this map rather than the enum's switch alone,
-///     so the compiler-plus-test pair forces both sides to stay in sync.
+///   * 0002_expense_category.sql keeps `cash_draw` (historical remote
+///     rows) and adds `expense` to both lists — when that lands, the
+///     enum switch and this map stay in sync through the compiler-plus-
+///     test pair.
 void main() {
   const remoteWhitelist = {
     LedgerEntryType.sale: 'sale',
-    LedgerEntryType.cashDraw: 'cash_draw',
+    LedgerEntryType.expense: 'expense',
     LedgerEntryType.supplierDebt: 'supplier_debt',
     LedgerEntryType.customerDebt: 'customer_debt',
     LedgerEntryType.debtRepayment: 'debt_repayment',

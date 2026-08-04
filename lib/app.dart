@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import 'core/data/sync/sync_providers.dart';
 import 'core/l10n/app_l10n.dart';
-import 'core/l10n/generated/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 
 /// Root widget. Arabic-primary, RTL — locale pinned to `ar` for P0.

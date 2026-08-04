@@ -82,7 +82,7 @@ void main() {
         .append(
           LedgerEntryDraft(
             pharmacyId: pharmacyId,
-            type: LedgerEntryType.cashDraw,
+            type: LedgerEntryType.expense,
             amountMinor: amount,
             occurredAt: DateTime(2026, 8, 2, 10),
             profileId: profileId,

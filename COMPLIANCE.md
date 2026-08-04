@@ -32,5 +32,17 @@ references this item but explicitly defers to this file's gate — the
 two files should never show conflicting status; this file is the
 authoritative one for compliance state.
 
+### Compliance-prep fields (local capture only)
+**Status:** implemented (data capture) — not a compliance feature
+**What:** PLANS/10 Phase 4 added optional `tax_registration_number` and
+`legal_business_name` fields to the local `Pharmacies` table, editable
+on the Settings screen. These exist for future use in the e-invoicing
+item above and are deliberately inert: optional, no validation, no
+network use, and no e-invoice path built against them.
+**Gate:** this item does **not** change the e-invoicing item's
+`unconfirmed` status above, and does **not** authorize implementing
+anything against those fields for e-invoicing until that item reaches
+`confirmed-by-counsel`.
+
 ## Log
 <!-- append confirmation events here as they happen, newest at the bottom -->

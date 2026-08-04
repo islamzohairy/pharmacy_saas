@@ -194,6 +194,27 @@ Test-suite notes: `tester.pageBack()` matches only the English 'Back'
 tooltip — use `find.byType(BackButton)` under Arabic; `AsyncValue.value`
 rethrows in error state — read `valueOrNull` for best-effort surfaces.
 
+Plan 10 (expenses + activity + compliance-prep settings) is complete:
+`cashDraw` renamed to `expense` (schemaVersion 5) with a nullable
+`category` column (`ExpenseCategory` enum: ownerDraw/rent/utilities/
+supplies/other, type-conditional — null on every other entry type); the
+`draws` feature is replaced by `expenses` (category picker with Owner
+Draw as default/first, amount, optional note, past-expenses list;
+`dashboardProvider` uses `expensesMinor` — profit is net of every
+expense, not just owner draws). Activity feature reads the last 100
+ledger entries via the new `watchEntries(limit:)` param (default null,
+so dashboard aggregation is unchanged) and joins profile display names
+via `getProfiles()`. Settings screen (`/settings`, dashboard AppBar icon)
+captures `tax_registration_number` + `legal_business_name` via
+`updatePharmacySettings` — inert compliance-prep data, not a compliance
+feature (COMPLIANCE.md). Local migration v4→v5 backfills stored `cashDraw`
+rows to `expense`/`ownerDraw`. SUPABASE DEPLOY GATE — CLEARED 2026-08-04
+(user-confirmed): `supabase/migrations/0002_expense_category.sql` applied to
+the live project, `rls_isolation_test.sql` re-run green; live e2e
+(`test_live/rls_isolation_test.dart`) passed. (Phase 0's `cash_draw` wire format
+was safe against the unmodified remote schema.) 159 unit/widget tests
+green; backfill verified via raw-seeded fixtures, no real pilot DB copy.
+
 ## Tooling (installed 2026-08-02, AI Engineering OS full setup)
 - Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`
   installed; `opencode.jsonc` now has the 8 CORE_SYSTEM files in

@@ -38,11 +38,15 @@ deviation.
   is what keeps the local/remote split invisible above the data layer.
 
 ## Core entities
-`Pharmacy` (tenant root) → `UserProfile` (role: owner/family/employee,
-role captured but not yet enforced) → `Product` (cost/sell price, optional
-expiry) → `LedgerEntry` (**append-only**, typed: sale / cash_draw /
-supplier_debt / customer_debt / debt_repayment, integer minor-unit amounts)
-→ `Supplier`, `Customer`. Full schema: `PLANS/03_DATA_AND_SYNC_PLAN.md`.
+`Pharmacy` (tenant root; compliance-prep fields `tax_registration_number`
+and `legal_business_name` since schema v5) → `UserProfile` (role:
+owner/family/employee, role captured but not yet enforced) → `Product`
+(cost/sell price, optional expiry) → `LedgerEntry` (**append-only**,
+typed: sale / expense / supplier_debt / customer_debt / debt_repayment,
+integer minor-unit amounts; `expense` rows carry an `ExpenseCategory`:
+ownerDraw/rent/utilities/supplies/other) → `Supplier`, `Customer`. Full
+schema: `PLANS/03_DATA_AND_SYNC_PLAN.md`, schema changes:
+`PLANS/10_EXPENSES_ACTIVITY_AND_SETTINGS_PLAN.md`.
 
 **The one rule that matters most in this schema:** `LedgerEntry` rows are
 never updated or deleted, by anyone, for any reason. A correction is a new
@@ -50,9 +54,9 @@ offsetting entry. All balances (profit, amount owed) are computed live by
 aggregation over the ledger — never stored as a mutated running total.
 
 ## Navigation
-`go_router`. ~7-8 P0 routes: onboarding/profile, product entry, sales
-entry, draws, supplier debt, customer debt, dashboard (default
-post-onboarding route).
+`go_router`. P0 routes: onboarding/profile, product entry, sales entry,
+expenses, activity, supplier debt, customer debt, dashboard (default
+post-onboarding route), settings.
 
 ## Identity / access (P0)
 Local device profile only — no backend login. See `SECURITY.md` and

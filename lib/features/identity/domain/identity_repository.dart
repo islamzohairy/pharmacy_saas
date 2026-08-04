@@ -19,6 +19,15 @@ abstract interface class IdentityRepository {
 
   Future<Pharmacy> getPharmacy();
 
+  /// Updates the compliance-prep fields on the pharmacy — the first
+  /// update-after-onboarding path for this entity (everything else is
+  /// create-once). Both fields optional and inert (PLANS/10 Phase 4);
+  /// missing fields keep their current value.
+  Future<Pharmacy> updatePharmacySettings({
+    required String? taxRegistrationNumber,
+    required String? legalBusinessName,
+  });
+
   /// The device's secret backup token: a random 256-bit value generated
   /// at onboarding, persisted in secure storage (never in the drift DB).
   /// Authenticates this install to the remote backup path — see

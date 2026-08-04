@@ -21,7 +21,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get salesTitle => 'المبيعات';
 
   @override
-  String get drawsTitle => 'السحوبات';
+  String get expensesTitle => 'المصروفات';
+
+  @override
+  String get expenseCategoryLabel => 'نوع المصروف';
+
+  @override
+  String get expenseCategoryOwnerDraw => 'سحب المالك';
+
+  @override
+  String get expenseCategoryRent => 'إيجار';
+
+  @override
+  String get expenseCategoryUtilities => 'مرافق';
+
+  @override
+  String get expenseCategorySupplies => 'مستلزمات';
+
+  @override
+  String get expenseCategoryOther => 'أخرى';
+
+  @override
+  String get expensesHistoryTitle => 'آخر المصروفات';
+
+  @override
+  String get expensesHistoryEmpty => 'لا توجد مصروفات مسجلة بعد';
 
   @override
   String get supplierDebtTitle => 'ديون الموردين';
@@ -31,6 +55,32 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dashboardTitle => 'لوحة التحكم';
+
+  @override
+  String get activityTitle => 'النشاط';
+
+  @override
+  String get activityEmpty => 'لا توجد حركة مسجلة بعد';
+
+  @override
+  String activityRecordedBy(String name) {
+    return 'بواسطة: $name';
+  }
+
+  @override
+  String get debtRepaymentLabel => 'سداد دين';
+
+  @override
+  String get ledgerTypeSale => 'مبيعات';
+
+  @override
+  String get ledgerTypeExpense => 'مصروف';
+
+  @override
+  String get ledgerTypeSupplierDebt => 'دين مورد';
+
+  @override
+  String get ledgerTypeCustomerDebt => 'دين عميل';
 
   @override
   String get screenUnderConstruction => 'هذه الشاشة قيد الإنشاء';
@@ -116,6 +166,34 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profilesTooltip => 'الملفات الشخصية';
+
+  @override
+  String get settingsTooltip => 'الإعدادات';
+
+  @override
+  String get settingsTitle => 'الإعدادات';
+
+  @override
+  String get settingsComplianceSection => 'بيانات الفوترة (تحضيري)';
+
+  @override
+  String get settingsTaxRegistrationLabel => 'الرقم الضريبي';
+
+  @override
+  String get settingsLegalBusinessNameLabel => 'الاسم القانوني للنشاط';
+
+  @override
+  String get settingsComplianceNote =>
+      'تُحفظ هذه البيانات محليًا لاستخدامها مستقبلًا في الفوترة الإلكترونية، ولا تؤثر على استخدام التطبيق حاليًا.';
+
+  @override
+  String get settingsSaved => 'تم حفظ الإعدادات';
+
+  @override
+  String get settingsSaveFailed => 'تعذر حفظ الإعدادات — حاول مرة أخرى';
+
+  @override
+  String get settingsSave => 'حفظ';
 
   @override
   String get roleOwner => 'المالك';
@@ -242,19 +320,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get goToProducts => 'الذهاب إلى المنتجات';
 
   @override
-  String get recordDraw => 'تسجيل السحب';
+  String get recordExpense => 'تسجيل المصروف';
 
   @override
-  String get drawAmountLabel => 'مبلغ السحب';
+  String get expenseAmountLabel => 'مبلغ المصروف';
 
   @override
   String get noteOptionalLabel => 'ملاحظة (اختياري)';
 
   @override
-  String get drawRecorded => 'تم تسجيل السحب';
+  String get expenseRecorded => 'تم تسجيل المصروف';
 
   @override
-  String get drawFailed => 'تعذر تسجيل السحب — حاول مرة أخرى';
+  String get expenseFailed => 'تعذر تسجيل المصروف — حاول مرة أخرى';
 
   @override
   String get addSupplier => 'إضافة مورد';

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:pharmacy_saas/core/data/app_database.dart';
+import 'package:pharmacy_saas/core/data/tables/expense_category.dart';
 import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
 
 /// In-memory drift database — no SQLCipher needed in tests.
@@ -20,6 +21,22 @@ Future<int> seedPharmacy(AppDatabase db, {String? remoteUuid}) async {
           name: 'صيدلية النور',
           currency: 'EGP',
           remoteUuid: Value(remoteUuid ?? 'test-uuid-0000000000000000'),
+        ),
+      );
+}
+
+/// Sets the compliance-prep fields on the pharmacy (PLANS/10 Phase 4).
+Future<void> seedPharmacySettings(
+  AppDatabase db,
+  int pharmacyId, {
+  String? taxRegistrationNumber = 'abc-123',
+  String? legalBusinessName,
+}) async {
+  await (db.update(db.pharmacies)..where((t) => t.id.equals(pharmacyId)))
+      .write(
+        PharmaciesCompanion(
+          taxRegistrationNumber: Value(taxRegistrationNumber),
+          legalBusinessName: Value(legalBusinessName),
         ),
       );
 }
@@ -135,6 +152,8 @@ Future<int> seedLedgerEntry(
   int? productId,
   int? supplierId,
   int? customerId,
+  int? profileId,
+  ExpenseCategory? category,
   DateTime? occurredAt,
 }) {
   return db
@@ -147,6 +166,8 @@ Future<int> seedLedgerEntry(
           productId: Value(productId),
           supplierId: Value(supplierId),
           customerId: Value(customerId),
+          profileId: Value(profileId),
+          category: Value(category),
           occurredAt: occurredAt ?? DateTime.now(),
         ),
       );

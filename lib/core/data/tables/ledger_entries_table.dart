@@ -1,12 +1,14 @@
 import 'package:drift/drift.dart';
 
 import 'customers_table.dart';
+import 'expense_category.dart';
 import 'ledger_entry_type.dart';
 import 'pharmacies_table.dart';
 import 'products_table.dart';
 import 'suppliers_table.dart';
 import 'user_profiles_table.dart';
 
+export 'expense_category.dart' show ExpenseCategory;
 export 'ledger_entry_type.dart' show LedgerEntryType;
 
 /// The append-only financial ledger. THE rule of this schema: rows are
@@ -41,6 +43,13 @@ class LedgerEntries extends Table {
   IntColumn get customerId => integer().references(Customers, #id).nullable()();
   IntColumn get profileId =>
       integer().references(UserProfiles, #id).nullable()();
+
+  /// Only set when [LedgerEntryType.expense] — the entry's expense
+  /// category. Type-conditional exactly like the party id columns above
+  /// (PLANS/10 Phase 1); ignored for every other entry type.
+  TextColumn get category =>
+      textEnum<ExpenseCategory>().nullable()();
+
   DateTimeColumn get occurredAt => dateTime()();
   TextColumn get note => text().nullable()();
   DateTimeColumn get syncedAt => dateTime().nullable()();

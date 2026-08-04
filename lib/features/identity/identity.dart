@@ -14,3 +14,4 @@ export 'presentation/identity_providers.dart'
         activeProfileProvider,
         identityRepositoryProvider,
         profileListProvider;
+export 'presentation/settings/settings_screen.dart';

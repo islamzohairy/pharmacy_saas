@@ -5,9 +5,12 @@
 --
 -- How to run:
 --   1. Apply supabase/migrations/0001_pharmacy_schema.sql first.
---   2. Paste this whole file into the Supabase SQL editor and run, or run
+--   2. Apply supabase/migrations/0002_expense_category.sql (PLANS/10:
+--      the expense/category type is tested below — the whitelist must
+--      accept BOTH the historical `cash_draw` and the current `expense`).
+--   3. Paste this whole file into the Supabase SQL editor and run, or run
 --      `supabase test db` if the CLI is linked.
---   3. Passing = no error output; the script raises on any failed check.
+--   4. Passing = no error output; the script raises on any failed check.
 --      Record the result in PROJECT_MEMORY.md / SECURITY.md (VERIFIED line).
 
 do $$
@@ -65,6 +68,9 @@ begin
   reset role;
 
   -- 3) Push via token A lands exactly in pharmacy A, with correct count.
+  --    Both whitelisted types are exercised: the historical `cash_draw`
+  --    (pre-plan-10 remote rows keep that value forever) and the current
+  --    `expense` with its category (0002_expense_category.sql).
   set local role anon;
   select public.push_ledger_entries(a_tok, jsonb_build_array(
     jsonb_build_object(
@@ -72,8 +78,9 @@ begin
       'occurred_at', '2026-08-02T10:00:00Z', 'note', 'draw'
     ),
     jsonb_build_object(
-      'id', 2, 'type', 'sale', 'amount_minor', 1250,
-      'occurred_at', '2026-08-02T10:05:00Z'
+      'id', 2, 'type', 'expense', 'amount_minor', 1250,
+      'category', 'owner_draw',
+      'occurred_at', '2026-08-02T10:05:00Z', 'note', 'rent'
     )
   )) into v_count;
   reset role;
@@ -81,6 +88,34 @@ begin
   select count(*) into v_count
   from public.ledger_entries where pharmacy_id = pharmacy_a;
   assert v_count = 2, 'FAIL: pharmacy A row count mismatch';
+
+  -- 3b) The expense row persisted its category.
+  select count(*) into v_count
+  from public.ledger_entries
+  where pharmacy_id = pharmacy_a
+    and id = 2
+    and type = 'expense'
+    and category = 'owner_draw';
+  assert v_count = 1, 'FAIL: expense category not persisted';
+
+  -- 3c) An invalid category is refused by the CHECK constraint.
+  set local role anon;
+  begin
+    perform public.push_ledger_entries(a_tok, jsonb_build_array(
+      jsonb_build_object(
+        'id', 3, 'type', 'expense', 'amount_minor', 100,
+        'category', 'bogus', 'occurred_at', '2026-08-02T10:06:00Z'
+      )
+    ));
+    raise exception 'FAIL: invalid expense category was accepted';
+  exception when others then
+    if sqlerrm like '%check%' then
+      raise notice 'ok: invalid expense category refused';
+    else
+      raise;
+    end if;
+  end;
+  reset role;
 
   -- 4) Idempotent retry: pushing the same local ids again inserts nothing.
   set local role anon;

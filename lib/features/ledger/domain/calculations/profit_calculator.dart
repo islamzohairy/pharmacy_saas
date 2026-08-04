@@ -9,7 +9,7 @@ class ProfitBreakdown {
   const ProfitBreakdown({
     required this.salesMinor,
     required this.costMinor,
-    required this.drawsMinor,
+    required this.expensesMinor,
   });
 
   /// Sum of `sale` entry amounts.
@@ -19,14 +19,16 @@ class ProfitBreakdown {
   /// at calculation time (PLANS/05 — never stored in the ledger row).
   final int costMinor;
 
-  /// Sum of `cashDraw` entry amounts.
-  final int drawsMinor;
+  /// Sum of **all** `expense` entry amounts regardless of category —
+  /// profit is net of every expense, not just owner draws
+  /// (PRODUCT_DIRECTION_FINAL.md §2, PLANS/10).
+  final int expensesMinor;
 
-  /// sales − cost − draws.
-  int get netMinor => salesMinor - costMinor - drawsMinor;
+  /// sales − cost − expenses.
+  int get netMinor => salesMinor - costMinor - expensesMinor;
 }
 
-/// Profit = sum(sale amounts) − sum(cost of goods sold) − sum(cash draws),
+/// Profit = sum(sale amounts) − sum(cost of goods sold) − sum(expenses),
 /// over [from]..[to] (inclusive, matching the repository's range query).
 ///
 /// Pure function over [entries] — no database access. Cost is resolved
@@ -41,7 +43,7 @@ ProfitBreakdown calculateProfit({
 }) {
   var salesMinor = 0;
   var costMinor = 0;
-  var drawsMinor = 0;
+  var expensesMinor = 0;
 
   for (final entry in entries) {
     if (!_inRange(entry.occurredAt, from, to)) continue;
@@ -52,8 +54,8 @@ ProfitBreakdown calculateProfit({
         if (productId != null) {
           costMinor += costMinorOf(productId) ?? 0;
         }
-      case LedgerEntryType.cashDraw:
-        drawsMinor += entry.amountMinor;
+      case LedgerEntryType.expense:
+        expensesMinor += entry.amountMinor;
       case LedgerEntryType.supplierDebt:
       case LedgerEntryType.customerDebt:
       case LedgerEntryType.debtRepayment:
@@ -64,7 +66,7 @@ ProfitBreakdown calculateProfit({
   return ProfitBreakdown(
     salesMinor: salesMinor,
     costMinor: costMinor,
-    drawsMinor: drawsMinor,
+    expensesMinor: expensesMinor,
   );
 }
 

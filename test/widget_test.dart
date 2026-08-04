@@ -48,16 +48,18 @@ void main() {
     final routes = <String, String>{
       '/products': 'المنتجات',
       '/sales': 'المبيعات',
-      '/draws': 'السحوبات',
+      '/expenses': 'المصروفات',
       '/supplier-debt': 'ديون الموردين',
       '/customer-debt': 'ديون العملاء',
       '/dashboard': 'لوحة التحكم',
     };
 
     for (final entry in routes.entries) {
-      // Products and sales are DB-backed (plan 05) — seed a tenant with an
+      // Products, sales and expenses are DB-backed — seed a tenant with an
       // active profile so their providers resolve; the rest render stubs.
-      final needsDb = entry.key == '/products' || entry.key == '/sales';
+      final needsDb = entry.key == '/products' ||
+          entry.key == '/sales' ||
+          entry.key == '/expenses';
       final db = needsDb ? await createMemoryDb() : null;
       addTearDown(() => db?.close());
       final store = FakeSecureStore();

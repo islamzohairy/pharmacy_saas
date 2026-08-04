@@ -16,9 +16,41 @@
   "@salesTitle": {
     "description": "Title of the sales entry placeholder screen"
   },
-  "drawsTitle": "السحوبات",
-  "@drawsTitle": {
-    "description": "Title of the cash draws placeholder screen"
+  "expensesTitle": "المصروفات",
+  "@expensesTitle": {
+    "description": "Title of the expenses screen (replaces the old draws screen)"
+  },
+  "expenseCategoryLabel": "نوع المصروف",
+  "@expenseCategoryLabel": {
+    "description": "Label for the expense category picker"
+  },
+  "expenseCategoryOwnerDraw": "سحب المالك",
+  "@expenseCategoryOwnerDraw": {
+    "description": "Expense category: cash taken out by the owner (the default option)"
+  },
+  "expenseCategoryRent": "إيجار",
+  "@expenseCategoryRent": {
+    "description": "Expense category: rent"
+  },
+  "expenseCategoryUtilities": "مرافق",
+  "@expenseCategoryUtilities": {
+    "description": "Expense category: utilities (electricity, water, ...)"
+  },
+  "expenseCategorySupplies": "مستلزمات",
+  "@expenseCategorySupplies": {
+    "description": "Expense category: supplies"
+  },
+  "expenseCategoryOther": "أخرى",
+  "@expenseCategoryOther": {
+    "description": "Expense category: anything not covered by the other categories"
+  },
+  "expensesHistoryTitle": "آخر المصروفات",
+  "@expensesHistoryTitle": {
+    "description": "Section title of the recent expenses list"
+  },
+  "expensesHistoryEmpty": "لا توجد مصروفات مسجلة بعد",
+  "@expensesHistoryEmpty": {
+    "description": "Empty state of the recent expenses list"
   },
   "supplierDebtTitle": "ديون الموردين",
   "@supplierDebtTitle": {
@@ -31,6 +63,43 @@
   "dashboardTitle": "لوحة التحكم",
   "@dashboardTitle": {
     "description": "Title of the dashboard placeholder screen"
+  },
+  "activityTitle": "النشاط",
+  "@activityTitle": {
+    "description": "Title of the activity history screen"
+  },
+  "activityEmpty": "لا توجد حركة مسجلة بعد",
+  "@activityEmpty": {
+    "description": "Empty state of the activity feed"
+  },
+  "activityRecordedBy": "بواسطة: {name}",
+  "@activityRecordedBy": {
+    "description": "Attribution line on an activity row, {name} is the recorder's display name",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "debtRepaymentLabel": "سداد دين",
+  "@debtRepaymentLabel": {
+    "description": "Ledger type label for a debt repayment entry in the activity feed"
+  },
+  "ledgerTypeSale": "مبيعات",
+  "@ledgerTypeSale": {
+    "description": "Ledger type label for a sale entry in the activity feed"
+  },
+  "ledgerTypeExpense": "مصروف",
+  "@ledgerTypeExpense": {
+    "description": "Ledger type label for an expense entry in the activity feed"
+  },
+  "ledgerTypeSupplierDebt": "دين مورد",
+  "@ledgerTypeSupplierDebt": {
+    "description": "Ledger type label for a supplier debt entry in the activity feed"
+  },
+  "ledgerTypeCustomerDebt": "دين عميل",
+  "@ledgerTypeCustomerDebt": {
+    "description": "Ledger type label for a customer debt entry in the activity feed"
   },
   "screenUnderConstruction": "هذه الشاشة قيد الإنشاء",
   "@screenUnderConstruction": {
@@ -143,6 +212,42 @@
   "profilesTooltip": "الملفات الشخصية",
   "@profilesTooltip": {
     "description": "Tooltip for the profile switcher entry icon"
+  },
+  "settingsTooltip": "الإعدادات",
+  "@settingsTooltip": {
+    "description": "Tooltip for the settings entry icon on the dashboard app bar"
+  },
+  "settingsTitle": "الإعدادات",
+  "@settingsTitle": {
+    "description": "Title of the settings screen"
+  },
+  "settingsComplianceSection": "بيانات الفوترة (تحضيري)",
+  "@settingsComplianceSection": {
+    "description": "Section title for the compliance-prep fields — inert data capture, not a compliance feature"
+  },
+  "settingsTaxRegistrationLabel": "الرقم الضريبي",
+  "@settingsTaxRegistrationLabel": {
+    "description": "Label for the tax registration number input"
+  },
+  "settingsLegalBusinessNameLabel": "الاسم القانوني للنشاط",
+  "@settingsLegalBusinessNameLabel": {
+    "description": "Label for the legal business name input"
+  },
+  "settingsComplianceNote": "تُحفظ هذه البيانات محليًا لاستخدامها مستقبلًا في الفوترة الإلكترونية، ولا تؤثر على استخدام التطبيق حاليًا.",
+  "@settingsComplianceNote": {
+    "description": "Note explaining the compliance-prep fields are optional and inert today"
+  },
+  "settingsSaved": "تم حفظ الإعدادات",
+  "@settingsSaved": {
+    "description": "Snackbar confirmation after settings are saved"
+  },
+  "settingsSaveFailed": "تعذر حفظ الإعدادات — حاول مرة أخرى",
+  "@settingsSaveFailed": {
+    "description": "Snackbar error after settings save fails"
+  },
+  "settingsSave": "حفظ",
+  "@settingsSave": {
+    "description": "Button that saves the settings screen fields"
   },
   "roleOwner": "المالك",
   "@roleOwner": {
@@ -314,25 +419,25 @@
   "@goToProducts": {
     "description": "Button navigating from the sales empty state to the products screen"
   },
-  "recordDraw": "تسجيل السحب",
-  "@recordDraw": {
-    "description": "Button that records a cash draw"
+  "recordExpense": "تسجيل المصروف",
+  "@recordExpense": {
+    "description": "Button that records an expense"
   },
-  "drawAmountLabel": "مبلغ السحب",
-  "@drawAmountLabel": {
-    "description": "Label for the cash draw amount input"
+  "expenseAmountLabel": "مبلغ المصروف",
+  "@expenseAmountLabel": {
+    "description": "Label for the expense amount input"
   },
   "noteOptionalLabel": "ملاحظة (اختياري)",
   "@noteOptionalLabel": {
     "description": "Label for an optional free-text note"
   },
-  "drawRecorded": "تم تسجيل السحب",
-  "@drawRecorded": {
-    "description": "Snackbar confirmation after a successful draw"
+  "expenseRecorded": "تم تسجيل المصروف",
+  "@expenseRecorded": {
+    "description": "Snackbar confirmation after a successful expense recording"
   },
-  "drawFailed": "تعذر تسجيل السحب — حاول مرة أخرى",
-  "@drawFailed": {
-    "description": "Snackbar error after a failed draw"
+  "expenseFailed": "تعذر تسجيل المصروف — حاول مرة أخرى",
+  "@expenseFailed": {
+    "description": "Snackbar error after a failed expense recording"
   },
   "addSupplier": "إضافة مورد",
   "@addSupplier": {

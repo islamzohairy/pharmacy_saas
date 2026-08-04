@@ -12,7 +12,7 @@ class DashboardData {
   const DashboardData({
     required this.salesMinor,
     required this.costMinor,
-    required this.drawsMinor,
+    required this.expensesMinor,
     required this.owedToSuppliersMinor,
     required this.owedByCustomersMinor,
     this.isEmpty = false,
@@ -24,7 +24,7 @@ class DashboardData {
   const DashboardData.empty()
     : salesMinor = 0,
       costMinor = 0,
-      drawsMinor = 0,
+      expensesMinor = 0,
       owedToSuppliersMinor = 0,
       owedByCustomersMinor = 0,
       isEmpty = true;
@@ -32,7 +32,10 @@ class DashboardData {
   /// Profit figures are scoped to the selected range.
   final int salesMinor;
   final int costMinor;
-  final int drawsMinor;
+
+  /// All `expense` entries in range, regardless of category — profit is
+  /// net of every expense (PLANS/10), not just owner draws.
+  final int expensesMinor;
 
   /// Debt figures are the current all-time snapshot — they match what
   /// the plan 06 screens show (PLANS/07 decision; the balance
@@ -40,7 +43,7 @@ class DashboardData {
   final int owedToSuppliersMinor;
   final int owedByCustomersMinor;
 
-  int get netMinor => salesMinor - costMinor - drawsMinor;
+  int get netMinor => salesMinor - costMinor - expensesMinor;
 
   final bool isEmpty;
 }
@@ -98,7 +101,7 @@ final dashboardProvider = StreamProvider.autoDispose<DashboardData>((ref) {
     return DashboardData(
       salesMinor: profit.salesMinor,
       costMinor: profit.costMinor,
-      drawsMinor: profit.drawsMinor,
+      expensesMinor: profit.expensesMinor,
       owedToSuppliersMinor: calculateTotalOwedToSuppliers(entries: allEntries),
       owedByCustomersMinor: calculateTotalOwedByCustomers(entries: allEntries),
     );

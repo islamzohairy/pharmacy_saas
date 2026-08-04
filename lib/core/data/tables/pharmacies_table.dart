@@ -17,5 +17,13 @@ class Pharmacies extends Table {
   TextColumn get name => text().withLength(min: 1, max: 200)();
   TextColumn get currency => text().withLength(min: 3, max: 3)();
   TextColumn get remoteUuid => text().nullable()();
+
+  /// Compliance-prep data capture (PLANS/10 Phase 4, PRODUCT_DIRECTION_
+  /// FINAL.md item (d)): inert fields for future e-invoicing integration.
+  /// Deliberately NOT compliance implementation — the ETA item stays
+  /// behind COMPLIANCE.md's confirmed-by-counsel gate.
+  TextColumn get taxRegistrationNumber => text().nullable()();
+  TextColumn get legalBusinessName => text().nullable()();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

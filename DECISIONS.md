@@ -730,3 +730,50 @@ VERIFIED: 14/14 dashboard widget tests (three new regression tests red before
   `occurred_at` at unix-second precision, so writes in the same wall-clock
   second as provider creation slip inside a frozen `to` — tests wait a real
   1.1s before the away-write to keep the red reproducible.
+
+## 2026-08-04 — Plan 10 Phase 0: ledger wire-format bug fix (shipped as PR #1)
+`LedgerEntryType.wireName` (`core/data/tables/ledger_entry_type.dart`) returned
+`name` — Dart's camelCase identifier (`cashDraw`, `supplierDebt`, ...) — while
+the remote whitelist (`0001_pharmacy_schema.sql` CHECK + `push_ledger_entries`
+validation) expects snake_case. Only `sale` matched either way, so ad hoc
+testing couldn't catch it. Fixed with an explicit exhaustive `switch`
+(`cashDraw` → `cash_draw`, `supplier_debt`, `customer_debt`, `debt_repayment`),
+the same pattern the new `ExpenseCategory.wireName` uses, so the compiler forces
+every future type to declare its wire form. No local data migration needed (local
+storage was never wrong — only outgoing serialization); `synced_at`-stamped push
+design self-heals the existing backlog. Regression test in
+`ledger_entry_type_test.dart`. VERIFIED: 159 tests green, analyzer clean.
+
+## 2026-08-04 — Plan 10 Phases 1–4: expenses feature, activity feed, compliance-prep settings
+PLANS/10 (expenses, activity history, compliance-prep) restructuring:
+- Phase 1 (schema v5): `cashDraw` enum member renamed to `expense`; new nullable
+  `category` column on `ledger_entries` typed by new `ExpenseCategory` enum
+  (ownerDraw/rent/utilities/supplies/other) with its own `wireName`; local
+  migration backfills existing `cashDraw` rows to `expense`/`ownerDraw` (their
+  only valid meaning — an app-level migration, not a ledger write, so the
+  append-only rule governs the normal write surface only). `pharmacies` gained
+  nullable `tax_registration_number` + `legal_business_name`.
+- Phase 2: `draws` feature replaced by `expenses` — category picker (Owner Draw
+  first/default — must not regress the old fast-logging property), amount,
+  optional note, past-expenses list; hub tile + figure row renamed;
+  dashboards `drawsMinor` → `expensesMinor` (profit net of EVERY expense, per
+  PRODUCT_DIRECTION_FINAL.md §2, not just owner draws).
+- Phase 3: activity feed — `watchEntries` gained optional `int? limit`
+  (default null = unbounded, so dashboard aggregation is unaffected); new
+  `activity` feature capped at 100 rows, resolving profile display names via
+  `getProfiles()`; 6th hub tile.
+- Phase 4: settings screen (`/settings`, dashboard AppBar icon — NOT a 7th hub
+  tile, low-frequency) capturing the two pharmacy fields via new
+  `updatePharmacySettings` (first update-after-onboarding path for the Pharmacy
+  entity). `COMPLIANCE.md` notes these are inert data capture and do NOT change
+  the e-invoicing item's `unconfirmed` status.
+DEPLOY GATE — CLEARED 2026-08-04 (user-confirmed): `supabase/migrations/
+0002_expense_category.sql` applied to the live project and `rls_isolation_test.sql`
+re-run green, so any build that pushes `'expense'` wire rows is safe. The migration
+drops/recreates the anonymous `ledger_entries_type_check` so `expense` is admitted
+while keeping historical `cash_draw` rows valid; category CHECK adheres to the
+wire names. Phase 0 (`cash_draw`) is safe against the unmodified remote schema.
+VERIFIED: 159 unit/widget tests green, analyzer clean; live e2e
+(`test_live/rls_isolation_test.dart`) passed against the live project. Backfill
+verified via raw-seeded fixtures only — no real pilot DB copy was available for
+migration testing.

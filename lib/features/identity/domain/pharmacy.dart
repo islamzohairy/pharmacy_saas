@@ -6,6 +6,8 @@ class Pharmacy {
     required this.currency,
     required this.createdAt,
     this.remoteUuid,
+    this.taxRegistrationNumber,
+    this.legalBusinessName,
   });
 
   final int id;
@@ -20,4 +22,10 @@ class Pharmacy {
   /// ids are guessable across tenants, this must be random
   /// (DECISIONS.md).
   final String? remoteUuid;
+
+  /// Compliance-prep fields (PLANS/10 Phase 4) — inert data capture for a
+  /// future e-invoicing/ETA flow. Optional, no validation on write, and
+  /// explicitly not part of any compliance feature today (COMPLIANCE.md).
+  final String? taxRegistrationNumber;
+  final String? legalBusinessName;
 }

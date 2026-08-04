@@ -61,6 +61,29 @@ class $PharmaciesTable extends Pharmacies
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _taxRegistrationNumberMeta =
+      const VerificationMeta('taxRegistrationNumber');
+  @override
+  late final GeneratedColumn<String> taxRegistrationNumber =
+      GeneratedColumn<String>(
+        'tax_registration_number',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _legalBusinessNameMeta = const VerificationMeta(
+    'legalBusinessName',
+  );
+  @override
+  late final GeneratedColumn<String> legalBusinessName =
+      GeneratedColumn<String>(
+        'legal_business_name',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -79,6 +102,8 @@ class $PharmaciesTable extends Pharmacies
     name,
     currency,
     remoteUuid,
+    taxRegistrationNumber,
+    legalBusinessName,
     createdAt,
   ];
   @override
@@ -118,6 +143,24 @@ class $PharmaciesTable extends Pharmacies
         remoteUuid.isAcceptableOrUnknown(data['remote_uuid']!, _remoteUuidMeta),
       );
     }
+    if (data.containsKey('tax_registration_number')) {
+      context.handle(
+        _taxRegistrationNumberMeta,
+        taxRegistrationNumber.isAcceptableOrUnknown(
+          data['tax_registration_number']!,
+          _taxRegistrationNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('legal_business_name')) {
+      context.handle(
+        _legalBusinessNameMeta,
+        legalBusinessName.isAcceptableOrUnknown(
+          data['legal_business_name']!,
+          _legalBusinessNameMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -149,6 +192,14 @@ class $PharmaciesTable extends Pharmacies
         DriftSqlType.string,
         data['${effectivePrefix}remote_uuid'],
       ),
+      taxRegistrationNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tax_registration_number'],
+      ),
+      legalBusinessName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}legal_business_name'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -167,12 +218,21 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
   final String name;
   final String currency;
   final String? remoteUuid;
+
+  /// Compliance-prep data capture (PLANS/10 Phase 4, PRODUCT_DIRECTION_
+  /// FINAL.md item (d)): inert fields for future e-invoicing integration.
+  /// Deliberately NOT compliance implementation — the ETA item stays
+  /// behind COMPLIANCE.md's confirmed-by-counsel gate.
+  final String? taxRegistrationNumber;
+  final String? legalBusinessName;
   final DateTime createdAt;
   const StoredPharmacy({
     required this.id,
     required this.name,
     required this.currency,
     this.remoteUuid,
+    this.taxRegistrationNumber,
+    this.legalBusinessName,
     required this.createdAt,
   });
   @override
@@ -183,6 +243,12 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     map['currency'] = Variable<String>(currency);
     if (!nullToAbsent || remoteUuid != null) {
       map['remote_uuid'] = Variable<String>(remoteUuid);
+    }
+    if (!nullToAbsent || taxRegistrationNumber != null) {
+      map['tax_registration_number'] = Variable<String>(taxRegistrationNumber);
+    }
+    if (!nullToAbsent || legalBusinessName != null) {
+      map['legal_business_name'] = Variable<String>(legalBusinessName);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -196,6 +262,12 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       remoteUuid: remoteUuid == null && nullToAbsent
           ? const Value.absent()
           : Value(remoteUuid),
+      taxRegistrationNumber: taxRegistrationNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(taxRegistrationNumber),
+      legalBusinessName: legalBusinessName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(legalBusinessName),
       createdAt: Value(createdAt),
     );
   }
@@ -210,6 +282,12 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       name: serializer.fromJson<String>(json['name']),
       currency: serializer.fromJson<String>(json['currency']),
       remoteUuid: serializer.fromJson<String?>(json['remoteUuid']),
+      taxRegistrationNumber: serializer.fromJson<String?>(
+        json['taxRegistrationNumber'],
+      ),
+      legalBusinessName: serializer.fromJson<String?>(
+        json['legalBusinessName'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -221,6 +299,10 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       'name': serializer.toJson<String>(name),
       'currency': serializer.toJson<String>(currency),
       'remoteUuid': serializer.toJson<String?>(remoteUuid),
+      'taxRegistrationNumber': serializer.toJson<String?>(
+        taxRegistrationNumber,
+      ),
+      'legalBusinessName': serializer.toJson<String?>(legalBusinessName),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -230,12 +312,20 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     String? name,
     String? currency,
     Value<String?> remoteUuid = const Value.absent(),
+    Value<String?> taxRegistrationNumber = const Value.absent(),
+    Value<String?> legalBusinessName = const Value.absent(),
     DateTime? createdAt,
   }) => StoredPharmacy(
     id: id ?? this.id,
     name: name ?? this.name,
     currency: currency ?? this.currency,
     remoteUuid: remoteUuid.present ? remoteUuid.value : this.remoteUuid,
+    taxRegistrationNumber: taxRegistrationNumber.present
+        ? taxRegistrationNumber.value
+        : this.taxRegistrationNumber,
+    legalBusinessName: legalBusinessName.present
+        ? legalBusinessName.value
+        : this.legalBusinessName,
     createdAt: createdAt ?? this.createdAt,
   );
   StoredPharmacy copyWithCompanion(PharmaciesCompanion data) {
@@ -246,6 +336,12 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       remoteUuid: data.remoteUuid.present
           ? data.remoteUuid.value
           : this.remoteUuid,
+      taxRegistrationNumber: data.taxRegistrationNumber.present
+          ? data.taxRegistrationNumber.value
+          : this.taxRegistrationNumber,
+      legalBusinessName: data.legalBusinessName.present
+          ? data.legalBusinessName.value
+          : this.legalBusinessName,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -257,13 +353,23 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
           ..write('name: $name, ')
           ..write('currency: $currency, ')
           ..write('remoteUuid: $remoteUuid, ')
+          ..write('taxRegistrationNumber: $taxRegistrationNumber, ')
+          ..write('legalBusinessName: $legalBusinessName, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, currency, remoteUuid, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    currency,
+    remoteUuid,
+    taxRegistrationNumber,
+    legalBusinessName,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -272,6 +378,8 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
           other.name == this.name &&
           other.currency == this.currency &&
           other.remoteUuid == this.remoteUuid &&
+          other.taxRegistrationNumber == this.taxRegistrationNumber &&
+          other.legalBusinessName == this.legalBusinessName &&
           other.createdAt == this.createdAt);
 }
 
@@ -280,12 +388,16 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
   final Value<String> name;
   final Value<String> currency;
   final Value<String?> remoteUuid;
+  final Value<String?> taxRegistrationNumber;
+  final Value<String?> legalBusinessName;
   final Value<DateTime> createdAt;
   const PharmaciesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.currency = const Value.absent(),
     this.remoteUuid = const Value.absent(),
+    this.taxRegistrationNumber = const Value.absent(),
+    this.legalBusinessName = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   PharmaciesCompanion.insert({
@@ -293,6 +405,8 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     required String name,
     required String currency,
     this.remoteUuid = const Value.absent(),
+    this.taxRegistrationNumber = const Value.absent(),
+    this.legalBusinessName = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : name = Value(name),
        currency = Value(currency);
@@ -301,6 +415,8 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     Expression<String>? name,
     Expression<String>? currency,
     Expression<String>? remoteUuid,
+    Expression<String>? taxRegistrationNumber,
+    Expression<String>? legalBusinessName,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -308,6 +424,9 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
       if (name != null) 'name': name,
       if (currency != null) 'currency': currency,
       if (remoteUuid != null) 'remote_uuid': remoteUuid,
+      if (taxRegistrationNumber != null)
+        'tax_registration_number': taxRegistrationNumber,
+      if (legalBusinessName != null) 'legal_business_name': legalBusinessName,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -317,6 +436,8 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     Value<String>? name,
     Value<String>? currency,
     Value<String?>? remoteUuid,
+    Value<String?>? taxRegistrationNumber,
+    Value<String?>? legalBusinessName,
     Value<DateTime>? createdAt,
   }) {
     return PharmaciesCompanion(
@@ -324,6 +445,9 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
       name: name ?? this.name,
       currency: currency ?? this.currency,
       remoteUuid: remoteUuid ?? this.remoteUuid,
+      taxRegistrationNumber:
+          taxRegistrationNumber ?? this.taxRegistrationNumber,
+      legalBusinessName: legalBusinessName ?? this.legalBusinessName,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -343,6 +467,14 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     if (remoteUuid.present) {
       map['remote_uuid'] = Variable<String>(remoteUuid.value);
     }
+    if (taxRegistrationNumber.present) {
+      map['tax_registration_number'] = Variable<String>(
+        taxRegistrationNumber.value,
+      );
+    }
+    if (legalBusinessName.present) {
+      map['legal_business_name'] = Variable<String>(legalBusinessName.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -356,6 +488,8 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
           ..write('name: $name, ')
           ..write('currency: $currency, ')
           ..write('remoteUuid: $remoteUuid, ')
+          ..write('taxRegistrationNumber: $taxRegistrationNumber, ')
+          ..write('legalBusinessName: $legalBusinessName, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1973,6 +2107,15 @@ class $LedgerEntriesTable extends LedgerEntries
       'REFERENCES user_profiles (id)',
     ),
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<ExpenseCategory?, String>
+  category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<ExpenseCategory?>($LedgerEntriesTable.$convertercategoryn);
   static const VerificationMeta _occurredAtMeta = const VerificationMeta(
     'occurredAt',
   );
@@ -2014,6 +2157,7 @@ class $LedgerEntriesTable extends LedgerEntries
     supplierId,
     customerId,
     profileId,
+    category,
     occurredAt,
     note,
     syncedAt,
@@ -2139,6 +2283,12 @@ class $LedgerEntriesTable extends LedgerEntries
         DriftSqlType.int,
         data['${effectivePrefix}profile_id'],
       ),
+      category: $LedgerEntriesTable.$convertercategoryn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}category'],
+        ),
+      ),
       occurredAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}occurred_at'],
@@ -2161,6 +2311,12 @@ class $LedgerEntriesTable extends LedgerEntries
 
   static JsonTypeConverter2<LedgerEntryType, String, String> $convertertype =
       const EnumNameConverter<LedgerEntryType>(LedgerEntryType.values);
+  static JsonTypeConverter2<ExpenseCategory, String, String>
+  $convertercategory = const EnumNameConverter<ExpenseCategory>(
+    ExpenseCategory.values,
+  );
+  static JsonTypeConverter2<ExpenseCategory?, String?, String?>
+  $convertercategoryn = JsonTypeConverter2.asNullable($convertercategory);
 }
 
 class StoredLedgerEntry extends DataClass
@@ -2173,6 +2329,11 @@ class StoredLedgerEntry extends DataClass
   final int? supplierId;
   final int? customerId;
   final int? profileId;
+
+  /// Only set when [LedgerEntryType.expense] — the entry's expense
+  /// category. Type-conditional exactly like the party id columns above
+  /// (PLANS/10 Phase 1); ignored for every other entry type.
+  final ExpenseCategory? category;
   final DateTime occurredAt;
   final String? note;
   final DateTime? syncedAt;
@@ -2185,6 +2346,7 @@ class StoredLedgerEntry extends DataClass
     this.supplierId,
     this.customerId,
     this.profileId,
+    this.category,
     required this.occurredAt,
     this.note,
     this.syncedAt,
@@ -2211,6 +2373,11 @@ class StoredLedgerEntry extends DataClass
     }
     if (!nullToAbsent || profileId != null) {
       map['profile_id'] = Variable<int>(profileId);
+    }
+    if (!nullToAbsent || category != null) {
+      map['category'] = Variable<String>(
+        $LedgerEntriesTable.$convertercategoryn.toSql(category),
+      );
     }
     map['occurred_at'] = Variable<DateTime>(occurredAt);
     if (!nullToAbsent || note != null) {
@@ -2240,6 +2407,9 @@ class StoredLedgerEntry extends DataClass
       profileId: profileId == null && nullToAbsent
           ? const Value.absent()
           : Value(profileId),
+      category: category == null && nullToAbsent
+          ? const Value.absent()
+          : Value(category),
       occurredAt: Value(occurredAt),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       syncedAt: syncedAt == null && nullToAbsent
@@ -2264,6 +2434,9 @@ class StoredLedgerEntry extends DataClass
       supplierId: serializer.fromJson<int?>(json['supplierId']),
       customerId: serializer.fromJson<int?>(json['customerId']),
       profileId: serializer.fromJson<int?>(json['profileId']),
+      category: $LedgerEntriesTable.$convertercategoryn.fromJson(
+        serializer.fromJson<String?>(json['category']),
+      ),
       occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
       note: serializer.fromJson<String?>(json['note']),
       syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
@@ -2283,6 +2456,9 @@ class StoredLedgerEntry extends DataClass
       'supplierId': serializer.toJson<int?>(supplierId),
       'customerId': serializer.toJson<int?>(customerId),
       'profileId': serializer.toJson<int?>(profileId),
+      'category': serializer.toJson<String?>(
+        $LedgerEntriesTable.$convertercategoryn.toJson(category),
+      ),
       'occurredAt': serializer.toJson<DateTime>(occurredAt),
       'note': serializer.toJson<String?>(note),
       'syncedAt': serializer.toJson<DateTime?>(syncedAt),
@@ -2298,6 +2474,7 @@ class StoredLedgerEntry extends DataClass
     Value<int?> supplierId = const Value.absent(),
     Value<int?> customerId = const Value.absent(),
     Value<int?> profileId = const Value.absent(),
+    Value<ExpenseCategory?> category = const Value.absent(),
     DateTime? occurredAt,
     Value<String?> note = const Value.absent(),
     Value<DateTime?> syncedAt = const Value.absent(),
@@ -2310,6 +2487,7 @@ class StoredLedgerEntry extends DataClass
     supplierId: supplierId.present ? supplierId.value : this.supplierId,
     customerId: customerId.present ? customerId.value : this.customerId,
     profileId: profileId.present ? profileId.value : this.profileId,
+    category: category.present ? category.value : this.category,
     occurredAt: occurredAt ?? this.occurredAt,
     note: note.present ? note.value : this.note,
     syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
@@ -2332,6 +2510,7 @@ class StoredLedgerEntry extends DataClass
           ? data.customerId.value
           : this.customerId,
       profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      category: data.category.present ? data.category.value : this.category,
       occurredAt: data.occurredAt.present
           ? data.occurredAt.value
           : this.occurredAt,
@@ -2351,6 +2530,7 @@ class StoredLedgerEntry extends DataClass
           ..write('supplierId: $supplierId, ')
           ..write('customerId: $customerId, ')
           ..write('profileId: $profileId, ')
+          ..write('category: $category, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('note: $note, ')
           ..write('syncedAt: $syncedAt')
@@ -2368,6 +2548,7 @@ class StoredLedgerEntry extends DataClass
     supplierId,
     customerId,
     profileId,
+    category,
     occurredAt,
     note,
     syncedAt,
@@ -2384,6 +2565,7 @@ class StoredLedgerEntry extends DataClass
           other.supplierId == this.supplierId &&
           other.customerId == this.customerId &&
           other.profileId == this.profileId &&
+          other.category == this.category &&
           other.occurredAt == this.occurredAt &&
           other.note == this.note &&
           other.syncedAt == this.syncedAt);
@@ -2398,6 +2580,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
   final Value<int?> supplierId;
   final Value<int?> customerId;
   final Value<int?> profileId;
+  final Value<ExpenseCategory?> category;
   final Value<DateTime> occurredAt;
   final Value<String?> note;
   final Value<DateTime?> syncedAt;
@@ -2410,6 +2593,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
     this.supplierId = const Value.absent(),
     this.customerId = const Value.absent(),
     this.profileId = const Value.absent(),
+    this.category = const Value.absent(),
     this.occurredAt = const Value.absent(),
     this.note = const Value.absent(),
     this.syncedAt = const Value.absent(),
@@ -2423,6 +2607,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
     this.supplierId = const Value.absent(),
     this.customerId = const Value.absent(),
     this.profileId = const Value.absent(),
+    this.category = const Value.absent(),
     required DateTime occurredAt,
     this.note = const Value.absent(),
     this.syncedAt = const Value.absent(),
@@ -2439,6 +2624,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
     Expression<int>? supplierId,
     Expression<int>? customerId,
     Expression<int>? profileId,
+    Expression<String>? category,
     Expression<DateTime>? occurredAt,
     Expression<String>? note,
     Expression<DateTime>? syncedAt,
@@ -2452,6 +2638,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
       if (supplierId != null) 'supplier_id': supplierId,
       if (customerId != null) 'customer_id': customerId,
       if (profileId != null) 'profile_id': profileId,
+      if (category != null) 'category': category,
       if (occurredAt != null) 'occurred_at': occurredAt,
       if (note != null) 'note': note,
       if (syncedAt != null) 'synced_at': syncedAt,
@@ -2467,6 +2654,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
     Value<int?>? supplierId,
     Value<int?>? customerId,
     Value<int?>? profileId,
+    Value<ExpenseCategory?>? category,
     Value<DateTime>? occurredAt,
     Value<String?>? note,
     Value<DateTime?>? syncedAt,
@@ -2480,6 +2668,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
       supplierId: supplierId ?? this.supplierId,
       customerId: customerId ?? this.customerId,
       profileId: profileId ?? this.profileId,
+      category: category ?? this.category,
       occurredAt: occurredAt ?? this.occurredAt,
       note: note ?? this.note,
       syncedAt: syncedAt ?? this.syncedAt,
@@ -2515,6 +2704,11 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
     if (profileId.present) {
       map['profile_id'] = Variable<int>(profileId.value);
     }
+    if (category.present) {
+      map['category'] = Variable<String>(
+        $LedgerEntriesTable.$convertercategoryn.toSql(category.value),
+      );
+    }
     if (occurredAt.present) {
       map['occurred_at'] = Variable<DateTime>(occurredAt.value);
     }
@@ -2538,6 +2732,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<StoredLedgerEntry> {
           ..write('supplierId: $supplierId, ')
           ..write('customerId: $customerId, ')
           ..write('profileId: $profileId, ')
+          ..write('category: $category, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('note: $note, ')
           ..write('syncedAt: $syncedAt')
@@ -3020,6 +3215,8 @@ typedef $$PharmaciesTableCreateCompanionBuilder =
       required String name,
       required String currency,
       Value<String?> remoteUuid,
+      Value<String?> taxRegistrationNumber,
+      Value<String?> legalBusinessName,
       Value<DateTime> createdAt,
     });
 typedef $$PharmaciesTableUpdateCompanionBuilder =
@@ -3028,6 +3225,8 @@ typedef $$PharmaciesTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String> currency,
       Value<String?> remoteUuid,
+      Value<String?> taxRegistrationNumber,
+      Value<String?> legalBusinessName,
       Value<DateTime> createdAt,
     });
 
@@ -3152,6 +3351,16 @@ class $$PharmaciesTableFilterComposer
 
   ColumnFilters<String> get remoteUuid => $composableBuilder(
     column: $table.remoteUuid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get taxRegistrationNumber => $composableBuilder(
+    column: $table.taxRegistrationNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get legalBusinessName => $composableBuilder(
+    column: $table.legalBusinessName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3315,6 +3524,16 @@ class $$PharmaciesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get taxRegistrationNumber => $composableBuilder(
+    column: $table.taxRegistrationNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get legalBusinessName => $composableBuilder(
+    column: $table.legalBusinessName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3341,6 +3560,16 @@ class $$PharmaciesTableAnnotationComposer
 
   GeneratedColumn<String> get remoteUuid => $composableBuilder(
     column: $table.remoteUuid,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get taxRegistrationNumber => $composableBuilder(
+    column: $table.taxRegistrationNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get legalBusinessName => $composableBuilder(
+    column: $table.legalBusinessName,
     builder: (column) => column,
   );
 
@@ -3511,12 +3740,16 @@ class $$PharmaciesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<String?> remoteUuid = const Value.absent(),
+                Value<String?> taxRegistrationNumber = const Value.absent(),
+                Value<String?> legalBusinessName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => PharmaciesCompanion(
                 id: id,
                 name: name,
                 currency: currency,
                 remoteUuid: remoteUuid,
+                taxRegistrationNumber: taxRegistrationNumber,
+                legalBusinessName: legalBusinessName,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -3525,12 +3758,16 @@ class $$PharmaciesTableTableManager
                 required String name,
                 required String currency,
                 Value<String?> remoteUuid = const Value.absent(),
+                Value<String?> taxRegistrationNumber = const Value.absent(),
+                Value<String?> legalBusinessName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => PharmaciesCompanion.insert(
                 id: id,
                 name: name,
                 currency: currency,
                 remoteUuid: remoteUuid,
+                taxRegistrationNumber: taxRegistrationNumber,
+                legalBusinessName: legalBusinessName,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -5348,6 +5585,7 @@ typedef $$LedgerEntriesTableCreateCompanionBuilder =
       Value<int?> supplierId,
       Value<int?> customerId,
       Value<int?> profileId,
+      Value<ExpenseCategory?> category,
       required DateTime occurredAt,
       Value<String?> note,
       Value<DateTime?> syncedAt,
@@ -5362,6 +5600,7 @@ typedef $$LedgerEntriesTableUpdateCompanionBuilder =
       Value<int?> supplierId,
       Value<int?> customerId,
       Value<int?> profileId,
+      Value<ExpenseCategory?> category,
       Value<DateTime> occurredAt,
       Value<String?> note,
       Value<DateTime?> syncedAt,
@@ -5485,6 +5724,12 @@ class $$LedgerEntriesTableFilterComposer
   ColumnFilters<int> get amountMinor => $composableBuilder(
     column: $table.amountMinor,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<ExpenseCategory?, ExpenseCategory, String>
+  get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<DateTime> get occurredAt => $composableBuilder(
@@ -5642,6 +5887,11 @@ class $$LedgerEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
     column: $table.occurredAt,
     builder: (column) => ColumnOrderings(column),
@@ -5792,6 +6042,9 @@ class $$LedgerEntriesTableAnnotationComposer
     column: $table.amountMinor,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<ExpenseCategory?, String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
 
   GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
     column: $table.occurredAt,
@@ -5962,6 +6215,7 @@ class $$LedgerEntriesTableTableManager
                 Value<int?> supplierId = const Value.absent(),
                 Value<int?> customerId = const Value.absent(),
                 Value<int?> profileId = const Value.absent(),
+                Value<ExpenseCategory?> category = const Value.absent(),
                 Value<DateTime> occurredAt = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<DateTime?> syncedAt = const Value.absent(),
@@ -5974,6 +6228,7 @@ class $$LedgerEntriesTableTableManager
                 supplierId: supplierId,
                 customerId: customerId,
                 profileId: profileId,
+                category: category,
                 occurredAt: occurredAt,
                 note: note,
                 syncedAt: syncedAt,
@@ -5988,6 +6243,7 @@ class $$LedgerEntriesTableTableManager
                 Value<int?> supplierId = const Value.absent(),
                 Value<int?> customerId = const Value.absent(),
                 Value<int?> profileId = const Value.absent(),
+                Value<ExpenseCategory?> category = const Value.absent(),
                 required DateTime occurredAt,
                 Value<String?> note = const Value.absent(),
                 Value<DateTime?> syncedAt = const Value.absent(),
@@ -6000,6 +6256,7 @@ class $$LedgerEntriesTableTableManager
                 supplierId: supplierId,
                 customerId: customerId,
                 profileId: profileId,
+                category: category,
                 occurredAt: occurredAt,
                 note: note,
                 syncedAt: syncedAt,

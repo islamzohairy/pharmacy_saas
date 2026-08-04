@@ -1,3 +1,5 @@
+import '../tables/expense_category.dart';
+
 /// One ledger row as the remote backup path sees it. Kept in `core` (not
 /// the ledger feature) because the sync infrastructure lives in `core`
 /// and must not depend on feature code.
@@ -11,6 +13,7 @@ class RemoteLedgerEntry {
     this.supplierId,
     this.customerId,
     this.profileId,
+    this.category,
     this.note,
   });
 
@@ -22,10 +25,17 @@ class RemoteLedgerEntry {
   final int? supplierId;
   final int? customerId;
   final int? profileId;
+
+  /// Wire form of the expense category, null for non-expense entries
+  /// (threaded only when the entry is a `expense` type — same
+  /// type-conditional contract as the party id columns).
+  final ExpenseCategory? category;
+
   final String? note;
 
   /// Field names must match `push_ledger_entries` in
-  /// `supabase/migrations/0001_pharmacy_schema.sql`.
+  /// `supabase/migrations/0001_pharmacy_schema.sql` and
+  /// `0002_expense_category.sql`.
   Map<String, Object?> toJson() => {
     'id': id,
     'type': type,
@@ -35,6 +45,7 @@ class RemoteLedgerEntry {
     if (supplierId != null) 'supplier_id': supplierId,
     if (customerId != null) 'customer_id': customerId,
     if (profileId != null) 'profile_id': profileId,
+    if (category != null) 'category': category!.wireName,
     if (note != null) 'note': note,
   };
 }

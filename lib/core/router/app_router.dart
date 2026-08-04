@@ -1,10 +1,12 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/activity/presentation/activity_screen.dart';
 import '../../features/customer_debt/presentation/customer_debt_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
-import '../../features/draws/presentation/draws_screen.dart';
+import '../../features/expenses/presentation/expenses_screen.dart';
 import '../../features/identity/presentation/onboarding/onboarding_screen.dart';
 import '../../features/identity/presentation/profiles/profile_switcher_screen.dart';
+import '../../features/identity/presentation/settings/settings_screen.dart';
 import '../../features/products/domain/product.dart';
 import '../../features/products/presentation/product_form_screen.dart';
 import '../../features/products/presentation/products_screen.dart';
@@ -19,11 +21,13 @@ abstract final class AppRoutes {
   static const products = 'products';
   static const productForm = 'product-form';
   static const sales = 'sales';
-  static const draws = 'draws';
+  static const expenses = 'expenses';
+  static const activity = 'activity';
   static const supplierDebt = 'supplier-debt';
   static const customerDebt = 'customer-debt';
   static const dashboard = 'dashboard';
   static const profiles = 'profiles';
+  static const settings = 'settings';
 }
 
 /// P0 route table.
@@ -57,9 +61,14 @@ GoRouter buildRouter({required String initialLocation}) {
         builder: (context, state) => const SalesScreen(),
       ),
       GoRoute(
-        path: '/draws',
-        name: AppRoutes.draws,
-        builder: (context, state) => const DrawsScreen(),
+        path: '/expenses',
+        name: AppRoutes.expenses,
+        builder: (context, state) => const ExpensesScreen(),
+      ),
+      GoRoute(
+        path: '/activity',
+        name: AppRoutes.activity,
+        builder: (context, state) => const ActivityScreen(),
       ),
       GoRoute(
         path: '/supplier-debt',
@@ -80,6 +89,11 @@ GoRouter buildRouter({required String initialLocation}) {
         path: '/profiles',
         name: AppRoutes.profiles,
         builder: (context, state) => const ProfileSwitcherScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        name: AppRoutes.settings,
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
   );

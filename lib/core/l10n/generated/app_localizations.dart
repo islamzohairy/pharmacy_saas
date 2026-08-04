@@ -118,11 +118,59 @@ abstract class AppLocalizations {
   /// **'المبيعات'**
   String get salesTitle;
 
-  /// Title of the cash draws placeholder screen
+  /// Title of the expenses screen (replaces the old draws screen)
   ///
   /// In ar, this message translates to:
-  /// **'السحوبات'**
-  String get drawsTitle;
+  /// **'المصروفات'**
+  String get expensesTitle;
+
+  /// Label for the expense category picker
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع المصروف'**
+  String get expenseCategoryLabel;
+
+  /// Expense category: cash taken out by the owner (the default option)
+  ///
+  /// In ar, this message translates to:
+  /// **'سحب المالك'**
+  String get expenseCategoryOwnerDraw;
+
+  /// Expense category: rent
+  ///
+  /// In ar, this message translates to:
+  /// **'إيجار'**
+  String get expenseCategoryRent;
+
+  /// Expense category: utilities (electricity, water, ...)
+  ///
+  /// In ar, this message translates to:
+  /// **'مرافق'**
+  String get expenseCategoryUtilities;
+
+  /// Expense category: supplies
+  ///
+  /// In ar, this message translates to:
+  /// **'مستلزمات'**
+  String get expenseCategorySupplies;
+
+  /// Expense category: anything not covered by the other categories
+  ///
+  /// In ar, this message translates to:
+  /// **'أخرى'**
+  String get expenseCategoryOther;
+
+  /// Section title of the recent expenses list
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر المصروفات'**
+  String get expensesHistoryTitle;
+
+  /// Empty state of the recent expenses list
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد مصروفات مسجلة بعد'**
+  String get expensesHistoryEmpty;
 
   /// Title of the supplier debt placeholder screen
   ///
@@ -141,6 +189,54 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'لوحة التحكم'**
   String get dashboardTitle;
+
+  /// Title of the activity history screen
+  ///
+  /// In ar, this message translates to:
+  /// **'النشاط'**
+  String get activityTitle;
+
+  /// Empty state of the activity feed
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد حركة مسجلة بعد'**
+  String get activityEmpty;
+
+  /// Attribution line on an activity row, {name} is the recorder's display name
+  ///
+  /// In ar, this message translates to:
+  /// **'بواسطة: {name}'**
+  String activityRecordedBy(String name);
+
+  /// Ledger type label for a debt repayment entry in the activity feed
+  ///
+  /// In ar, this message translates to:
+  /// **'سداد دين'**
+  String get debtRepaymentLabel;
+
+  /// Ledger type label for a sale entry in the activity feed
+  ///
+  /// In ar, this message translates to:
+  /// **'مبيعات'**
+  String get ledgerTypeSale;
+
+  /// Ledger type label for an expense entry in the activity feed
+  ///
+  /// In ar, this message translates to:
+  /// **'مصروف'**
+  String get ledgerTypeExpense;
+
+  /// Ledger type label for a supplier debt entry in the activity feed
+  ///
+  /// In ar, this message translates to:
+  /// **'دين مورد'**
+  String get ledgerTypeSupplierDebt;
+
+  /// Ledger type label for a customer debt entry in the activity feed
+  ///
+  /// In ar, this message translates to:
+  /// **'دين عميل'**
+  String get ledgerTypeCustomerDebt;
 
   /// Placeholder body text shown on stub screens
   ///
@@ -309,6 +405,60 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الملفات الشخصية'**
   String get profilesTooltip;
+
+  /// Tooltip for the settings entry icon on the dashboard app bar
+  ///
+  /// In ar, this message translates to:
+  /// **'الإعدادات'**
+  String get settingsTooltip;
+
+  /// Title of the settings screen
+  ///
+  /// In ar, this message translates to:
+  /// **'الإعدادات'**
+  String get settingsTitle;
+
+  /// Section title for the compliance-prep fields — inert data capture, not a compliance feature
+  ///
+  /// In ar, this message translates to:
+  /// **'بيانات الفوترة (تحضيري)'**
+  String get settingsComplianceSection;
+
+  /// Label for the tax registration number input
+  ///
+  /// In ar, this message translates to:
+  /// **'الرقم الضريبي'**
+  String get settingsTaxRegistrationLabel;
+
+  /// Label for the legal business name input
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم القانوني للنشاط'**
+  String get settingsLegalBusinessNameLabel;
+
+  /// Note explaining the compliance-prep fields are optional and inert today
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحفظ هذه البيانات محليًا لاستخدامها مستقبلًا في الفوترة الإلكترونية، ولا تؤثر على استخدام التطبيق حاليًا.'**
+  String get settingsComplianceNote;
+
+  /// Snackbar confirmation after settings are saved
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حفظ الإعدادات'**
+  String get settingsSaved;
+
+  /// Snackbar error after settings save fails
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر حفظ الإعدادات — حاول مرة أخرى'**
+  String get settingsSaveFailed;
+
+  /// Button that saves the settings screen fields
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ'**
+  String get settingsSave;
 
   /// Display label for the owner role (informational — role is not enforced in P0)
   ///
@@ -550,17 +700,17 @@ abstract class AppLocalizations {
   /// **'الذهاب إلى المنتجات'**
   String get goToProducts;
 
-  /// Button that records a cash draw
+  /// Button that records an expense
   ///
   /// In ar, this message translates to:
-  /// **'تسجيل السحب'**
-  String get recordDraw;
+  /// **'تسجيل المصروف'**
+  String get recordExpense;
 
-  /// Label for the cash draw amount input
+  /// Label for the expense amount input
   ///
   /// In ar, this message translates to:
-  /// **'مبلغ السحب'**
-  String get drawAmountLabel;
+  /// **'مبلغ المصروف'**
+  String get expenseAmountLabel;
 
   /// Label for an optional free-text note
   ///
@@ -568,17 +718,17 @@ abstract class AppLocalizations {
   /// **'ملاحظة (اختياري)'**
   String get noteOptionalLabel;
 
-  /// Snackbar confirmation after a successful draw
+  /// Snackbar confirmation after a successful expense recording
   ///
   /// In ar, this message translates to:
-  /// **'تم تسجيل السحب'**
-  String get drawRecorded;
+  /// **'تم تسجيل المصروف'**
+  String get expenseRecorded;
 
-  /// Snackbar error after a failed draw
+  /// Snackbar error after a failed expense recording
   ///
   /// In ar, this message translates to:
-  /// **'تعذر تسجيل السحب — حاول مرة أخرى'**
-  String get drawFailed;
+  /// **'تعذر تسجيل المصروف — حاول مرة أخرى'**
+  String get expenseFailed;
 
   /// Action/button to create a new supplier
   ///

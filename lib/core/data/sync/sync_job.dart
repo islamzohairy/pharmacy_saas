@@ -141,6 +141,7 @@ class SyncJob {
     supplierId: entry.supplierId,
     customerId: entry.customerId,
     profileId: entry.profileId,
+    category: entry.category,
     note: entry.note,
   );
 }

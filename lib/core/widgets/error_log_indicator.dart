@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../data/app_database.dart';
 import '../data/error_log_providers.dart';
 import '../l10n/app_l10n.dart';
-import '../l10n/generated/app_localizations.dart';
 
 /// Crash/error visibility for the pilot owner (PLANS/09) — sits beside
 /// [BackupStatusIndicator] so an unhandled error becomes *seen* even though

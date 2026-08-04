@@ -97,6 +97,30 @@ class DriftIdentityRepository implements IdentityRepository {
   }
 
   @override
+  Future<Pharmacy> updatePharmacySettings({
+    required String? taxRegistrationNumber,
+    required String? legalBusinessName,
+  }) {
+    return _db.transaction(() async {
+      final pharmacy = await getPharmacy();
+      await (_db.update(_db.pharmacies)..where((t) => t.id.equals(pharmacy.id)))
+          .write(
+            PharmaciesCompanion(
+              taxRegistrationNumber: Value(
+                taxRegistrationNumber?.trim(),
+              ),
+              legalBusinessName: Value(legalBusinessName?.trim()),
+            ),
+          );
+      return (_db.select(
+        _db.pharmacies,
+      )..where((t) => t.id.equals(pharmacy.id)))
+          .getSingle()
+          .then((row) => row.toDomain());
+    });
+  }
+
+  @override
   Future<List<UserProfile>> getProfiles() async {
     final rows = await (_db.select(
       _db.userProfiles,
@@ -227,6 +251,8 @@ extension on StoredPharmacy {
     currency: currency,
     createdAt: createdAt,
     remoteUuid: remoteUuid,
+    taxRegistrationNumber: taxRegistrationNumber,
+    legalBusinessName: legalBusinessName,
   );
 }
 

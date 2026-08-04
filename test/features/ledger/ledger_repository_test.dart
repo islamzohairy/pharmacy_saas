@@ -28,7 +28,7 @@ void main() {
   });
 
   LedgerEntryDraft draft({
-    LedgerEntryType type = LedgerEntryType.cashDraw,
+    LedgerEntryType type = LedgerEntryType.expense,
     int amount = 1000,
     DateTime? occurredAt,
     int? supplierId,
@@ -50,7 +50,7 @@ void main() {
 
     expect(entry.id, greaterThan(0));
     expect(entry.pharmacyId, pharmacyId);
-    expect(entry.type, LedgerEntryType.cashDraw);
+    expect(entry.type, LedgerEntryType.expense);
     expect(entry.amountMinor, 1000);
     expect(entry.profileId, 1);
     expect(entry.syncedAt, isNull);
@@ -69,7 +69,7 @@ void main() {
     );
     await repository.append(
       draft(
-        type: LedgerEntryType.cashDraw,
+        type: LedgerEntryType.expense,
         amount: 700,
         occurredAt: DateTime(2026, 8, 3, 9),
       ),
@@ -89,6 +89,33 @@ void main() {
         )
         .first;
     expect(august2, isEmpty);
+  });
+
+  test('watchEntries caps the result at limit, newest first', () async {
+    for (var i = 0; i < 105; i++) {
+      await repository.append(
+        draft(
+          type: LedgerEntryType.sale,
+          amount: 1000 + i,
+          occurredAt: DateTime(2026, 8, 1).add(Duration(minutes: i)),
+        ),
+      );
+    }
+
+    final capped = await repository
+        .watchEntries(pharmacyId: pharmacyId, limit: 100)
+        .first;
+    expect(capped, hasLength(100));
+
+    // Newest 100 retained — the oldest 5 (1000..1004) are dropped, the
+    // latest amount (1104) is the head.
+    expect(capped.first.amountMinor, 1104);
+    expect(capped.any((e) => e.amountMinor < 1005), isFalse);
+
+    // Default (unbounded) keeps everything — dashboard's aggregation
+    // depends on this.
+    final all = await repository.watchEntries(pharmacyId: pharmacyId).first;
+    expect(all, hasLength(105));
   });
 
   test('entriesByParty returns only the party requested', () async {

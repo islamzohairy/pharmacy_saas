@@ -1,3 +1,4 @@
+import 'package:pharmacy_saas/core/data/tables/expense_category.dart';
 import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
 
 /// A financial fact in the append-only ledger. Immutable once created.
@@ -15,6 +16,7 @@ class LedgerEntry {
     this.supplierId,
     this.customerId,
     this.profileId,
+    this.category,
     this.note,
     this.syncedAt,
   });
@@ -28,6 +30,11 @@ class LedgerEntry {
   final int? supplierId;
   final int? customerId;
   final int? profileId;
+
+  /// The expense category — only set when [LedgerEntryType.expense],
+  /// null for every other entry type (type-conditional, PLANS/10).
+  final ExpenseCategory? category;
+
   final String? note;
   final DateTime? syncedAt;
 }
@@ -45,6 +52,7 @@ class LedgerEntryDraft {
     this.supplierId,
     this.customerId,
     this.profileId,
+    this.category,
     this.note,
   });
 
@@ -56,5 +64,6 @@ class LedgerEntryDraft {
   final int? supplierId;
   final int? customerId;
   final int? profileId;
+  final ExpenseCategory? category;
   final String? note;
 }

@@ -23,6 +23,7 @@ class FakeLedgerRepository implements LedgerRepository {
       customerId: draft.customerId,
       profileId: draft.profileId,
       occurredAt: draft.occurredAt,
+      category: draft.category,
       note: draft.note,
     );
     entries.add(entry);
@@ -52,6 +53,7 @@ class FakeLedgerRepository implements LedgerRepository {
     DateTime? from,
     DateTime? to,
     LedgerEntryType? type,
+    int? limit,
   }) {
     throw UnimplementedError('watchEntries is not used by the use-cases');
   }

@@ -53,6 +53,50 @@ void main() {
     expect(await repository.hasAnyProfile(), isTrue);
   });
 
+  test('updatePharmacySettings persists both fields and survives reload',
+      () async {
+    final created = await repository.createPharmacyAndOwner(
+      pharmacyName: 'صيدلية النور',
+      currency: 'EGP',
+      ownerDisplayName: 'أم أحمد',
+    );
+
+    final updated = await repository.updatePharmacySettings(
+      taxRegistrationNumber: ' 123-456-789 ',
+      legalBusinessName: 'صيدلية النور للمستلزمات الطبية',
+    );
+
+    expect(updated.id, created.pharmacy.id);
+    expect(updated.taxRegistrationNumber, '123-456-789');
+    expect(updated.legalBusinessName, 'صيدلية النور للمستلزمات الطبية');
+
+    final reloaded = await repository.getPharmacy();
+    expect(reloaded.taxRegistrationNumber, '123-456-789');
+    expect(reloaded.legalBusinessName, 'صيدلية النور للمستلزمات الطبية');
+  });
+
+  test('updatePharmacySettings clears a previously-set field with null',
+      () async {
+    final created = await repository.createPharmacyAndOwner(
+      pharmacyName: 'صيدلية النور',
+      currency: 'EGP',
+      ownerDisplayName: 'أم أحمد',
+    );
+
+    await repository.updatePharmacySettings(
+      taxRegistrationNumber: '123',
+      legalBusinessName: 'اسم',
+    );
+    final cleared = await repository.updatePharmacySettings(
+      taxRegistrationNumber: null,
+      legalBusinessName: 'اسم',
+    );
+
+    expect(cleared.taxRegistrationNumber, isNull);
+    expect(cleared.legalBusinessName, 'اسم');
+    expect(created.pharmacy.taxRegistrationNumber, isNull);
+  });
+
   test('adds a family profile for the shared-shift pattern', () async {
     final created = await repository.createPharmacyAndOwner(
       pharmacyName: 'صيدلية النور',

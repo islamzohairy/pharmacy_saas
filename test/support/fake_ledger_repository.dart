@@ -78,4 +78,9 @@ class FakeLedgerRepository implements LedgerRepository {
   Future<DateTime?> oldestUnsyncedAt({required int pharmacyId}) {
     throw UnimplementedError('oldestUnsyncedAt is not used by the use-cases');
   }
+
+  @override
+  Future<DateTime?> lastSyncedAt({required int pharmacyId}) {
+    throw UnimplementedError('lastSyncedAt is not used by the use-cases');
+  }
 }

@@ -130,6 +130,19 @@ class DriftLedgerRepository implements LedgerRepository {
   }
 
   @override
+  Future<DateTime?> lastSyncedAt({required int pharmacyId}) async {
+    final maxAt = _db.ledgerEntries.syncedAt.max();
+    final row = await (_db.selectOnly(_db.ledgerEntries)
+          ..addColumns([maxAt])
+          ..where(
+            _db.ledgerEntries.pharmacyId.equals(pharmacyId) &
+                _db.ledgerEntries.syncedAt.isNotNull(),
+          ))
+        .getSingleOrNull();
+    return row?.read(maxAt);
+  }
+
+  @override
   Future<void> markSynced({
     required int pharmacyId,
     required List<int> ids,

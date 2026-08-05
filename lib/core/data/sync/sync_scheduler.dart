@@ -134,6 +134,7 @@ class SyncScheduler {
         return; // pre-plan-03 installs lack the binding key; skip safely.
       }
 
+      final previousStatus = status.status;
       status.update(
         BackupStatus(
           state: BackupSyncState.syncing,
@@ -149,10 +150,10 @@ class SyncScheduler {
         onRegistered: identityRepository.markDeviceRegistered,
       );
 
-      if (result.isSkipped) return;
-
-      if (result.isSuccess) {
-        if (result.pushed > 0 || !registered) {
+      if (result.isSkipped) {
+        if (!registered) {
+          // First pass: registration completed but there was nothing to
+          // push yet — report synced (original semantics).
           status.update(
             BackupStatus(
               state: BackupSyncState.synced,
@@ -160,7 +161,38 @@ class SyncScheduler {
               backlogCount: 0,
             ),
           );
+        } else {
+          // Genuine no-op pass (already registered, nothing to push):
+          // derive the last successful push from stamped entries — a
+          // relaunch must show the real last-sync time, not "never
+          // synced" or a lingering "syncing" (observed live 2026-08-05
+          // after the 0003 fix).
+          final lastSyncedAt = await ledgerRepository.lastSyncedAt(
+            pharmacyId: pharmacy.id,
+          );
+          if (lastSyncedAt != null) {
+            status.update(
+              BackupStatus(
+                state: BackupSyncState.synced,
+                lastSyncedAt: lastSyncedAt,
+                backlogCount: 0,
+              ),
+            );
+          } else {
+            status.update(previousStatus);
+          }
         }
+        return;
+      }
+
+      if (result.isSuccess) {
+        status.update(
+          BackupStatus(
+            state: BackupSyncState.synced,
+            lastSyncedAt: DateTime.now(),
+            backlogCount: 0,
+          ),
+        );
         _retryTimer?.cancel();
       } else {
         status.update(

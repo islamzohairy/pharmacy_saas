@@ -19,6 +19,10 @@ class FakeLedger implements LedgerRepository {
   final List<LedgerEntry> _pending = [];
   final _unsyncedController = StreamController<int>.broadcast();
 
+  /// Newest stamp written by [markSynced], for the derived
+  /// [lastSyncedAt] read — `null` until anything was pushed.
+  DateTime? lastSynced;
+
   /// Synchronously inspectable — avoids `completion(...)` matchers, whose
   /// continuations freeze once the fakeAsync zone exits.
   int get pendingCount => _pending.length;
@@ -26,6 +30,12 @@ class FakeLedger implements LedgerRepository {
   void addPending(LedgerEntry entry) {
     _pending.add(entry);
     _unsyncedController.add(_pending.length);
+  }
+
+  void stampAll(DateTime at) {
+    lastSynced = at;
+    _pending.clear();
+    _unsyncedController.add(0);
   }
 
   @override
@@ -72,6 +82,10 @@ class FakeLedger implements LedgerRepository {
     if (_pending.isEmpty) return null;
     return _pending.map((e) => e.occurredAt).reduce((a, b) => a.isBefore(b) ? a : b);
   }
+
+  @override
+  Future<DateTime?> lastSyncedAt({required int pharmacyId}) async =>
+      lastSynced;
 
   @override
   Future<void> markSynced({
@@ -255,6 +269,53 @@ void main() {
       expect(ledger.pendingCount, 0);
       expect(status.status.state, BackupSyncState.synced);
       expect(status.status.lastSyncedAt, isNotNull);
+      scheduler.dispose();
+    });
+  });
+
+  test('no-op pass (registered, nothing pending) shows the derived last '
+      'sync time instead of lingering at syncing', () {
+    fakeAsync((async) {
+      final ledger = FakeLedger();
+      ledger.stampAll(DateTime(2026, 8, 5, 11, 10));
+      final identity = FakeIdentity()..pharmacy = _pharmacy()..registered = true;
+      final client = FakeRemoteBackupClient();
+      final status = BackupStatusNotifier();
+      final scheduler = SyncScheduler(
+        ledgerRepository: ledger,
+        identityRepository: identity,
+        client: client,
+        status: status,
+      );
+
+      scheduler.start();
+      async.flushMicrotasks();
+
+      expect(client.registerCalls, 0);
+      expect(client.pushCalls, 0);
+      expect(status.status.state, BackupSyncState.synced);
+      expect(status.status.lastSyncedAt, DateTime(2026, 8, 5, 11, 10));
+      scheduler.dispose();
+    });
+  });
+
+  test('no-op pass with nothing ever stamped keeps the prior state', () {
+    fakeAsync((async) {
+      final ledger = FakeLedger();
+      final identity = FakeIdentity()..pharmacy = _pharmacy()..registered = true;
+      final client = FakeRemoteBackupClient();
+      final status = BackupStatusNotifier();
+      final scheduler = SyncScheduler(
+        ledgerRepository: ledger,
+        identityRepository: identity,
+        client: client,
+        status: status,
+      );
+
+      scheduler.start();
+      async.flushMicrotasks();
+
+      expect(status.status.state, BackupSyncState.neverSynced);
       scheduler.dispose();
     });
   });

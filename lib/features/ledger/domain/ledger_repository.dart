@@ -55,6 +55,13 @@ abstract interface class LedgerRepository {
   /// new full-scan stream).
   Future<DateTime?> oldestUnsyncedAt({required int pharmacyId});
 
+  /// Newest `synced_at` among stamped rows (`null` when nothing was ever
+  /// pushed). Lets the indicator show the real last-sync time after a
+  /// no-op pass / relaunch — derived from persisted sync bookkeeping,
+  /// never stored as separate state (same philosophy as staleness,
+  /// PLANS/11 §4.2).
+  Future<DateTime?> lastSyncedAt({required int pharmacyId});
+
   /// Stamps `synced_at` on the given ids. Sync bookkeeping only — see
   /// the class doc. Never touches business fields.
   Future<void> markSynced({

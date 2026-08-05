@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../features/identity/domain/identity_repository.dart';
 import '../../../features/identity/domain/pharmacy.dart';
@@ -10,6 +11,7 @@ import '../error_log_repository.dart';
 import 'backup_staleness.dart';
 import 'quarantine_repository.dart';
 import 'remote_backup_client.dart';
+import 'sync_diag.dart';
 import 'sync_job.dart';
 
 /// What the in-app "last backed up" indicator renders.
@@ -104,17 +106,20 @@ class SyncScheduler {
   /// Idempotent; safe to call once at app start.
   void start() {
     if (_periodicTimer != null) return;
+    syncDiag('start(): creating periodic timer');
     _periodicTimer = Timer.periodic(_periodicInterval, (_) => _run());
     _run();
   }
 
   /// Called from the app-lifecycle observer on foreground resume.
   Future<void> onAppResumed() async {
+    syncDiag('onAppResumed');
     _debounceTimer?.cancel();
     await _run();
   }
 
   void dispose() {
+    syncDiag('scheduler dispose: canceling timers');
     _periodicTimer?.cancel();
     _debounceTimer?.cancel();
     _retryTimer?.cancel();
@@ -122,6 +127,7 @@ class SyncScheduler {
   }
 
   Future<void> _run() async {
+    syncDiag('_run: entered (running=$_running, configured=${client.isConfigured})');
     if (_running || !client.isConfigured) return;
     _running = true;
     try {
@@ -132,6 +138,7 @@ class SyncScheduler {
         return; // onboarding not complete — nothing to back up yet.
       }
       _ensureBacklogSubscription(pharmacy.id);
+      syncDiag('backlog subscription ensured');
 
       final registered = await identityRepository.isDeviceRegistered();
       final credentials = SyncCredentials(
@@ -159,6 +166,10 @@ class SyncScheduler {
         pharmacyId: pharmacy.id,
         credentials: credentials,
         onRegistered: identityRepository.markDeviceRegistered,
+      );
+      syncDiag(
+        'pass done: pushed=${result.pushed} '
+        'error=${_errorSummary(result.error)} skip=${result.isSkipped}',
       );
 
       if (result.isSkipped) {
@@ -259,25 +270,38 @@ class SyncScheduler {
     );
   }
 
+  /// SYNC_DIAG content rule: error code (PostgrestException) or runtime
+  /// type only — never the raw message (may carry ledger content).
+  String _errorSummary(Object? error) {
+    if (error == null) return 'null';
+    if (error is PostgrestException) return 'code=${error.code ?? 'unknown'}';
+    return error.runtimeType.toString();
+  }
+
   void _ensureBacklogSubscription(int pharmacyId) {
     if (_backlogSubscription != null) return;
     _backlogSubscription = ledgerRepository
         .watchUnsyncedCount(pharmacyId: pharmacyId)
         .listen((count) {
+          syncDiag('backlog count event: $count');
           _debounceTimer?.cancel();
+          syncDiag('debounce armed/reset: count=$count');
           _debounceTimer = Timer(_writeDebounce, () async {
-            status.update(
-              BackupStatus(
-                state: status.status.state,
-                lastSyncedAt: status.status.lastSyncedAt,
-                backlogCount: count,
-                lastError: status.status.lastError,
-                staleness: status.status.staleness,
-              ),
-            );
-            await _refreshStaleness(pharmacyId);
-            unawaited(_run());
-          });
+          syncDiag(
+            'debounce fired: count=$count state=${status.status.state}',
+          );
+          status.update(
+            BackupStatus(
+              state: status.status.state,
+              lastSyncedAt: status.status.lastSyncedAt,
+              backlogCount: count,
+              lastError: status.status.lastError,
+              staleness: status.status.staleness,
+            ),
+          );
+          await _refreshStaleness(pharmacyId);
+          unawaited(_run());
         });
+    });
   }
 }

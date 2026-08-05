@@ -975,3 +975,83 @@ permanent-failure classification — set stays EXACTLY
 error-log record per quarantine, no auto-release); 23505 → success;
 everything else (incl. 401/403) → existing capped backoff. Staleness
 remains the visibility for those.
+23505 BOUNDARY SENTENCE (Phase 1 acceptance, 2026-08-05): unique-violation
+(23505) on `push_ledger_entries` is an EXPECTED race under concurrent
+device writers — it is absorbed inside the push boundary (counted as
+success), and it is never a sync-failure signal, never quarantined, never
+surfaced to the user; anything OUTSIDE that boundary (401/403/network)
+is the failure class the staleness/backoff/error-log path owns.
+
+## 2026-08-05 — Plan 11-H Phase 1 gate FAILED: root cause = provider self-watch self-disposal (fixed, staff-engineer approved)
+ROOT CAUSE (proven live on emulator 5556, 2026-08-05): `syncSchedulerProvider`
+did `ref.watch(backupStatusProvider)`. In Riverpod 2.6.1,
+`ChangeNotifierProviderElement` calls `setState(notifier)` on EVERY
+`notifyListeners()` (flutter_riverpod-2.6.1 base.dart:216), which marks all
+dependents changed → `invalidateSelf` → `runOnDispose` → the scheduler's own
+`ref.onDispose(scheduler.dispose)` ran. The scheduler's FIRST status write
+(`status.update(syncing)` in every pass) therefore invalidated its own
+provider 200ms into the first pass, canceling periodic timer, debounce
+timer, retry timer and backlog subscription; with zero listeners on
+`syncSchedulerProvider` the invalidation is never rebuilt — the provider
+stays dead. That one mechanism explains EVERY symptom (start-once,
+resume-once, timers never fire, subscription dead, chip stuck at syncing).
+Bisection evidence: probe-app (no Riverpod) on the same AVD fired timers
+exactly on schedule → environment exonerated; instrumentation showed
+`periodic created` → 213ms later `scheduler dispose: canceling timers` →
+adjacent probes reading `debounce active=false` while local timers fired —
+only `dispose()` can cancel field-backed timers.
+FIX (one word, `sync_providers.dart`): `status: ref.read(backupStatusProvider)`
+inside `syncSchedulerProvider`. Notifier lifecycle unchanged (single owner
+= the ChangeNotifierProvider element, disposed once at container teardown);
+the chip (`backup_status_indicator`) still watches, unaffected. Split
+provider variant REJECTED (risks use-after-dispose if the status provider
+is ever invalidated; read variant keeps the owner unique). Regression test
+in `sync_scheduler_test.dart` (ProviderContainer + fakes: after `start()` +
+flushMicrotasks the container must serve the SAME scheduler instance, and
+a new write must still debounce-push): verified RED on the old wiring,
+GREEN on the fix.
+RULE (new): NEVER `ref.watch` a provider that your own execution path
+writes to — the notifier's `notifyListeners` invalidates you mid-pass and
+`onDispose` runs; if nobody listens to you, the invalidation is never
+rebuilt. If the value is only READ, use `ref.read`. (Riverpod 3 will block
+`ref.read` inside provider bodies entirely — revisit wiring on upgrade,
+recording this before then.)
+LESSON (acceptance-path): the v5 rehearsal, the 08-04 deploy gate and the
+v5 gate all PASSED while this bug shipped in v6 — because none of them
+EXERCISED the write-triggered path (no sale, no pending write) that the
+Plan 11-H Phase 1 gate now runs (sale → debounce → push; idle → periodic;
+relaunch → resume). Acceptance evidence only means something when it
+drives the REAL trigger path; the Phase 1 gate's three write triggers are
+now load-bearing for every future release of this sync path.
+
+## 2026-08-05 — RELEASE builds had no INTERNET permission (manifest bug, found during Phase 1 re-verify)
+FINDING: the release APK could never sync — `android/app/src/main/
+AndroidManifest.xml` is the untouched stock Flutter template; the INTERNET
+permission exists ONLY in the debug/profile manifests. netd denies DNS to
+apps without it, surfacing as `_ClientSocketException: Failed host lookup
+(OS Error: No address associated with hostname, errno = 7)` — a socket
+permission denial MASKED as a DNS failure. Chrome/ping on the same device
+resolved fine; the app resolved nothing. Debug builds worked (INTERNET
+merged); every release build since the app gained network code could not
+resolve or connect at all. Discovered during the condition-3 release
+re-verify (chip showed "تعذر النسخ الاحتياطي" while the SAME code on
+debug pushed fine; the gated diag's full error text identified the DNS
+failure; `dumpsys package` showed zero INTERNET for the release install).
+FIX: added `<uses-permission android:name="android.permission.INTERNET"/>`
+to the MAIN manifest (backup sync ships in release — load-bearing, not
+dev-only). Verified: release `pushed=1 error=null` (first successful
+release push ever, 2026-08-05 14:53), chip "آخر نسخة: 5/8/2026 14:54".
+CORRECTION to the 11:10 acceptance record (2026-08-05 11-H entry): the
+claim "on-device acceptance (release APK, real app)" cannot be reconciled
+with this finding — a release build could not push until the INTERNET fix,
+so the 11:10 error→synced chip transition and the remote stamps were
+produced by a DEBUG build (the stamps themselves were independently
+verified via owner-privilege SQL and stand; the BUILD label is what's in
+doubt). Also explains the v5-era "stale 401" error-chip readings on
+release installs: no network permission, not a key issue. OPEN QUESTION
+for the user: reconcile the 11:10 record (which build ran on the
+acceptance device).
+DIAG ENHANCEMENT (same pass): `_diagErrorSummary` now prints the FULL
+message for non-Postgrest errors only (socket/OS/TLS errors carry no
+ledger content — the content rule still holds for Postgrest messages);
+this is what surfaced the DNS denial. Kept, gated behind SYNC_DIAG.

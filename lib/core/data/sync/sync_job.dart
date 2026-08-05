@@ -5,6 +5,7 @@ import '../../../../features/ledger/domain/ledger_repository.dart';
 import '../error_log_repository.dart';
 import 'quarantine_repository.dart';
 import 'remote_backup_client.dart';
+import 'sync_diag.dart';
 import 'sync_error_classification.dart';
 
 /// Everything the sync job needs to identify the device and its tenant.
@@ -130,6 +131,10 @@ class SyncJob {
           );
           pushed += batch.length;
         } catch (error) {
+          syncDiag(
+            'SYNC_DIAG push failure: '
+            'error=${_diagErrorSummary(error)}',
+          );
           final classification = classifySyncError(error);
           if (classification == SyncFailureClass.transient) {
             _consecutiveFailures++;
@@ -160,10 +165,20 @@ class SyncJob {
       _consecutiveFailures = 0;
       return SyncResult.success(pushed: pushed);
     } catch (error) {
+      syncDiag('SYNC_DIAG runOnce failure: error=${_diagErrorSummary(error)}');
       _consecutiveFailures++;
       final delay = _nextRetryDelay();
       return SyncResult.failure(error, delay);
     }
+  }
+
+  /// SYNC_DIAG content rule: error code (PostgrestException) or runtime
+  /// type only — never the raw message (may carry ledger content). A
+  /// non-Postgrest error (socket/OS/TLS) carries no ledger content, so its
+  /// full message is safe to print and needed to triage network failures.
+  String _diagErrorSummary(Object error) {
+    if (error is PostgrestException) return 'code=${error.code ?? 'unknown'}';
+    return '${error.runtimeType}: $error';
   }
 
   Future<void> _quarantine({

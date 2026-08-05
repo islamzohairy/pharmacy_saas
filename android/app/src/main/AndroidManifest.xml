@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Backup sync (core/data/sync) ships in release builds — INTERNET is
+         load-bearing there, not a dev-only permission. It was missing from
+         main (stock template has it only in debug/profile), so release
+         builds could never resolve DNS or open sockets. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="pharmacy_saas"
         android:name="${applicationName}"

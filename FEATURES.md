@@ -148,6 +148,24 @@
   already-registered pass with nothing to push left the chip at
   "syncing" forever on relaunch — the scheduler now derives the real
   last-sync time from stamped entries (`LedgerRepository.lastSyncedAt`).
+  Plan 11-H Phase 1 (write-triggered sync acceptance) found and fixed the
+  scheduler self-disposal bug: `syncSchedulerProvider` `ref.watch`ed the
+  status provider it writes, so the first pass's own status update
+  invalidated and disposed the scheduler (dead timers, chip stuck at
+  syncing). Fixed via `ref.read` (sync_providers.dart) + regression test
+  (RED on old wiring, GREEN on fix); DECISIONS.md 2026-08-05 has the
+  root-cause entry and the never-watch-what-you-write rule. Phase 1 gate
+  (sale→debounce, idle→periodic, relaunch→resume pushes on the emulator)
+  PASSED on the fixed build (2026-08-05: 3 trigger paths, no scheduler
+  dispose, chip synced after each push). The release re-verify found a
+  second bug: the main manifest lacked the INTERNET permission (stock
+  template — debug/profile only), so release builds could never sync
+  (DNS denied, masked as "Failed host lookup"). Fixed in the main
+  manifest; release push verified end-to-end (first ever successful
+  release push 14:53, chip synced 14:54); SnackBar dismiss re-verified
+  on the clean release build (visible +2s, gone +8s). The earlier
+  "release APK" 11:10 acceptance record is under correction — see
+  DECISIONS.md 2026-08-05.
 
 ## In progress
 None — all P0 plans (01–09), plan 10, and plan 11 are complete. Next work

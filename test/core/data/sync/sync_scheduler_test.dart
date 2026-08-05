@@ -1,20 +1,25 @@
 import 'dart:async';
 
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:pharmacy_saas/core/data/app_database.dart';
+import 'package:pharmacy_saas/core/data/error_log_providers.dart';
 import 'package:pharmacy_saas/core/data/error_log_repository.dart';
 import 'package:pharmacy_saas/core/data/sync/backup_staleness.dart';
 import 'package:pharmacy_saas/core/data/sync/quarantine_repository.dart';
 import 'package:pharmacy_saas/core/data/sync/remote_backup_client.dart';
+import 'package:pharmacy_saas/core/data/sync/sync_providers.dart';
 import 'package:pharmacy_saas/core/data/sync/sync_scheduler.dart';
 import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
 import 'package:pharmacy_saas/features/identity/domain/identity_repository.dart';
 import 'package:pharmacy_saas/features/identity/domain/pharmacy.dart';
 import 'package:pharmacy_saas/features/identity/domain/user_profile.dart';
+import 'package:pharmacy_saas/features/identity/presentation/identity_providers.dart';
 import 'package:pharmacy_saas/features/ledger/domain/ledger_entry.dart';
 import 'package:pharmacy_saas/features/ledger/domain/ledger_repository.dart';
+import 'package:pharmacy_saas/features/ledger/presentation/ledger_providers.dart';
 
 /// Drift-free fakes so the scheduler's timing logic is testable with
 /// fake_async (no isolate messages).
@@ -596,6 +601,57 @@ void main() {
         expect(status.status.backlogCount, 2);
         expect(status.status.staleness, BackupStaleness.stale);
 
+        scheduler.dispose();
+      });
+    },
+  );
+
+  test(
+    'status writes do not dispose the scheduler provider (regression: '
+    'provider self-watch)',
+    () {
+      fakeAsync((async) {
+        final ledger = FakeLedger();
+        final identity = FakeIdentity()..pharmacy = _pharmacy();
+        final client = FakeRemoteBackupClient();
+        final container = ProviderContainer(
+          overrides: [
+            ledgerRepositoryProvider.overrideWithValue(ledger),
+            identityRepositoryProvider.overrideWithValue(identity),
+            remoteBackupClientProvider.overrideWithValue(client),
+            quarantineRepositoryProvider.overrideWithValue(FakeQuarantine()),
+            errorLogRepositoryProvider.overrideWithValue(FakeErrorLog()),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final scheduler = container.read(syncSchedulerProvider);
+        scheduler.start();
+        async.flushMicrotasks();
+
+        // The first pass just completed (nothing pending — registration
+        // only) — and its own status.update is the poison pill: under the
+        // old wiring (ref.watch(backupStatusProvider) inside
+        // syncSchedulerProvider) every notifyListeners invalidated this
+        // provider mid-pass, running ref.onDispose → scheduler.dispose,
+        // which canceled the timers and the backlog subscription. The
+        // provider must still serve the SAME live instance.
+        expect(client.pushCalls, 0);
+        expect(
+          identical(container.read(syncSchedulerProvider), scheduler),
+          isTrue,
+          reason: 'the scheduler must not be rebuilt by its own status writes',
+        );
+
+        // And the machinery must still be live end-to-end: a new write
+        // still flows through the subscription to the debounce and out to
+        // a push.
+        ledger.addPending(_entry(2));
+        async.elapse(const Duration(seconds: 5));
+        async.flushMicrotasks();
+
+        expect(client.pushCalls, 1);
+        expect(ledger.pendingCount, 0);
         scheduler.dispose();
       });
     },

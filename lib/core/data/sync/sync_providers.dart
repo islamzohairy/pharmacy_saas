@@ -7,6 +7,7 @@ import '../error_log_providers.dart';
 import 'quarantine_repository.dart';
 import 'remote_backup_client.dart';
 import 'supabase_backup_client.dart';
+import 'sync_diag.dart';
 import 'sync_scheduler.dart';
 
 /// The remote backup surface. Override in tests with a fake client.
@@ -27,11 +28,12 @@ final backupStatusProvider = ChangeNotifierProvider<BackupStatusNotifier>(
 /// The sync scheduler. Instantiated lazily; `start()` is called once from
 /// `main()` after the provider container is created.
 final syncSchedulerProvider = Provider<SyncScheduler>((ref) {
+  syncDiag('scheduler provider build');
   final scheduler = SyncScheduler(
     ledgerRepository: ref.watch(ledgerRepositoryProvider),
     identityRepository: ref.watch(identityRepositoryProvider),
     client: ref.watch(remoteBackupClientProvider),
-    status: ref.watch(backupStatusProvider),
+    status: ref.read(backupStatusProvider),
     quarantineRepository: ref.watch(quarantineRepositoryProvider),
     errorLogRepository: ref.watch(errorLogRepositoryProvider),
   );

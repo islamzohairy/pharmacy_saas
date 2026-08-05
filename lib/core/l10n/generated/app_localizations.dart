@@ -508,6 +508,60 @@ abstract class AppLocalizations {
   /// **'تعذر النسخ الاحتياطي — سنحاول مرة أخرى'**
   String get backupError;
 
+  /// Backup indicator: unsynced entries sit past the 48h staleness threshold — warns the owner to check connectivity
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر نسخة احتياطية قديمة — تحقق من الاتصال'**
+  String get backupStale;
+
+  /// Title of the staleness explanation dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'نسخة احتياطية قديمة'**
+  String get backupStaleDialogTitle;
+
+  /// Non-destructive explanation of the stale backup state and what to do
+  ///
+  /// In ar, this message translates to:
+  /// **'هناك عمليات لم تُنسخ احتياطيًا منذ أكثر من يومين. بياناتك ما زالت محفوظة على هذا الجهاز. تأكد من اتصال الإنترنت وأبقِ التطبيق مفتوحًا بعض الوقت حتى تتم المزامنة تلقائيًا.'**
+  String get backupStaleDialogBody;
+
+  /// Dismiss button of the staleness explanation dialog
+  ///
+  /// In ar, this message translates to:
+  /// **'فهمت'**
+  String get backupStaleDialogGotIt;
+
+  /// Fatal-error screen title shown when the local database cannot open
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر فتح البيانات'**
+  String get fatalDatabaseTitle;
+
+  /// Fatal-error screen body: reassures data is intact, asks to copy the report and retry — never suggests clearing data
+  ///
+  /// In ar, this message translates to:
+  /// **'حدث خطأ غير متوقع أثناء فتح ملف البيانات المحلي. بياناتك لم تُمس — لا تحذف التطبيق أو البيانات. انسخ التقرير وأرسله للدعم، ثم أعد المحاولة.'**
+  String get fatalDatabaseBody;
+
+  /// Fatal-error screen action that copies the minimal error report to the clipboard
+  ///
+  /// In ar, this message translates to:
+  /// **'نسخ التقرير'**
+  String get fatalDatabaseCopyReport;
+
+  /// Snackbar after the fatal-error report is copied
+  ///
+  /// In ar, this message translates to:
+  /// **'تم نسخ التقرير إلى الحافظة'**
+  String get fatalDatabaseReportCopied;
+
+  /// Snackbar shown when the user-triggered retry fails again
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر فتح البيانات — حاول مرة أخرى'**
+  String get fatalDatabaseRetryFailed;
+
   /// Action/button to create a new product
   ///
   /// In ar, this message translates to:

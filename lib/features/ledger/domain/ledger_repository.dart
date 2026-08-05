@@ -48,6 +48,13 @@ abstract interface class LedgerRepository {
   /// and the "last backed up" indicator.
   Stream<int> watchUnsyncedCount({required int pharmacyId});
 
+  /// One-shot bounded read of the oldest row still waiting for backup
+  /// (`null` when nothing is unsynced). Drives backup-staleness
+  /// evaluation on scheduler state changes — deliberately a one-shot
+  /// query, not a stream (PLANS/11 §4.2; the indicator must not add a
+  /// new full-scan stream).
+  Future<DateTime?> oldestUnsyncedAt({required int pharmacyId});
+
   /// Stamps `synced_at` on the given ids. Sync bookkeeping only — see
   /// the class doc. Never touches business fields.
   Future<void> markSynced({

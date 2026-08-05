@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:mcp_toolkit/mcp_toolkit.dart';
 
 import 'app.dart';
@@ -12,6 +13,7 @@ import 'core/data/database_providers.dart';
 import 'core/data/error_log_capture.dart';
 import 'core/data/sync/sync_providers.dart';
 import 'core/router/app_router.dart';
+import 'core/widgets/database_fatal_error_screen.dart';
 import 'features/identity/data/identity_repository_impl.dart';
 
 /// The app runs inside a guarded zone so that async/zone errors that
@@ -36,7 +38,55 @@ Future<void> _startup() async {
 
   await SupabaseBootstrap.initializeIfConfigured();
 
-  final database = await openAppDatabase();
+  final AppDatabase database;
+  try {
+    database = await openAppDatabase();
+  } catch (error, stack) {
+    // The local DB cannot open (corrupt file, lost encryption key, failing
+    // migration). The file is NEVER deleted/recreated by the open path
+    // (PLANS/11 §4.3), so data is intact — the fatal screen only reassures,
+    // exports a minimal report, and retries on the user's tap. Error
+    // capture isn't installed (it needs the DB), so this screen IS the
+    // fallback surface; the zone guard also still tries to log it.
+    reportZoneErrors(error, stack);
+    runApp(
+      DatabaseFatalErrorApp(
+        report: _databaseOpenReport(error, stack),
+        retry: _retryOpen,
+      ),
+    );
+    return;
+  }
+
+  await _runApp(database);
+}
+
+/// Retry path for the fatal-error screen: re-attempt the open, then launch
+/// the real app on success. Throws on failure so the screen can surface it
+/// (no silent loops).
+Future<void> _retryOpen() async {
+  await _runApp(await openAppDatabase());
+}
+
+/// Minimal plain-text artifact for support: timestamp, error type/message
+/// (truncated), and the DB path. No ledger content — the DB is unreachable
+/// at this point, so none can leak (PLANS/11 §11).
+String _databaseOpenReport(Object error, StackTrace stack) {
+  final message = error.toString();
+  final truncated = message.length > 500 ? message.substring(0, 500) : message;
+  final date = DateFormat('d/M/yyyy HH:mm').format(DateTime.now());
+  return 'تقرير خطأ فتح البيانات\n'
+      '----\n'
+      '[$date] ${error.runtimeType}\n'
+      '$truncated\n'
+      'stack:\n'
+      '${stack.toString().split('\n').take(8).join('\n')}';
+}
+
+/// The tail of startup — everything that needs a successfully opened
+/// database. Reused by the fatal screen's retry path so a recovery lands in
+/// the same state as a clean boot.
+Future<void> _runApp(AppDatabase database) async {
   installErrorLogCapture(database);
 
   final container = ProviderContainer(

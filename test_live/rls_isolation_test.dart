@@ -22,7 +22,9 @@
 // in supabase/tests/rls_isolation_test.sql.
 //
 // Note: anon has no delete grants, so the rows created here stay in the
-// project. Run against a throwaway project or accept test tenants.
+// project — the SQL gate (supabase/tests/rls_isolation_test.sql, section
+// 10) sweeps `live-test-%` tenants at the next gate run; the deploy gate
+// runs both, so residue is cleaned as part of the same gate.
 
 import 'dart:math';
 
@@ -172,6 +174,50 @@ void main() {
           contains('already registered'),
         ),
       ),
+    );
+
+    // 6) Real app payload shape (Plan 11-H, mirrors gate section 9): the
+    //    app always sends party ids — a sale with product_id + profile_id,
+    //    an expense with profile_id + category. Requires 0003 applied;
+    //    before it these pushes 409'd with SQLSTATE 23503. This section
+    //    asserts the client contract for the exact payload that failed.
+    final tokenC = token();
+    final uuidC = uuid();
+    final pharmacyC = await client.rpc<int>('register_device', params: {
+      'p_token': tokenC,
+      'p_pharmacy_uuid': uuidC,
+      'p_pharmacy_name': 'pharmacy-c',
+      'p_currency': 'EGP',
+    });
+    expect(pharmacyC, isNotNull);
+
+    final realShape = await client.rpc<int>('push_ledger_entries', params: {
+      'p_token': tokenC,
+      'p_entries': [
+        {
+          'id': 101,
+          'type': 'sale',
+          'amount_minor': 1500,
+          'product_id': 1,
+          'profile_id': 1,
+          'occurred_at': '2026-08-05T11:00:00Z',
+          'note': 'real-shape sale',
+        },
+        {
+          'id': 102,
+          'type': 'expense',
+          'amount_minor': 300,
+          'profile_id': 1,
+          'category': 'rent',
+          'occurred_at': '2026-08-05T11:01:00Z',
+          'note': 'real-shape expense',
+        },
+      ],
+    });
+    expect(
+      realShape,
+      2,
+      reason: 'real app payload with party ids must persist after 0003',
     );
   }, timeout: const Timeout(Duration(minutes: 2)));
 }

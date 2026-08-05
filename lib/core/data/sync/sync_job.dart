@@ -1,6 +1,12 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../../features/ledger/domain/ledger_entry.dart';
 import '../../../../features/ledger/domain/ledger_repository.dart';
+import '../error_log_repository.dart';
+import 'quarantine_repository.dart';
 import 'remote_backup_client.dart';
+import 'sync_diag.dart';
+import 'sync_error_classification.dart';
 
 /// Everything the sync job needs to identify the device and its tenant.
 /// Assembled by the scheduler from the identity layer — the job itself
@@ -64,10 +70,17 @@ class SyncResult {
 /// suggested retry delay so the scheduler can back off. UI is never
 /// blocked — the caller decides how to schedule this.
 class SyncJob {
-  SyncJob({required this.ledgerRepository, required this.client});
+  SyncJob({
+    required this.ledgerRepository,
+    required this.client,
+    required this.quarantineRepository,
+    required this.errorLogRepository,
+  });
 
   final LedgerRepository ledgerRepository;
   final RemoteBackupClient client;
+  final QuarantineRepository quarantineRepository;
+  final ErrorLogRepository errorLogRepository;
 
   static const _batchSize = 200;
   static const _initialRetryDelay = Duration(seconds: 5);
@@ -96,31 +109,99 @@ class SyncJob {
       }
 
       var pushed = 0;
+      final excludedIds = await quarantineRepository.quarantinedEntryIds(
+        pharmacyId: pharmacyId,
+      );
       while (true) {
         final batch = await ledgerRepository.unsyncedEntries(
           pharmacyId: pharmacyId,
           limit: _batchSize,
+          excludeIds: excludedIds.toList(),
         );
         if (batch.isEmpty) break;
-        await client.pushLedgerEntries(
-          deviceToken: credentials.deviceToken,
-          entries: batch.map(_toRemote).toList(),
-        );
-        await ledgerRepository.markSynced(
-          pharmacyId: pharmacyId,
-          ids: batch.map((e) => e.id).toList(),
-          at: DateTime.now().toUtc(),
-        );
-        pushed += batch.length;
+        try {
+          await client.pushLedgerEntries(
+            deviceToken: credentials.deviceToken,
+            entries: batch.map(_toRemote).toList(),
+          );
+          await ledgerRepository.markSynced(
+            pharmacyId: pharmacyId,
+            ids: batch.map((e) => e.id).toList(),
+            at: DateTime.now().toUtc(),
+          );
+          pushed += batch.length;
+        } catch (error) {
+          syncDiag(
+            'SYNC_DIAG push failure: '
+            'error=${_diagErrorSummary(error)}',
+          );
+          final classification = classifySyncError(error);
+          if (classification == SyncFailureClass.transient) {
+            _consecutiveFailures++;
+            return SyncResult.failure(error, _nextRetryDelay());
+          }
+          if (classification == SyncFailureClass.alreadyExists) {
+            await ledgerRepository.markSynced(
+              pharmacyId: pharmacyId,
+              ids: batch.map((e) => e.id).toList(),
+              at: DateTime.now().toUtc(),
+            );
+            pushed += batch.length;
+            continue;
+          }
+          await _quarantine(
+            pharmacyId: pharmacyId,
+            batch: batch,
+            error: error,
+          );
+          // Newly quarantined rows join the exclusion set so later
+          // batches in this pass skip them too (defense-in-depth; the
+          // SQL filter already keeps them out of future fetches).
+          excludedIds.addAll(batch.map((e) => e.id));
+          continue;
+        }
       }
 
       _consecutiveFailures = 0;
       return SyncResult.success(pushed: pushed);
     } catch (error) {
+      syncDiag('SYNC_DIAG runOnce failure: error=${_diagErrorSummary(error)}');
       _consecutiveFailures++;
       final delay = _nextRetryDelay();
       return SyncResult.failure(error, delay);
     }
+  }
+
+  /// SYNC_DIAG content rule: error code (PostgrestException) or runtime
+  /// type only — never the raw message (may carry ledger content). A
+  /// non-Postgrest error (socket/OS/TLS) carries no ledger content, so its
+  /// full message is safe to print and needed to triage network failures.
+  String _diagErrorSummary(Object error) {
+    if (error is PostgrestException) return 'code=${error.code ?? 'unknown'}';
+    return '${error.runtimeType}: $error';
+  }
+
+  Future<void> _quarantine({
+    required int pharmacyId,
+    required List<LedgerEntry> batch,
+    required Object error,
+  }) async {
+    final code = error is PostgrestException ? error.code ?? 'unknown' : 'unknown';
+    await quarantineRepository.quarantine(
+      pharmacyId: pharmacyId,
+      entryIds: batch.map((e) => e.id).toList(),
+      code: code,
+      message: error.toString(),
+    );
+    // ONE error-log record per quarantine event — the visibility for a
+    // batch that will never be retried. A logging failure must never
+    // fail the sync pass (same semantics as the capture layer).
+    try {
+      await errorLogRepository.record(
+        errorType: 'SyncQuarantine',
+        message: 'Quarantined ${batch.length} entries (SQLSTATE $code): $error',
+      );
+    } catch (_) {}
   }
 
   Duration _nextRetryDelay() {

@@ -1,13 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../features/identity/domain/identity_repository.dart';
 import '../../../features/identity/domain/pharmacy.dart';
 import '../../../features/ledger/domain/ledger_repository.dart';
 import '../error_log_capture.dart';
+import '../error_log_repository.dart';
 import 'backup_staleness.dart';
+import 'quarantine_repository.dart';
 import 'remote_backup_client.dart';
+import 'sync_diag.dart';
 import 'sync_job.dart';
 
 /// What the in-app "last backed up" indicator renders.
@@ -71,12 +75,21 @@ class SyncScheduler {
     required this.identityRepository,
     required this.client,
     required this.status,
-  }) : _job = SyncJob(ledgerRepository: ledgerRepository, client: client);
+    required this.quarantineRepository,
+    required this.errorLogRepository,
+  }) : _job = SyncJob(
+         ledgerRepository: ledgerRepository,
+         client: client,
+         quarantineRepository: quarantineRepository,
+         errorLogRepository: errorLogRepository,
+       );
 
   final LedgerRepository ledgerRepository;
   final IdentityRepository identityRepository;
   final RemoteBackupClient client;
   final BackupStatusNotifier status;
+  final QuarantineRepository quarantineRepository;
+  final ErrorLogRepository errorLogRepository;
 
   static const _periodicInterval = Duration(seconds: 60);
   static const _writeDebounce = Duration(seconds: 5);
@@ -93,17 +106,20 @@ class SyncScheduler {
   /// Idempotent; safe to call once at app start.
   void start() {
     if (_periodicTimer != null) return;
+    syncDiag('start(): creating periodic timer');
     _periodicTimer = Timer.periodic(_periodicInterval, (_) => _run());
     _run();
   }
 
   /// Called from the app-lifecycle observer on foreground resume.
   Future<void> onAppResumed() async {
+    syncDiag('onAppResumed');
     _debounceTimer?.cancel();
     await _run();
   }
 
   void dispose() {
+    syncDiag('scheduler dispose: canceling timers');
     _periodicTimer?.cancel();
     _debounceTimer?.cancel();
     _retryTimer?.cancel();
@@ -111,6 +127,7 @@ class SyncScheduler {
   }
 
   Future<void> _run() async {
+    syncDiag('_run: entered (running=$_running, configured=${client.isConfigured})');
     if (_running || !client.isConfigured) return;
     _running = true;
     try {
@@ -121,6 +138,7 @@ class SyncScheduler {
         return; // onboarding not complete — nothing to back up yet.
       }
       _ensureBacklogSubscription(pharmacy.id);
+      syncDiag('backlog subscription ensured');
 
       final registered = await identityRepository.isDeviceRegistered();
       final credentials = SyncCredentials(
@@ -134,6 +152,7 @@ class SyncScheduler {
         return; // pre-plan-03 installs lack the binding key; skip safely.
       }
 
+      final previousStatus = status.status;
       status.update(
         BackupStatus(
           state: BackupSyncState.syncing,
@@ -148,11 +167,15 @@ class SyncScheduler {
         credentials: credentials,
         onRegistered: identityRepository.markDeviceRegistered,
       );
+      syncDiag(
+        'pass done: pushed=${result.pushed} '
+        'error=${_errorSummary(result.error)} skip=${result.isSkipped}',
+      );
 
-      if (result.isSkipped) return;
-
-      if (result.isSuccess) {
-        if (result.pushed > 0 || !registered) {
+      if (result.isSkipped) {
+        if (!registered) {
+          // First pass: registration completed but there was nothing to
+          // push yet — report synced (original semantics).
           status.update(
             BackupStatus(
               state: BackupSyncState.synced,
@@ -160,7 +183,38 @@ class SyncScheduler {
               backlogCount: 0,
             ),
           );
+        } else {
+          // Genuine no-op pass (already registered, nothing to push):
+          // derive the last successful push from stamped entries — a
+          // relaunch must show the real last-sync time, not "never
+          // synced" or a lingering "syncing" (observed live 2026-08-05
+          // after the 0003 fix).
+          final lastSyncedAt = await ledgerRepository.lastSyncedAt(
+            pharmacyId: pharmacy.id,
+          );
+          if (lastSyncedAt != null) {
+            status.update(
+              BackupStatus(
+                state: BackupSyncState.synced,
+                lastSyncedAt: lastSyncedAt,
+                backlogCount: 0,
+              ),
+            );
+          } else {
+            status.update(previousStatus);
+          }
         }
+        return;
+      }
+
+      if (result.isSuccess) {
+        status.update(
+          BackupStatus(
+            state: BackupSyncState.synced,
+            lastSyncedAt: DateTime.now(),
+            backlogCount: 0,
+          ),
+        );
         _retryTimer?.cancel();
       } else {
         status.update(
@@ -216,25 +270,38 @@ class SyncScheduler {
     );
   }
 
+  /// SYNC_DIAG content rule: error code (PostgrestException) or runtime
+  /// type only — never the raw message (may carry ledger content).
+  String _errorSummary(Object? error) {
+    if (error == null) return 'null';
+    if (error is PostgrestException) return 'code=${error.code ?? 'unknown'}';
+    return error.runtimeType.toString();
+  }
+
   void _ensureBacklogSubscription(int pharmacyId) {
     if (_backlogSubscription != null) return;
     _backlogSubscription = ledgerRepository
         .watchUnsyncedCount(pharmacyId: pharmacyId)
         .listen((count) {
+          syncDiag('backlog count event: $count');
           _debounceTimer?.cancel();
+          syncDiag('debounce armed/reset: count=$count');
           _debounceTimer = Timer(_writeDebounce, () async {
-            status.update(
-              BackupStatus(
-                state: status.status.state,
-                lastSyncedAt: status.status.lastSyncedAt,
-                backlogCount: count,
-                lastError: status.status.lastError,
-                staleness: status.status.staleness,
-              ),
-            );
-            await _refreshStaleness(pharmacyId);
-            unawaited(_run());
-          });
+          syncDiag(
+            'debounce fired: count=$count state=${status.status.state}',
+          );
+          status.update(
+            BackupStatus(
+              state: status.status.state,
+              lastSyncedAt: status.status.lastSyncedAt,
+              backlogCount: count,
+              lastError: status.status.lastError,
+              staleness: status.status.staleness,
+            ),
+          );
+          await _refreshStaleness(pharmacyId);
+          unawaited(_run());
         });
+    });
   }
 }

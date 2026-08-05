@@ -1,23 +1,35 @@
 import 'dart:async';
 
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:pharmacy_saas/core/data/app_database.dart';
+import 'package:pharmacy_saas/core/data/error_log_providers.dart';
+import 'package:pharmacy_saas/core/data/error_log_repository.dart';
 import 'package:pharmacy_saas/core/data/sync/backup_staleness.dart';
+import 'package:pharmacy_saas/core/data/sync/quarantine_repository.dart';
 import 'package:pharmacy_saas/core/data/sync/remote_backup_client.dart';
+import 'package:pharmacy_saas/core/data/sync/sync_providers.dart';
 import 'package:pharmacy_saas/core/data/sync/sync_scheduler.dart';
 import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
 import 'package:pharmacy_saas/features/identity/domain/identity_repository.dart';
 import 'package:pharmacy_saas/features/identity/domain/pharmacy.dart';
 import 'package:pharmacy_saas/features/identity/domain/user_profile.dart';
+import 'package:pharmacy_saas/features/identity/presentation/identity_providers.dart';
 import 'package:pharmacy_saas/features/ledger/domain/ledger_entry.dart';
 import 'package:pharmacy_saas/features/ledger/domain/ledger_repository.dart';
+import 'package:pharmacy_saas/features/ledger/presentation/ledger_providers.dart';
 
 /// Drift-free fakes so the scheduler's timing logic is testable with
 /// fake_async (no isolate messages).
 class FakeLedger implements LedgerRepository {
   final List<LedgerEntry> _pending = [];
   final _unsyncedController = StreamController<int>.broadcast();
+
+  /// Newest stamp written by [markSynced], for the derived
+  /// [lastSyncedAt] read — `null` until anything was pushed.
+  DateTime? lastSynced;
 
   /// Synchronously inspectable — avoids `completion(...)` matchers, whose
   /// continuations freeze once the fakeAsync zone exits.
@@ -26,6 +38,12 @@ class FakeLedger implements LedgerRepository {
   void addPending(LedgerEntry entry) {
     _pending.add(entry);
     _unsyncedController.add(_pending.length);
+  }
+
+  void stampAll(DateTime at) {
+    lastSynced = at;
+    _pending.clear();
+    _unsyncedController.add(0);
   }
 
   @override
@@ -61,7 +79,9 @@ class FakeLedger implements LedgerRepository {
   Future<List<LedgerEntry>> unsyncedEntries({
     required int pharmacyId,
     int limit = 200,
-  }) async => _pending.take(limit).toList();
+    List<int> excludeIds = const [],
+  }) async =>
+      _pending.where((e) => !excludeIds.contains(e.id)).take(limit).toList();
 
   @override
   Stream<int> watchUnsyncedCount({required int pharmacyId}) =>
@@ -72,6 +92,10 @@ class FakeLedger implements LedgerRepository {
     if (_pending.isEmpty) return null;
     return _pending.map((e) => e.occurredAt).reduce((a, b) => a.isBefore(b) ? a : b);
   }
+
+  @override
+  Future<DateTime?> lastSyncedAt({required int pharmacyId}) async =>
+      lastSynced;
 
   @override
   Future<void> markSynced({
@@ -200,6 +224,49 @@ class FakeRemoteBackupClient implements RemoteBackupClient {
   }
 }
 
+/// Quarantine/error-log no-ops for the scheduler timing tests — none of
+/// them provoke permanent failures, so the fakes record nothing.
+class FakeQuarantine implements QuarantineRepository {
+  FakeQuarantine({this.excluded = const {}});
+
+  /// Which entry ids the sync job must treat as quarantined.
+  final Set<int> excluded;
+
+  @override
+  Future<void> quarantine({
+    required int pharmacyId,
+    required List<int> entryIds,
+    required String code,
+    String? message,
+  }) async {}
+
+  @override
+  Future<Set<int>> quarantinedEntryIds({required int pharmacyId}) async =>
+      excluded;
+}
+
+class FakeErrorLog implements ErrorLogRepository {
+  final List<String> records = [];
+
+  @override
+  Future<void> record({
+    required String errorType,
+    required String message,
+    String? stackTrace,
+  }) async {
+    records.add('$errorType: $message');
+  }
+
+  @override
+  Future<void> markAllReported() async {}
+
+  @override
+  Future<List<StoredErrorLogEntry>> unreportedEntries() async => [];
+
+  @override
+  Stream<int> watchUnreportedCount() => const Stream.empty();
+}
+
 void main() {
   test('unconfigured backend: start() is a quiet no-op', () {
     fakeAsync((async) {
@@ -209,6 +276,8 @@ void main() {
         identityRepository: FakeIdentity()..pharmacy = _pharmacy(),
         client: FakeRemoteBackupClient(configured: false),
         status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
       );
       scheduler.start();
       async.elapse(const Duration(minutes: 2));
@@ -225,6 +294,8 @@ void main() {
         identityRepository: FakeIdentity(),
         client: FakeRemoteBackupClient(),
         status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
       );
       scheduler.start();
       async.elapse(const Duration(minutes: 2));
@@ -245,6 +316,8 @@ void main() {
         identityRepository: identity,
         client: client,
         status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
       );
 
       scheduler.start();
@@ -255,6 +328,57 @@ void main() {
       expect(ledger.pendingCount, 0);
       expect(status.status.state, BackupSyncState.synced);
       expect(status.status.lastSyncedAt, isNotNull);
+      scheduler.dispose();
+    });
+  });
+
+  test('no-op pass (registered, nothing pending) shows the derived last '
+      'sync time instead of lingering at syncing', () {
+    fakeAsync((async) {
+      final ledger = FakeLedger();
+      ledger.stampAll(DateTime(2026, 8, 5, 11, 10));
+      final identity = FakeIdentity()..pharmacy = _pharmacy()..registered = true;
+      final client = FakeRemoteBackupClient();
+      final status = BackupStatusNotifier();
+      final scheduler = SyncScheduler(
+        ledgerRepository: ledger,
+        identityRepository: identity,
+        client: client,
+        status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
+      );
+
+      scheduler.start();
+      async.flushMicrotasks();
+
+      expect(client.registerCalls, 0);
+      expect(client.pushCalls, 0);
+      expect(status.status.state, BackupSyncState.synced);
+      expect(status.status.lastSyncedAt, DateTime(2026, 8, 5, 11, 10));
+      scheduler.dispose();
+    });
+  });
+
+  test('no-op pass with nothing ever stamped keeps the prior state', () {
+    fakeAsync((async) {
+      final ledger = FakeLedger();
+      final identity = FakeIdentity()..pharmacy = _pharmacy()..registered = true;
+      final client = FakeRemoteBackupClient();
+      final status = BackupStatusNotifier();
+      final scheduler = SyncScheduler(
+        ledgerRepository: ledger,
+        identityRepository: identity,
+        client: client,
+        status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
+      );
+
+      scheduler.start();
+      async.flushMicrotasks();
+
+      expect(status.status.state, BackupSyncState.neverSynced);
       scheduler.dispose();
     });
   });
@@ -270,6 +394,8 @@ void main() {
         identityRepository: identity,
         client: client,
         status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
       );
 
       scheduler.start();
@@ -302,6 +428,8 @@ void main() {
         identityRepository: identity,
         client: client,
         status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
       );
 
       scheduler.start();
@@ -333,6 +461,8 @@ void main() {
         identityRepository: identity,
         client: client,
         status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
       );
 
       scheduler.start();
@@ -364,6 +494,8 @@ void main() {
         identityRepository: identity,
         client: client,
         status: status,
+        quarantineRepository: FakeQuarantine(),
+        errorLogRepository: FakeErrorLog(),
       );
 
       scheduler.start();
@@ -387,10 +519,147 @@ void main() {
       scheduler.dispose();
     });
   });
+
+  test(
+    'all entries quarantined: chip shows a sane never-synced state and '
+    'staleness still climbs (staff-review condition 3)',
+    () {
+      fakeAsync((async) {
+        final ledger = FakeLedger();
+        final identity = FakeIdentity()..pharmacy = _pharmacy()..registered = true;
+        final client = FakeRemoteBackupClient();
+        final status = BackupStatusNotifier();
+        final quarantine = FakeQuarantine(excluded: {1, 2});
+        final scheduler = SyncScheduler(
+          ledgerRepository: ledger,
+          identityRepository: identity,
+          client: client,
+          status: status,
+          quarantineRepository: quarantine,
+          errorLogRepository: FakeErrorLog(),
+        );
+
+        scheduler.start();
+        async.flushMicrotasks();
+
+        // The quarantine empties the push candidates; nothing was ever
+        // stamped, so the chip never claims a sync.
+        ledger.addPending(_entry(1, occurredAt: _oldDate()));
+        ledger.addPending(_entry(2, occurredAt: _oldDate()));
+        async.elapse(const Duration(seconds: 5));
+        async.flushMicrotasks();
+        async.elapse(const Duration(seconds: 1));
+        async.flushMicrotasks();
+
+        expect(client.pushCalls, 0);
+        expect(status.status.state, BackupSyncState.neverSynced);
+        expect(status.status.backlogCount, 2);
+        expect(status.status.staleness, BackupStaleness.stale);
+
+        scheduler.dispose();
+      });
+    },
+  );
+
+  test(
+    'quarantined entries are excluded from push candidates but counted in '
+    'the backlog (staff-review condition 3)',
+    () {
+      fakeAsync((async) {
+        final ledger = FakeLedger();
+        final identity = FakeIdentity()..pharmacy = _pharmacy()..registered = true;
+        final client = FakeRemoteBackupClient();
+        final status = BackupStatusNotifier();
+        final quarantine = FakeQuarantine(excluded: {2, 3});
+        final scheduler = SyncScheduler(
+          ledgerRepository: ledger,
+          identityRepository: identity,
+          client: client,
+          status: status,
+          quarantineRepository: quarantine,
+          errorLogRepository: FakeErrorLog(),
+        );
+
+        scheduler.start();
+        async.flushMicrotasks();
+
+        // A new write appears: two entries quarantined, one pushable.
+        ledger.addPending(_entry(1, occurredAt: _oldDate()));
+        ledger.addPending(_entry(2, occurredAt: _oldDate()));
+        ledger.addPending(_entry(3, occurredAt: _oldDate()));
+        async.elapse(const Duration(seconds: 5));
+        async.flushMicrotasks();
+
+        // Exactly one push — the quarantined entries were never re-sent.
+        expect(client.pushCalls, 1);
+        expect(ledger.pendingCount, 2);
+        expect(status.status.state, BackupSyncState.synced);
+
+        // The quarantined backlog is still visible and still stale.
+        async.elapse(const Duration(seconds: 5));
+        async.flushMicrotasks();
+        expect(status.status.backlogCount, 2);
+        expect(status.status.staleness, BackupStaleness.stale);
+
+        scheduler.dispose();
+      });
+    },
+  );
+
+  test(
+    'status writes do not dispose the scheduler provider (regression: '
+    'provider self-watch)',
+    () {
+      fakeAsync((async) {
+        final ledger = FakeLedger();
+        final identity = FakeIdentity()..pharmacy = _pharmacy();
+        final client = FakeRemoteBackupClient();
+        final container = ProviderContainer(
+          overrides: [
+            ledgerRepositoryProvider.overrideWithValue(ledger),
+            identityRepositoryProvider.overrideWithValue(identity),
+            remoteBackupClientProvider.overrideWithValue(client),
+            quarantineRepositoryProvider.overrideWithValue(FakeQuarantine()),
+            errorLogRepositoryProvider.overrideWithValue(FakeErrorLog()),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final scheduler = container.read(syncSchedulerProvider);
+        scheduler.start();
+        async.flushMicrotasks();
+
+        // The first pass just completed (nothing pending — registration
+        // only) — and its own status.update is the poison pill: under the
+        // old wiring (ref.watch(backupStatusProvider) inside
+        // syncSchedulerProvider) every notifyListeners invalidated this
+        // provider mid-pass, running ref.onDispose → scheduler.dispose,
+        // which canceled the timers and the backlog subscription. The
+        // provider must still serve the SAME live instance.
+        expect(client.pushCalls, 0);
+        expect(
+          identical(container.read(syncSchedulerProvider), scheduler),
+          isTrue,
+          reason: 'the scheduler must not be rebuilt by its own status writes',
+        );
+
+        // And the machinery must still be live end-to-end: a new write
+        // still flows through the subscription to the debounce and out to
+        // a push.
+        ledger.addPending(_entry(2));
+        async.elapse(const Duration(seconds: 5));
+        async.flushMicrotasks();
+
+        expect(client.pushCalls, 1);
+        expect(ledger.pendingCount, 0);
+        scheduler.dispose();
+      });
+    },
+  );
 }
 
-Pharmacy _pharmacy() => Pharmacy(
-  id: 1,
+Pharmacy _pharmacy({int id = 1}) => Pharmacy(
+  id: id,
   name: 'صيدلية النور',
   currency: 'EGP',
   createdAt: DateTime(2026, 8, 2),
@@ -404,3 +673,7 @@ LedgerEntry _entry(int id, {DateTime? occurredAt}) => LedgerEntry(
   amountMinor: 100,
   occurredAt: occurredAt ?? DateTime(2026, 8, 2, 10),
 );
+
+/// Far past the staleness threshold (49h, matching the existing stale
+/// tests) so any backlog drives the chip stale.
+DateTime _oldDate() => DateTime.now().subtract(const Duration(hours: 49));

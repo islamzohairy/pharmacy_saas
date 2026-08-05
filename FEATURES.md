@@ -29,6 +29,14 @@
   Verified against the live project (migration applied; e2e + 8 server
   checks passed). Unsynced-only ledger backup — products/suppliers/
   customers stay local by plan scope.
+  **CORRECTION (2026-08-05, Plan 11-H):** the gate runs (incl. the
+  plan-10 deploy gate) proved RLS isolation but never the app's real
+  wire payload — their push payloads omit party ids, so every real app
+  push 409'd on the four never-populated reference FKs (fixed by remote
+  migration `0003_ledger_party_reference_fks.sql`; evidence in
+  DECISIONS.md 2026-08-05). The gate now pushes a realistic app payload,
+  asserts the post-0003 FK count, and is self-cleaning (no residue per
+  run).
 - 04_FINANCIAL_LEDGER_PLAN — financial domain layer: four record
   use-cases (`recordDraw`, `recordSupplierDebt`, `recordCustomerDebt`,
   `recordRepayment` — validated, attributed, append-only) and three pure
@@ -131,7 +139,35 @@
   stale local anon key — config issue, not app code), cold-restart data
   persistence. Stale-state runtime repro blocked by emulator environment
   (no adb root, `-qemu -rtc` unsupported) — covered by unit/widget
-  tests instead.
+  tests instead. The runtime backup failure seen here was the remote FK
+  bug (409 23503 — the anon key was valid all along; the "401 stale key"
+  reading was RLS denial on direct table access, misread). Fixed
+  2026-08-05 via migration 0003 + deploy gate; on-device acceptance:
+  error chip → synced ("آخر نسخة: 5/8/2026 11:10"), entries stamped
+  remotely. Plan 11-H also fixed the indicator's no-op-pass bug: an
+  already-registered pass with nothing to push left the chip at
+  "syncing" forever on relaunch — the scheduler now derives the real
+  last-sync time from stamped entries (`LedgerRepository.lastSyncedAt`).
+  Plan 11-H Phase 1 (write-triggered sync acceptance) found and fixed the
+  scheduler self-disposal bug: `syncSchedulerProvider` `ref.watch`ed the
+  status provider it writes, so the first pass's own status update
+  invalidated and disposed the scheduler (dead timers, chip stuck at
+  syncing). Fixed via `ref.read` (sync_providers.dart) + regression test
+  (RED on old wiring, GREEN on fix); DECISIONS.md 2026-08-05 has the
+  root-cause entry and the never-watch-what-you-write rule. Phase 1 gate
+  (sale→debounce, idle→periodic, relaunch→resume pushes on the emulator)
+  PASSED on the fixed build (2026-08-05: 3 trigger paths, no scheduler
+  dispose, chip synced after each push). The release re-verify found a
+  second bug: the main manifest lacked the INTERNET permission (stock
+  template — debug/profile only), so release builds could never sync
+  (DNS denied, masked as "Failed host lookup"). Fixed in the main
+  manifest; release push verified end-to-end (first ever successful
+  release push 14:53, chip synced 14:54); SnackBar dismiss re-verified
+  on the clean release build (visible +2s, gone +8s). The earlier
+  "release APK" 11:10 acceptance record is corrected (definitive): that
+  acceptance was verified on a DEBUG build; release builds could not sync
+  until the INTERNET manifest fix (first successful release-mode sync
+  14:53) — see DECISIONS.md 2026-08-05.
 
 ## In progress
 None — all P0 plans (01–09), plan 10, and plan 11 are complete. Next work

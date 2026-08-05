@@ -231,9 +231,57 @@ Runtime-verified on the emulator (onboarding → dashboard, product/sale
 entry, live aggregation, non-destructive error indicator, cold-restart
 persistence); the stale-state runtime repro is blocked by the emulator
 environment (no adb root, `-qemu -rtc` unsupported on this image) and is
-covered by unit/widget tests. Note: the local `.env.local` anon key
-returns 401 against its Supabase project — runtime sync failures in local
-dev builds are expected until it's regenerated.
+covered by unit/widget tests. SUPABASE CREDENTIALS: `.env.local` anon key is
+VALID for project `vhzvvveikzmuzxzrgbsr` (byte-verified in the release APK;
+register_device RPC returns 200) — the earlier "401 = invalid key" note was
+wrong (that 401 is RLS denial on direct table access, by design).
+REMOTE BACKUP FIXED (2026-08-05, Plan 11-H, staff-engineer approved): the
+FK-23503 bug is CLOSED — remote migration `0003_ledger_party_reference_fks.sql`
+applied to the live project (drops the four never-populated reference FKs;
+`pharmacy_id` FK + type CHECK + RLS untouched); deploy gate re-run green
+with the upgraded gate (FK-count assertion + real app payload push + self-
+cleaning sweep — the gate now tests the app's actual wire shape, which the
+08-02/08-04 gate runs never did); on-device acceptance: chip error →
+"آخر نسخة: 5/8/2026 11:10", both sales stamped remotely, staleness healthy.
+Indicator no-op bug fixed in the same pass (relaunch no longer lingers at
+"syncing"; last-sync time derived via new `LedgerRepository.lastSyncedAt`).
+Live project state (final, 2026-08-05, verified via landscape query after
+cleanup): exactly TWO tenants — 14 (`PharmacyTest`, uuid
+`ae1e4e62-8974-4fac-bee2-383d4d3424a0`, REAL pilot tenant, 2 ledger
+entries) and 25 (`9b2b5683-b21a-47ee-8d31-667c460aeeb1`, the 5556
+emulator test tenant, 9 entries — 5 pre-gate + the 4 Plan 11-H Phase 1
+gate pushes; KEPT, disposal trigger = 5556 retirement). Probe tenant 24
+deleted (2 entries/1 device/1 pharmacy). Remote timestamp axis is
+`ledger_entries.occurred_at` — the RPC never writes remote `synced_at`
+(local Drift stamps it client-side post-push; that's the unsynced/
+quarantine axis). Phase 2 (permanent-failure
+quarantine, schemaVersion 6) is designed and deferred pending Phase 1
+sign-off — see DECISIONS.md 2026-08-05.
+
+SYNC SCHEDULER SELF-DISPOSAL FIXED (2026-08-05, staff-engineer approved):
+`syncSchedulerProvider` self-invalidated on the first pass — it `ref.watch`ed
+`backupStatusProvider`, so its own `status.update(syncing)` fired
+`notifyListeners` → dependent invalidation → `ref.onDispose(scheduler.dispose)`
+cancelled every timer + the backlog subscription; with no listeners the
+provider never rebuilt (dead scheduler, all symptoms). FIX: `ref.read` in
+`sync_providers.dart` (the scheduler never watches a provider it writes).
+RULE this introduced: never `ref.watch` a provider your own execution path
+writes to; the write-path must use `ref.read` (Riverpod 3 blocks read-in-
+build — revisit on upgrade). Regression test in `sync_scheduler_test.dart`
+verified RED on the old wiring, GREEN on the fix. Diagnostics stay: gated
+`[SYNC_DIAG]` prints in `sync_diag.dart` (`kSyncDiag`, off in release).
+
+RELEASE MANIFEST FIX (2026-08-05, same pass): `INTERNET` was missing from
+`android/app/src/main/AndroidManifest.xml` (stock template has it only in
+debug/profile) — release builds could NEVER resolve DNS or open sockets
+(netd masks the denial as "Failed host lookup, errno 7"). Debug-only
+sync evidence was therefore always suspect until the permission was added
+to MAIN; the 11:10 "release APK" acceptance record is under correction
+(see DECISIONS.md 2026-08-05) — the push came from a debug build. Release
+sync now verified end-to-end (first successful release push 14:53,
+chip synced 14:54). Check the MAIN manifest whenever a new capability
+needs network in release — the template's debug-only INTERNET is a
+trap.
 
 ## Tooling (installed 2026-08-02, AI Engineering OS full setup)
 - Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`

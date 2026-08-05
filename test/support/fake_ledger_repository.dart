@@ -43,6 +43,7 @@ class FakeLedgerRepository implements LedgerRepository {
   Future<List<LedgerEntry>> unsyncedEntries({
     required int pharmacyId,
     int limit = 200,
+    List<int> excludeIds = const [],
   }) {
     throw UnimplementedError('unsyncedEntries is not used by the use-cases');
   }
@@ -77,5 +78,10 @@ class FakeLedgerRepository implements LedgerRepository {
   @override
   Future<DateTime?> oldestUnsyncedAt({required int pharmacyId}) {
     throw UnimplementedError('oldestUnsyncedAt is not used by the use-cases');
+  }
+
+  @override
+  Future<DateTime?> lastSyncedAt({required int pharmacyId}) {
+    throw UnimplementedError('lastSyncedAt is not used by the use-cases');
   }
 }

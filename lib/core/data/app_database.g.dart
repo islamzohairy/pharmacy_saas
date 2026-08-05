@@ -3162,6 +3162,398 @@ class ErrorLogEntriesCompanion extends UpdateCompanion<StoredErrorLogEntry> {
   }
 }
 
+class $SyncQuarantineEntriesTable extends SyncQuarantineEntries
+    with TableInfo<$SyncQuarantineEntriesTable, StoredSyncQuarantineEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncQuarantineEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _pharmacyIdMeta = const VerificationMeta(
+    'pharmacyId',
+  );
+  @override
+  late final GeneratedColumn<int> pharmacyId = GeneratedColumn<int>(
+    'pharmacy_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  @override
+  late final GeneratedColumn<int> entryId = GeneratedColumn<int>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _codeMeta = const VerificationMeta('code');
+  @override
+  late final GeneratedColumn<String> code = GeneratedColumn<String>(
+    'code',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 16,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _messageMeta = const VerificationMeta(
+    'message',
+  );
+  @override
+  late final GeneratedColumn<String> message = GeneratedColumn<String>(
+    'message',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 2048,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _quarantinedAtMeta = const VerificationMeta(
+    'quarantinedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> quarantinedAt =
+      GeneratedColumn<DateTime>(
+        'quarantined_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    pharmacyId,
+    entryId,
+    code,
+    message,
+    quarantinedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_quarantine_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StoredSyncQuarantineEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('pharmacy_id')) {
+      context.handle(
+        _pharmacyIdMeta,
+        pharmacyId.isAcceptableOrUnknown(data['pharmacy_id']!, _pharmacyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pharmacyIdMeta);
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('code')) {
+      context.handle(
+        _codeMeta,
+        code.isAcceptableOrUnknown(data['code']!, _codeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_codeMeta);
+    }
+    if (data.containsKey('message')) {
+      context.handle(
+        _messageMeta,
+        message.isAcceptableOrUnknown(data['message']!, _messageMeta),
+      );
+    }
+    if (data.containsKey('quarantined_at')) {
+      context.handle(
+        _quarantinedAtMeta,
+        quarantinedAt.isAcceptableOrUnknown(
+          data['quarantined_at']!,
+          _quarantinedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_quarantinedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {pharmacyId, entryId};
+  @override
+  StoredSyncQuarantineEntry map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StoredSyncQuarantineEntry(
+      pharmacyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}pharmacy_id'],
+      )!,
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      code: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}code'],
+      )!,
+      message: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}message'],
+      ),
+      quarantinedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}quarantined_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncQuarantineEntriesTable createAlias(String alias) {
+    return $SyncQuarantineEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class StoredSyncQuarantineEntry extends DataClass
+    implements Insertable<StoredSyncQuarantineEntry> {
+  final int pharmacyId;
+  final int entryId;
+
+  /// SQLSTATE of the permanent failure (e.g. '23503').
+  final String code;
+  final String? message;
+  final DateTime quarantinedAt;
+  const StoredSyncQuarantineEntry({
+    required this.pharmacyId,
+    required this.entryId,
+    required this.code,
+    this.message,
+    required this.quarantinedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['pharmacy_id'] = Variable<int>(pharmacyId);
+    map['entry_id'] = Variable<int>(entryId);
+    map['code'] = Variable<String>(code);
+    if (!nullToAbsent || message != null) {
+      map['message'] = Variable<String>(message);
+    }
+    map['quarantined_at'] = Variable<DateTime>(quarantinedAt);
+    return map;
+  }
+
+  SyncQuarantineEntriesCompanion toCompanion(bool nullToAbsent) {
+    return SyncQuarantineEntriesCompanion(
+      pharmacyId: Value(pharmacyId),
+      entryId: Value(entryId),
+      code: Value(code),
+      message: message == null && nullToAbsent
+          ? const Value.absent()
+          : Value(message),
+      quarantinedAt: Value(quarantinedAt),
+    );
+  }
+
+  factory StoredSyncQuarantineEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StoredSyncQuarantineEntry(
+      pharmacyId: serializer.fromJson<int>(json['pharmacyId']),
+      entryId: serializer.fromJson<int>(json['entryId']),
+      code: serializer.fromJson<String>(json['code']),
+      message: serializer.fromJson<String?>(json['message']),
+      quarantinedAt: serializer.fromJson<DateTime>(json['quarantinedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'pharmacyId': serializer.toJson<int>(pharmacyId),
+      'entryId': serializer.toJson<int>(entryId),
+      'code': serializer.toJson<String>(code),
+      'message': serializer.toJson<String?>(message),
+      'quarantinedAt': serializer.toJson<DateTime>(quarantinedAt),
+    };
+  }
+
+  StoredSyncQuarantineEntry copyWith({
+    int? pharmacyId,
+    int? entryId,
+    String? code,
+    Value<String?> message = const Value.absent(),
+    DateTime? quarantinedAt,
+  }) => StoredSyncQuarantineEntry(
+    pharmacyId: pharmacyId ?? this.pharmacyId,
+    entryId: entryId ?? this.entryId,
+    code: code ?? this.code,
+    message: message.present ? message.value : this.message,
+    quarantinedAt: quarantinedAt ?? this.quarantinedAt,
+  );
+  StoredSyncQuarantineEntry copyWithCompanion(
+    SyncQuarantineEntriesCompanion data,
+  ) {
+    return StoredSyncQuarantineEntry(
+      pharmacyId: data.pharmacyId.present
+          ? data.pharmacyId.value
+          : this.pharmacyId,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      code: data.code.present ? data.code.value : this.code,
+      message: data.message.present ? data.message.value : this.message,
+      quarantinedAt: data.quarantinedAt.present
+          ? data.quarantinedAt.value
+          : this.quarantinedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StoredSyncQuarantineEntry(')
+          ..write('pharmacyId: $pharmacyId, ')
+          ..write('entryId: $entryId, ')
+          ..write('code: $code, ')
+          ..write('message: $message, ')
+          ..write('quarantinedAt: $quarantinedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(pharmacyId, entryId, code, message, quarantinedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StoredSyncQuarantineEntry &&
+          other.pharmacyId == this.pharmacyId &&
+          other.entryId == this.entryId &&
+          other.code == this.code &&
+          other.message == this.message &&
+          other.quarantinedAt == this.quarantinedAt);
+}
+
+class SyncQuarantineEntriesCompanion
+    extends UpdateCompanion<StoredSyncQuarantineEntry> {
+  final Value<int> pharmacyId;
+  final Value<int> entryId;
+  final Value<String> code;
+  final Value<String?> message;
+  final Value<DateTime> quarantinedAt;
+  final Value<int> rowid;
+  const SyncQuarantineEntriesCompanion({
+    this.pharmacyId = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.code = const Value.absent(),
+    this.message = const Value.absent(),
+    this.quarantinedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncQuarantineEntriesCompanion.insert({
+    required int pharmacyId,
+    required int entryId,
+    required String code,
+    this.message = const Value.absent(),
+    required DateTime quarantinedAt,
+    this.rowid = const Value.absent(),
+  }) : pharmacyId = Value(pharmacyId),
+       entryId = Value(entryId),
+       code = Value(code),
+       quarantinedAt = Value(quarantinedAt);
+  static Insertable<StoredSyncQuarantineEntry> custom({
+    Expression<int>? pharmacyId,
+    Expression<int>? entryId,
+    Expression<String>? code,
+    Expression<String>? message,
+    Expression<DateTime>? quarantinedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (pharmacyId != null) 'pharmacy_id': pharmacyId,
+      if (entryId != null) 'entry_id': entryId,
+      if (code != null) 'code': code,
+      if (message != null) 'message': message,
+      if (quarantinedAt != null) 'quarantined_at': quarantinedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncQuarantineEntriesCompanion copyWith({
+    Value<int>? pharmacyId,
+    Value<int>? entryId,
+    Value<String>? code,
+    Value<String?>? message,
+    Value<DateTime>? quarantinedAt,
+    Value<int>? rowid,
+  }) {
+    return SyncQuarantineEntriesCompanion(
+      pharmacyId: pharmacyId ?? this.pharmacyId,
+      entryId: entryId ?? this.entryId,
+      code: code ?? this.code,
+      message: message ?? this.message,
+      quarantinedAt: quarantinedAt ?? this.quarantinedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (pharmacyId.present) {
+      map['pharmacy_id'] = Variable<int>(pharmacyId.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<int>(entryId.value);
+    }
+    if (code.present) {
+      map['code'] = Variable<String>(code.value);
+    }
+    if (message.present) {
+      map['message'] = Variable<String>(message.value);
+    }
+    if (quarantinedAt.present) {
+      map['quarantined_at'] = Variable<DateTime>(quarantinedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncQuarantineEntriesCompanion(')
+          ..write('pharmacyId: $pharmacyId, ')
+          ..write('entryId: $entryId, ')
+          ..write('code: $code, ')
+          ..write('message: $message, ')
+          ..write('quarantinedAt: $quarantinedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3174,6 +3566,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ErrorLogEntriesTable errorLogEntries = $ErrorLogEntriesTable(
     this,
   );
+  late final $SyncQuarantineEntriesTable syncQuarantineEntries =
+      $SyncQuarantineEntriesTable(this);
   late final Index idxLedgerPharmacyOccurredAt = Index(
     'idx_ledger_pharmacy_occurred_at',
     'CREATE INDEX idx_ledger_pharmacy_occurred_at ON ledger_entries (pharmacy_id, occurred_at)',
@@ -3194,6 +3588,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     customers,
     ledgerEntries,
     errorLogEntries,
+    syncQuarantineEntries,
     idxLedgerPharmacyOccurredAt,
     idxLedgerPharmacyType,
   ];
@@ -6632,6 +7027,229 @@ typedef $$ErrorLogEntriesTableProcessedTableManager =
       StoredErrorLogEntry,
       PrefetchHooks Function()
     >;
+typedef $$SyncQuarantineEntriesTableCreateCompanionBuilder =
+    SyncQuarantineEntriesCompanion Function({
+      required int pharmacyId,
+      required int entryId,
+      required String code,
+      Value<String?> message,
+      required DateTime quarantinedAt,
+      Value<int> rowid,
+    });
+typedef $$SyncQuarantineEntriesTableUpdateCompanionBuilder =
+    SyncQuarantineEntriesCompanion Function({
+      Value<int> pharmacyId,
+      Value<int> entryId,
+      Value<String> code,
+      Value<String?> message,
+      Value<DateTime> quarantinedAt,
+      Value<int> rowid,
+    });
+
+class $$SyncQuarantineEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncQuarantineEntriesTable> {
+  $$SyncQuarantineEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get pharmacyId => $composableBuilder(
+    column: $table.pharmacyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get code => $composableBuilder(
+    column: $table.code,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get quarantinedAt => $composableBuilder(
+    column: $table.quarantinedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncQuarantineEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncQuarantineEntriesTable> {
+  $$SyncQuarantineEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get pharmacyId => $composableBuilder(
+    column: $table.pharmacyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get code => $composableBuilder(
+    column: $table.code,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get quarantinedAt => $composableBuilder(
+    column: $table.quarantinedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncQuarantineEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncQuarantineEntriesTable> {
+  $$SyncQuarantineEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get pharmacyId => $composableBuilder(
+    column: $table.pharmacyId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+
+  GeneratedColumn<String> get code =>
+      $composableBuilder(column: $table.code, builder: (column) => column);
+
+  GeneratedColumn<String> get message =>
+      $composableBuilder(column: $table.message, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get quarantinedAt => $composableBuilder(
+    column: $table.quarantinedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$SyncQuarantineEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncQuarantineEntriesTable,
+          StoredSyncQuarantineEntry,
+          $$SyncQuarantineEntriesTableFilterComposer,
+          $$SyncQuarantineEntriesTableOrderingComposer,
+          $$SyncQuarantineEntriesTableAnnotationComposer,
+          $$SyncQuarantineEntriesTableCreateCompanionBuilder,
+          $$SyncQuarantineEntriesTableUpdateCompanionBuilder,
+          (
+            StoredSyncQuarantineEntry,
+            BaseReferences<
+              _$AppDatabase,
+              $SyncQuarantineEntriesTable,
+              StoredSyncQuarantineEntry
+            >,
+          ),
+          StoredSyncQuarantineEntry,
+          PrefetchHooks Function()
+        > {
+  $$SyncQuarantineEntriesTableTableManager(
+    _$AppDatabase db,
+    $SyncQuarantineEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncQuarantineEntriesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$SyncQuarantineEntriesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SyncQuarantineEntriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> pharmacyId = const Value.absent(),
+                Value<int> entryId = const Value.absent(),
+                Value<String> code = const Value.absent(),
+                Value<String?> message = const Value.absent(),
+                Value<DateTime> quarantinedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncQuarantineEntriesCompanion(
+                pharmacyId: pharmacyId,
+                entryId: entryId,
+                code: code,
+                message: message,
+                quarantinedAt: quarantinedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int pharmacyId,
+                required int entryId,
+                required String code,
+                Value<String?> message = const Value.absent(),
+                required DateTime quarantinedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SyncQuarantineEntriesCompanion.insert(
+                pharmacyId: pharmacyId,
+                entryId: entryId,
+                code: code,
+                message: message,
+                quarantinedAt: quarantinedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncQuarantineEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncQuarantineEntriesTable,
+      StoredSyncQuarantineEntry,
+      $$SyncQuarantineEntriesTableFilterComposer,
+      $$SyncQuarantineEntriesTableOrderingComposer,
+      $$SyncQuarantineEntriesTableAnnotationComposer,
+      $$SyncQuarantineEntriesTableCreateCompanionBuilder,
+      $$SyncQuarantineEntriesTableUpdateCompanionBuilder,
+      (
+        StoredSyncQuarantineEntry,
+        BaseReferences<
+          _$AppDatabase,
+          $SyncQuarantineEntriesTable,
+          StoredSyncQuarantineEntry
+        >,
+      ),
+      StoredSyncQuarantineEntry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6650,4 +7268,6 @@ class $AppDatabaseManager {
       $$LedgerEntriesTableTableManager(_db, _db.ledgerEntries);
   $$ErrorLogEntriesTableTableManager get errorLogEntries =>
       $$ErrorLogEntriesTableTableManager(_db, _db.errorLogEntries);
+  $$SyncQuarantineEntriesTableTableManager get syncQuarantineEntries =>
+      $$SyncQuarantineEntriesTableTableManager(_db, _db.syncQuarantineEntries);
 }

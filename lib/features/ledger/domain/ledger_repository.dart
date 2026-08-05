@@ -38,10 +38,13 @@ abstract interface class LedgerRepository {
   });
 
   /// Rows not yet pushed to the backup target, oldest first, capped at
-  /// [limit] for batched sync.
+  /// [limit] for batched sync. [excludeIds] is a generic caller-supplied
+  /// filter (the sync job passes its quarantine set) — the ledger
+  /// repository never learns what a quarantine is; it only skips rows.
   Future<List<LedgerEntry>> unsyncedEntries({
     required int pharmacyId,
     int limit = 200,
+    List<int> excludeIds = const [],
   });
 
   /// Live count of rows waiting for backup — drives the sync scheduler
@@ -54,6 +57,13 @@ abstract interface class LedgerRepository {
   /// query, not a stream (PLANS/11 §4.2; the indicator must not add a
   /// new full-scan stream).
   Future<DateTime?> oldestUnsyncedAt({required int pharmacyId});
+
+  /// Newest `synced_at` among stamped rows (`null` when nothing was ever
+  /// pushed). Lets the indicator show the real last-sync time after a
+  /// no-op pass / relaunch — derived from persisted sync bookkeeping,
+  /// never stored as separate state (same philosophy as staleness,
+  /// PLANS/11 §4.2).
+  Future<DateTime?> lastSyncedAt({required int pharmacyId});
 
   /// Stamps `synced_at` on the given ids. Sync bookkeeping only — see
   /// the class doc. Never touches business fields.

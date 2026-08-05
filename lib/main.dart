@@ -58,8 +58,7 @@ Future<void> _startup() async {
     return;
   }
 
-  await _runApp(database);
-}
+  await _runApp(database);}
 
 /// Retry path for the fatal-error screen: re-attempt the open, then launch
 /// the real app on success. Throws on failure so the screen can surface it

@@ -6,7 +6,9 @@ import '../../../features/identity/domain/identity_repository.dart';
 import '../../../features/identity/domain/pharmacy.dart';
 import '../../../features/ledger/domain/ledger_repository.dart';
 import '../error_log_capture.dart';
+import '../error_log_repository.dart';
 import 'backup_staleness.dart';
+import 'quarantine_repository.dart';
 import 'remote_backup_client.dart';
 import 'sync_job.dart';
 
@@ -71,12 +73,21 @@ class SyncScheduler {
     required this.identityRepository,
     required this.client,
     required this.status,
-  }) : _job = SyncJob(ledgerRepository: ledgerRepository, client: client);
+    required this.quarantineRepository,
+    required this.errorLogRepository,
+  }) : _job = SyncJob(
+         ledgerRepository: ledgerRepository,
+         client: client,
+         quarantineRepository: quarantineRepository,
+         errorLogRepository: errorLogRepository,
+       );
 
   final LedgerRepository ledgerRepository;
   final IdentityRepository identityRepository;
   final RemoteBackupClient client;
   final BackupStatusNotifier status;
+  final QuarantineRepository quarantineRepository;
+  final ErrorLogRepository errorLogRepository;
 
   static const _periodicInterval = Duration(seconds: 60);
   static const _writeDebounce = Duration(seconds: 5);

@@ -98,11 +98,17 @@ class DriftLedgerRepository implements LedgerRepository {
   Future<List<LedgerEntry>> unsyncedEntries({
     required int pharmacyId,
     int limit = 200,
+    List<int> excludeIds = const [],
   }) {
     final query = _db.select(_db.ledgerEntries)
-      ..where((t) => t.pharmacyId.equals(pharmacyId) & t.syncedAt.isNull())
+      ..where(
+        (t) => t.pharmacyId.equals(pharmacyId) & t.syncedAt.isNull(),
+      )
       ..orderBy([(t) => OrderingTerm.asc(t.id)])
       ..limit(limit);
+    if (excludeIds.isNotEmpty) {
+      query.where((t) => t.id.isNotIn(excludeIds));
+    }
     return query.get().then((rows) => rows.map(_toDomain).toList());
   }
 

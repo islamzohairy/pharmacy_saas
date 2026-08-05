@@ -43,6 +43,7 @@ class FakeLedgerRepository implements LedgerRepository {
   Future<List<LedgerEntry>> unsyncedEntries({
     required int pharmacyId,
     int limit = 200,
+    List<int> excludeIds = const [],
   }) {
     throw UnimplementedError('unsyncedEntries is not used by the use-cases');
   }

@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features/identity/presentation/identity_providers.dart';
 import '../../../features/ledger/presentation/ledger_providers.dart';
+import '../database_providers.dart';
+import '../error_log_providers.dart';
+import 'quarantine_repository.dart';
 import 'remote_backup_client.dart';
 import 'supabase_backup_client.dart';
 import 'sync_scheduler.dart';
@@ -9,6 +12,11 @@ import 'sync_scheduler.dart';
 /// The remote backup surface. Override in tests with a fake client.
 final remoteBackupClientProvider = Provider<RemoteBackupClient>(
   (ref) => SupabaseRemoteBackupClient(),
+);
+
+/// The sync-failure quarantine store (PLANS/11-H Phase 2).
+final quarantineRepositoryProvider = Provider<QuarantineRepository>(
+  (ref) => QuarantineRepository(ref.watch(appDatabaseProvider)),
 );
 
 /// Backup status for the in-app "last backed up" indicator.
@@ -24,6 +32,8 @@ final syncSchedulerProvider = Provider<SyncScheduler>((ref) {
     identityRepository: ref.watch(identityRepositoryProvider),
     client: ref.watch(remoteBackupClientProvider),
     status: ref.watch(backupStatusProvider),
+    quarantineRepository: ref.watch(quarantineRepositoryProvider),
+    errorLogRepository: ref.watch(errorLogRepositoryProvider),
   );
   ref.onDispose(scheduler.dispose);
   return scheduler;

@@ -38,10 +38,13 @@ abstract interface class LedgerRepository {
   });
 
   /// Rows not yet pushed to the backup target, oldest first, capped at
-  /// [limit] for batched sync.
+  /// [limit] for batched sync. [excludeIds] is a generic caller-supplied
+  /// filter (the sync job passes its quarantine set) — the ledger
+  /// repository never learns what a quarantine is; it only skips rows.
   Future<List<LedgerEntry>> unsyncedEntries({
     required int pharmacyId,
     int limit = 200,
+    List<int> excludeIds = const [],
   });
 
   /// Live count of rows waiting for backup — drives the sync scheduler

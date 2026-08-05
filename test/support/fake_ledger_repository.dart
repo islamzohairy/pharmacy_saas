@@ -73,4 +73,9 @@ class FakeLedgerRepository implements LedgerRepository {
   Stream<int> watchUnsyncedCount({required int pharmacyId}) {
     throw UnimplementedError('watchUnsyncedCount is not used by the use-cases');
   }
+
+  @override
+  Future<DateTime?> oldestUnsyncedAt({required int pharmacyId}) {
+    throw UnimplementedError('oldestUnsyncedAt is not used by the use-cases');
+  }
 }

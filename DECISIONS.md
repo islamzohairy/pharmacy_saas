@@ -777,3 +777,78 @@ VERIFIED: 159 unit/widget tests green, analyzer clean; live e2e
 (`test_live/rls_isolation_test.dart`) passed against the live project. Backfill
 verified via raw-seeded fixtures only — no real pilot DB copy was available for
 migration testing.
+
+## 2026-08-05 — Plan 11 Phase 0 verification report (sign-off gate)
+DECISION: Phase 0 (PLANS/11 §4.1) concluded with findings below; staff sign-off
+recorded 2026-08-05 (user, via session approval). Implementation proceeds per
+plan §7. No stop conditions triggered (no data destruction, no `double` in
+money, no material scheduler divergence).
+- V1 — DB-open/migration failure path: FAIL on error surfacing, PASS on
+  non-destruction. `openAppDatabase()` is unguarded and drift opens lazily, so a
+  corrupt file / SQLCipher key mismatch / throwing `onUpgrade` surfaces at the
+  first query (`hasAnyProfile()` in `main.dart`) — `_startup` aborts, the zone
+  guard's `reportZoneErrors` is a no-op (capture installs after open), nothing
+  renders. Structural grep: no `File.delete`/recreate path for the DB anywhere;
+  the forgot-PIN wipe deletes rows + secure-store keys only, never the file.
+  → Hardening (plan §4.3) required.
+- V2 — money types: PASS. Only `double` token in `lib/` is a layout width
+  (`error_log_indicator.dart:65`); `formatEgp`'s `/100` is display-only inside
+  `NumberFormat`; parse is pure int; remote wire `amount_minor` is int.
+- V3 — scheduler wiring: PASS with one minor divergence. All four triggers
+  match docs (start + 60s periodic, foreground resume, 5s write-debounce,
+  5s→5min backoff); `SyncJob` never throws. Divergence: `SyncScheduler._run()`
+  doesn't catch non-`StateError` identity-layer throws — they escape to
+  `FlutterError.onError` and land in the error log (installed by then); app
+  does not brick. Fixed in-phase (catch → `reportZoneErrors`).
+- V4 — `watchEntries(limit:)`: PASS. `limit` used only by the activity feed
+  (`activity_providers.dart:27`); dashboard/debt/expense reads unbounded.
+- V5 — ledger query paths: PASS. Unsynced tracking IS a derivable signal
+  (per-row `synced_at IS NULL` + `watchUnsyncedCount`); all queries bounded by
+  the `(pharmacy_id, occurred_at)` index's tenant prefix. No
+  `(pharmacy_id, synced_at)` composite index — per-tenant scan provably small
+  at pilot volume; candidate only if volume grows (not P0, no schema change).
+
+## 2026-08-05 — Plan 11: backup staleness is derived, no sync_metadata table
+DECISION: backup staleness is DERIVED from existing sync state — unsynced count
+(`watchUnsyncedCount`, already streams) + oldest unsynced `occurred_at`
+(new one-shot bounded query, `ORDER BY occurred_at ASC LIMIT 1` on the same
+`synced_at IS NULL` predicate) evaluated against a 48h threshold by one pure
+function (`evaluateBackupStaleness` in `core/data/sync/backup_staleness.dart`).
+Evaluated only on existing scheduler state changes (write-debounce / sync-pass
+completion) — no new timer, no new stream. ZERO schema change; the
+`sync_metadata` fallback table (plan §4.2 preference 2) is NOT needed.
+WHY: Phase 0 V5 confirmed the derivable signal exists (per-row `synced_at IS
+NULL` flag), so plan preference #1 applies — deriving beats persisting, and a
+new table + migration v6 would add risk with no benefit.
+THRESHOLD: 48h. Daily-use pilot; two missed days is already a support
+conversation, and the backoff cap is 5 minutes so a healthy-but-offline device
+never sits near the bound.
+EDGE (clock manipulation): staleness compares entry timestamps against
+`DateTime.now()`; a clock set backward masks staleness (negative age → pending)
+— accepted residual risk for pilot, per plan §10.
+EMPTY LEDGER: unsynced count 0 → healthy — a fresh install never alarms.
+
+## 2026-08-05 — Plan 11 complete: implementation + runtime verification (closure)
+DECISION: plan 11 shipped per §7 with zero schema change (schemaVersion stays 5,
+no migration; remote `supabase/` untouched — no deploy gate needed this release).
+179 unit/widget tests green (+20 over the 159 baseline), analyzer clean, release
+APK builds (72.0MB; runtime build 74.1MB with the `.env.local` defines).
+Runtime-verified on the emulator (release-mode, fresh install): onboarding →
+dashboard; product create (Arabic-Indic price rendering); sale → dashboard
+aggregation live-updates (sales 15.00, COGS 10.00, net 5.00, expenses 0.00);
+backup indicator ERROR state non-destructive ("تعذر النسخ الاحتياطي — سنحاول
+مرة أخرى" — app fully functional); cold restart → data persisted, no fatal
+screen, no re-onboarding. Fatal-screen + stale states NOT runtime-reproducible
+on this environment: the emulator image is a production build (no `adb root`)
+and ignores `-qemu -rtc base=` (RTC skew), so a corrupt-DB or >48h-old unsynced
+entry can't be staged on-device; both paths are covered by
+`database_open_test.dart` (byte-identical file survival on corrupt file AND
+throwing `onUpgrade`) and `backup_staleness_test.dart` (7 cases incl.
+threshold-boundary) + indicator widget tests — stated honestly per DoD, not
+claimed runtime-verified.
+FINDING (config, not code): the local `.env.local` anon key returns 401 against
+project `vhzvvveikzmuzxzrgbsr.supabase.co` (live-checked via REST). Expected
+runtime effect: local dev builds show the backup error indicator because sync
+always fails; pilot/dev sync is broken until the key is regenerated in the
+Supabase dashboard and `.env.local` updated. Plan 11's error surface made this
+visible — by design.

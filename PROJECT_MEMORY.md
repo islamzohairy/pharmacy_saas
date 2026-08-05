@@ -212,8 +212,28 @@ rows to `expense`/`ownerDraw`. SUPABASE DEPLOY GATE — CLEARED 2026-08-04
 (user-confirmed): `supabase/migrations/0002_expense_category.sql` applied to
 the live project, `rls_isolation_test.sql` re-run green; live e2e
 (`test_live/rls_isolation_test.dart`) passed. (Phase 0's `cash_draw` wire format
-was safe against the unmodified remote schema.) 159 unit/widget tests
+was safe against the unmodified remote schema.) 159   unit/widget tests
 green; backfill verified via raw-seeded fixtures, no real pilot DB copy.
+
+Plan 11 (pilot hardening + observability) is complete — no schema change:
+`openAppDatabase` failure (any throw, incl. corrupt file or a failing
+`onUpgrade` migration) → non-destructive `DatabaseFatalErrorScreen`
+(copy-report + user-triggered retry; the DB file is never deleted or
+recreated, no automatic retry loop); backup staleness is DERIVED from
+`synced_at IS NULL` via `LedgerRepository.oldestUnsyncedAt` + pure
+`evaluateBackupStaleness` (48h threshold; stale overrides error in the
+indicator; clock-set-backward masks stale as pending — accepted);
+`SyncScheduler._run` catch-all now routes non-`StateError` identity-layer
+throws through `reportZoneErrors`. `RELEASES.md` is the release-log home
+(empty so far); `SUPPORT_AND_ROLLBACK.md` §5 is the pilot-ops protocol.
+179 unit/widget tests green, analyzer clean, release APK builds.
+Runtime-verified on the emulator (onboarding → dashboard, product/sale
+entry, live aggregation, non-destructive error indicator, cold-restart
+persistence); the stale-state runtime repro is blocked by the emulator
+environment (no adb root, `-qemu -rtc` unsupported on this image) and is
+covered by unit/widget tests. Note: the local `.env.local` anon key
+returns 401 against its Supabase project — runtime sync failures in local
+dev builds are expected until it's regenerated.
 
 ## Tooling (installed 2026-08-02, AI Engineering OS full setup)
 - Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`

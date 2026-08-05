@@ -94,21 +94,62 @@ class AppDatabase extends _$AppDatabase {
   );
 }
 
+/// Thrown when the encrypted database cannot be opened — corrupt file,
+/// lost/rotated encryption key, or a failing migration. Carries the
+/// underlying cause for the user-facing report.
+///
+/// The on-disk file is NEVER touched by the open path: no delete, no move,
+/// no recreate (PLANS/11 §4.3 — a pilot device cannot be bricked by a
+/// failed open). The only data-destroying path in the app is the explicit
+/// user-initiated identity wipe (forgot-PIN flow).
+class DatabaseOpenException implements Exception {
+  const DatabaseOpenException(this.cause, this.stackTrace);
+
+  final Object cause;
+  final StackTrace stackTrace;
+
+  @override
+  String toString() => 'DatabaseOpenException: $cause';
+}
+
 /// Opens the encrypted on-disk database.
 ///
 /// The encryption key is generated once and stored via [SecureStore] —
 /// never in the database file itself, never hardcoded in source.
-Future<AppDatabase> openAppDatabase({SecureStore? secureStore}) async {
+///
+/// [directory] is injectable for tests (defaults to the app documents
+/// directory).
+Future<AppDatabase> openAppDatabase({
+  SecureStore? secureStore,
+  Directory? directory,
+}) async {
   final store = secureStore ?? const FlutterSecureStore();
   final key = await _obtainDatabaseKey(store);
-  final directory = await getApplicationDocumentsDirectory();
-  final file = File(p.join(directory.path, 'pharmacy.sqlite'));
+  final dir = directory ?? await getApplicationDocumentsDirectory();
+  final file = File(p.join(dir.path, 'pharmacy.sqlite'));
 
   final executor = NativeDatabase.createInBackground(
     file,
     setup: (db) => db.execute("PRAGMA key = '$key'"),
   );
-  return AppDatabase(executor);
+  return openWithGuard(AppDatabase(executor));
+}
+
+/// Forces the database open — including any pending migrations — to run at
+/// the connection boundary instead of drift's lazy first-query open, and
+/// converts any failure into [DatabaseOpenException].
+///
+/// Why: drift opens on first query, which would surface a corrupt-file or
+/// migration failure from inside the first screen's provider tree. Forcing
+/// it here means `main.dart` can catch it and render the non-destructive
+/// fatal screen with a copy-report + user-triggered retry (PLANS/11 §4.3).
+Future<T> openWithGuard<T extends AppDatabase>(T database) async {
+  try {
+    await database.customSelect('SELECT 1').getSingle();
+    return database;
+  } catch (error, stack) {
+    throw DatabaseOpenException(error, stack);
+  }
 }
 
 const _databaseKeyName = 'db_key_v1';

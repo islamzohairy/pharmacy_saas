@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import '../../../features/identity/domain/identity_repository.dart';
 import '../../../features/identity/domain/pharmacy.dart';
 import '../../../features/ledger/domain/ledger_repository.dart';
+import '../error_log_capture.dart';
+import 'backup_staleness.dart';
 import 'remote_backup_client.dart';
 import 'sync_job.dart';
 
@@ -17,18 +19,25 @@ class BackupStatus {
     this.lastSyncedAt,
     this.backlogCount = 0,
     this.lastError,
+    this.staleness = BackupStaleness.healthy,
   });
 
   const BackupStatus.initial()
     : state = BackupSyncState.neverSynced,
       lastSyncedAt = null,
       backlogCount = 0,
-      lastError = null;
+      lastError = null,
+      staleness = BackupStaleness.healthy;
 
   final BackupSyncState state;
   final DateTime? lastSyncedAt;
   final int backlogCount;
   final String? lastError;
+
+  /// Derived, never stored (PLANS/11 §4.2): whether unsynced entries have
+  /// sat past [backupStaleThreshold]. Evaluated on scheduler state changes
+  /// only — no new timers or streams.
+  final BackupStaleness staleness;
 }
 
 /// Listens to backup status; consumed by the indicator widget via
@@ -130,6 +139,7 @@ class SyncScheduler {
           state: BackupSyncState.syncing,
           lastSyncedAt: status.status.lastSyncedAt,
           backlogCount: status.status.backlogCount,
+          staleness: status.status.staleness,
         ),
       );
 
@@ -159,14 +169,51 @@ class SyncScheduler {
             lastSyncedAt: status.status.lastSyncedAt,
             backlogCount: status.status.backlogCount,
             lastError: '${result.error}',
+            staleness: status.status.staleness,
           ),
         );
         _retryTimer?.cancel();
         _retryTimer = Timer(result.suggestedRetryDelay, _run);
       }
+
+      // Every sync pass is a state change — re-derive staleness from the
+      // current backlog (a successful pass with pushed>0 set count 0 above,
+      // so this lands healthy; a failed pass keeps the entries, so this
+      // reflects their age).
+      await _refreshStaleness(pharmacy.id);
+    } catch (error, stack) {
+      // Phase 0 finding (PLANS/11 V3): identity-layer edge throws (token
+      // reads etc.) must go through the shared error sink instead of
+      // escaping to the lifecycle callback. Logging is fire-and-forget —
+      // a logging bug can never take the scheduler down.
+      reportZoneErrors(error, stack);
     } finally {
       _running = false;
     }
+  }
+
+  /// Re-derives [BackupStatus.staleness] with one bounded query (oldest
+  /// unsynced `occurred_at`, tenant-prefix indexed). Called only on
+  /// scheduler state changes — the write-debounce and sync-pass
+  /// completion — never on a timer of its own (PLANS/11 §12).
+  Future<void> _refreshStaleness(int pharmacyId) async {
+    final current = status.status;
+    final oldest = await ledgerRepository.oldestUnsyncedAt(
+      pharmacyId: pharmacyId,
+    );
+    status.update(
+      BackupStatus(
+        state: current.state,
+        lastSyncedAt: current.lastSyncedAt,
+        backlogCount: current.backlogCount,
+        lastError: current.lastError,
+        staleness: evaluateBackupStaleness(
+          unsyncedCount: current.backlogCount,
+          oldestUnsyncedAt: oldest,
+          now: DateTime.now(),
+        ),
+      ),
+    );
   }
 
   void _ensureBacklogSubscription(int pharmacyId) {
@@ -175,15 +222,18 @@ class SyncScheduler {
         .watchUnsyncedCount(pharmacyId: pharmacyId)
         .listen((count) {
           _debounceTimer?.cancel();
-          _debounceTimer = Timer(_writeDebounce, () {
+          _debounceTimer = Timer(_writeDebounce, () async {
             status.update(
               BackupStatus(
                 state: status.status.state,
                 lastSyncedAt: status.status.lastSyncedAt,
                 backlogCount: count,
+                lastError: status.status.lastError,
+                staleness: status.status.staleness,
               ),
             );
-            _run();
+            await _refreshStaleness(pharmacyId);
+            unawaited(_run());
           });
         });
   }

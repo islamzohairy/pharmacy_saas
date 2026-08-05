@@ -286,6 +286,42 @@
   "@backupError": {
     "description": "Backup indicator: the last sync attempt failed"
   },
+  "backupStale": "آخر نسخة احتياطية قديمة — تحقق من الاتصال",
+  "@backupStale": {
+    "description": "Backup indicator: unsynced entries sit past the 48h staleness threshold — warns the owner to check connectivity"
+  },
+  "backupStaleDialogTitle": "نسخة احتياطية قديمة",
+  "@backupStaleDialogTitle": {
+    "description": "Title of the staleness explanation dialog"
+  },
+  "backupStaleDialogBody": "هناك عمليات لم تُنسخ احتياطيًا منذ أكثر من يومين. بياناتك ما زالت محفوظة على هذا الجهاز. تأكد من اتصال الإنترنت وأبقِ التطبيق مفتوحًا بعض الوقت حتى تتم المزامنة تلقائيًا.",
+  "@backupStaleDialogBody": {
+    "description": "Non-destructive explanation of the stale backup state and what to do"
+  },
+  "backupStaleDialogGotIt": "فهمت",
+  "@backupStaleDialogGotIt": {
+    "description": "Dismiss button of the staleness explanation dialog"
+  },
+  "fatalDatabaseTitle": "تعذر فتح البيانات",
+  "@fatalDatabaseTitle": {
+    "description": "Fatal-error screen title shown when the local database cannot open"
+  },
+  "fatalDatabaseBody": "حدث خطأ غير متوقع أثناء فتح ملف البيانات المحلي. بياناتك لم تُمس — لا تحذف التطبيق أو البيانات. انسخ التقرير وأرسله للدعم، ثم أعد المحاولة.",
+  "@fatalDatabaseBody": {
+    "description": "Fatal-error screen body: reassures data is intact, asks to copy the report and retry — never suggests clearing data"
+  },
+  "fatalDatabaseCopyReport": "نسخ التقرير",
+  "@fatalDatabaseCopyReport": {
+    "description": "Fatal-error screen action that copies the minimal error report to the clipboard"
+  },
+  "fatalDatabaseReportCopied": "تم نسخ التقرير إلى الحافظة",
+  "@fatalDatabaseReportCopied": {
+    "description": "Snackbar after the fatal-error report is copied"
+  },
+  "fatalDatabaseRetryFailed": "تعذر فتح البيانات — حاول مرة أخرى",
+  "@fatalDatabaseRetryFailed": {
+    "description": "Snackbar shown when the user-triggered retry fails again"
+  },
   "addProduct": "إضافة منتج",
   "@addProduct": {
     "description": "Action/button to create a new product"

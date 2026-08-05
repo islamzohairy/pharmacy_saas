@@ -222,6 +222,35 @@ class AppLocalizationsAr extends AppLocalizations {
   String get backupError => 'تعذر النسخ الاحتياطي — سنحاول مرة أخرى';
 
   @override
+  String get backupStale => 'آخر نسخة احتياطية قديمة — تحقق من الاتصال';
+
+  @override
+  String get backupStaleDialogTitle => 'نسخة احتياطية قديمة';
+
+  @override
+  String get backupStaleDialogBody =>
+      'هناك عمليات لم تُنسخ احتياطيًا منذ أكثر من يومين. بياناتك ما زالت محفوظة على هذا الجهاز. تأكد من اتصال الإنترنت وأبقِ التطبيق مفتوحًا بعض الوقت حتى تتم المزامنة تلقائيًا.';
+
+  @override
+  String get backupStaleDialogGotIt => 'فهمت';
+
+  @override
+  String get fatalDatabaseTitle => 'تعذر فتح البيانات';
+
+  @override
+  String get fatalDatabaseBody =>
+      'حدث خطأ غير متوقع أثناء فتح ملف البيانات المحلي. بياناتك لم تُمس — لا تحذف التطبيق أو البيانات. انسخ التقرير وأرسله للدعم، ثم أعد المحاولة.';
+
+  @override
+  String get fatalDatabaseCopyReport => 'نسخ التقرير';
+
+  @override
+  String get fatalDatabaseReportCopied => 'تم نسخ التقرير إلى الحافظة';
+
+  @override
+  String get fatalDatabaseRetryFailed => 'تعذر فتح البيانات — حاول مرة أخرى';
+
+  @override
   String get addProduct => 'إضافة منتج';
 
   @override

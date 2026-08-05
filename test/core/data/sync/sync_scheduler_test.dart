@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:pharmacy_saas/core/data/sync/backup_staleness.dart';
 import 'package:pharmacy_saas/core/data/sync/remote_backup_client.dart';
 import 'package:pharmacy_saas/core/data/sync/sync_scheduler.dart';
 import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
@@ -65,6 +66,12 @@ class FakeLedger implements LedgerRepository {
   @override
   Stream<int> watchUnsyncedCount({required int pharmacyId}) =>
       _unsyncedController.stream;
+
+  @override
+  Future<DateTime?> oldestUnsyncedAt({required int pharmacyId}) async {
+    if (_pending.isEmpty) return null;
+    return _pending.map((e) => e.occurredAt).reduce((a, b) => a.isBefore(b) ? a : b);
+  }
 
   @override
   Future<void> markSynced({
@@ -311,6 +318,75 @@ void main() {
       scheduler.dispose();
     });
   });
+
+  test('unsynced entries older than the threshold turn the status stale',
+      () {
+    fakeAsync((async) {
+      final ledger = FakeLedger();
+      final identity = FakeIdentity()..pharmacy = _pharmacy();
+      // Push fails, so the old backlog can't be cleared — the steady
+      // state of a device whose backup has been failing for 2+ days.
+      final client = FakeRemoteBackupClient()..failPush = true;
+      final status = BackupStatusNotifier();
+      final scheduler = SyncScheduler(
+        ledgerRepository: ledger,
+        identityRepository: identity,
+        client: client,
+        status: status,
+      );
+
+      scheduler.start();
+      async.flushMicrotasks();
+      expect(status.status.staleness, BackupStaleness.healthy);
+
+      // A very old unsynced entry appears (e.g. a pre-existing backlog
+      // after days offline) — the write-debounce re-derives staleness.
+      ledger.addPending(
+        _entry(2, occurredAt: DateTime.now().subtract(const Duration(hours: 49))),
+      );
+      async.elapse(const Duration(seconds: 5));
+      async.flushMicrotasks();
+
+      expect(status.status.staleness, BackupStaleness.stale);
+      expect(status.status.backlogCount, 1);
+      scheduler.dispose();
+    });
+  });
+
+  test('a successful sync pass clears staleness back to healthy', () {
+    fakeAsync((async) {
+      final ledger = FakeLedger();
+      final identity = FakeIdentity()..pharmacy = _pharmacy();
+      final client = FakeRemoteBackupClient()..failPush = true;
+      final status = BackupStatusNotifier();
+      final scheduler = SyncScheduler(
+        ledgerRepository: ledger,
+        identityRepository: identity,
+        client: client,
+        status: status,
+      );
+
+      scheduler.start();
+      async.flushMicrotasks();
+
+      ledger.addPending(
+        _entry(2, occurredAt: DateTime.now().subtract(const Duration(hours: 49))),
+      );
+      async.elapse(const Duration(seconds: 5));
+      async.flushMicrotasks();
+      expect(status.status.staleness, BackupStaleness.stale);
+
+      // The backlog empties (a later sync pass succeeded) — the count
+      // stream emits 0, the debounce fires, and staleness drops back to
+      // healthy.
+      ledger.markSynced(pharmacyId: 1, ids: const [2], at: DateTime.now());
+      async.elapse(const Duration(seconds: 5));
+      async.flushMicrotasks();
+      expect(status.status.staleness, BackupStaleness.healthy);
+      expect(status.status.backlogCount, 0);
+      scheduler.dispose();
+    });
+  });
 }
 
 Pharmacy _pharmacy() => Pharmacy(
@@ -321,10 +397,10 @@ Pharmacy _pharmacy() => Pharmacy(
   remoteUuid: 'uuid',
 );
 
-LedgerEntry _entry(int id) => LedgerEntry(
+LedgerEntry _entry(int id, {DateTime? occurredAt}) => LedgerEntry(
   id: id,
   pharmacyId: 1,
   type: LedgerEntryType.expense,
   amountMinor: 100,
-  occurredAt: DateTime(2026, 8, 2, 10),
+  occurredAt: occurredAt ?? DateTime(2026, 8, 2, 10),
 );

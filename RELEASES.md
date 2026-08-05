@@ -1,0 +1,52 @@
+# Releases — Pharmacy Profit Control Platform
+
+Version-tag → artifact → rollback mapping for the closed pilot (PLANS/11
+§4.4 / §8). The pilot owner's real financial records are at stake — every
+APK handed out must be taggable, testable, and replaceable. Read
+`SUPPORT_AND_ROLLBACK.md` before doing anything operational.
+
+## Conventions
+
+- **Tag = `v<versionName>-<yyyymmdd>`**, e.g. `v1.0.0-20260805`, applied as a
+  git tag on the exact commit the APK was built from.
+- **Artifact = the built APK, kept forever** outside the repo under
+  `releases/` (or a private location), named
+  `app-release-<tag>.apk` — a git tag alone is NOT enough; rebuilds are not
+  guaranteed byte-identical, and rollback needs the exact file.
+- Version bump: `pubspec.yaml` (`version:` — becomes Android versionName)
+  and the Android `versionCode` (also derived from pubspec; bump per
+  release). One release = one commit that bumps the version.
+- **Signing:** a release APK must be signed with the real keystore
+  (`SUPPORT_AND_ROLLBACK.md` §3) before it reaches the pilot device.
+  Debug-signed and keystore-signed APKs cannot replace each other in place.
+- Migration rule: every release that ships a local schema change must have
+  rehearsed the migration against a copy of real pilot data first — the
+  standing rule in `AGENTS.md`. No release ships an unrehearsed migration.
+
+## Pilot release log
+
+| Tag | versionCode | Built from (commit) | What shipped | APK | Rollback target |
+|---|---|---|---|---|---|
+| — | — | — | (no releases yet — plan 11 sets up the discipline before the first pilot install) | — | — |
+
+## Rollback procedure (quick reference)
+
+1. Rollback = install the previous tagged APK **over** the current one —
+   non-destructive (same signing key, local data untouched).
+2. If the current release has a pending local migration, the rollback
+   **must** be checked against `RELEASES.md`/`DECISIONS.md` for a schema
+   mismatch (downgrade across a schema bump is not automatic).
+3. A rollback is a support event: collect the in-app error report first
+   (`SUPPORT_AND_ROLLBACK.md` §1), then decide with the recorded evidence.
+4. Full detail: `SUPPORT_AND_ROLLBACK.md` §2.
+
+## Release checklist (per release)
+
+- [ ] `flutter analyze` clean; full suite green (all tests, not just new)
+- [ ] Release APK builds (`flutter build apk --release`)
+- [ ] Release-mode runtime pass on the emulator: fresh install, full P0
+      flow, exact dashboard figures
+- [ ] Local migration rehearsed against a copy of real data (if any)
+- [ ] Signed with the real keystore; `apksigner verify` fingerprints recorded
+- [ ] Version bumped; tag `v<version>-<date>` pushed; APK archived by tag
+- [ ] This file updated (tag → artifact → rollback target)

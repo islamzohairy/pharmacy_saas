@@ -120,6 +120,16 @@ class DriftLedgerRepository implements LedgerRepository {
   }
 
   @override
+  Future<DateTime?> oldestUnsyncedAt({required int pharmacyId}) async {
+    final query = _db.select(_db.ledgerEntries)
+      ..where((t) => t.pharmacyId.equals(pharmacyId) & t.syncedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.asc(t.occurredAt)])
+      ..limit(1);
+    final rows = await query.get();
+    return rows.isEmpty ? null : rows.first.occurredAt;
+  }
+
+  @override
   Future<void> markSynced({
     required int pharmacyId,
     required List<int> ids,

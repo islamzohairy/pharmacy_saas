@@ -164,8 +164,10 @@
   manifest; release push verified end-to-end (first ever successful
   release push 14:53, chip synced 14:54); SnackBar dismiss re-verified
   on the clean release build (visible +2s, gone +8s). The earlier
-  "release APK" 11:10 acceptance record is under correction — see
-  DECISIONS.md 2026-08-05.
+  "release APK" 11:10 acceptance record is corrected (definitive): that
+  acceptance was verified on a DEBUG build; release builds could not sync
+  until the INTERNET manifest fix (first successful release-mode sync
+  14:53) — see DECISIONS.md 2026-08-05.
 
 ## In progress
 None — all P0 plans (01–09), plan 10, and plan 11 are complete. Next work

@@ -1055,3 +1055,19 @@ DIAG ENHANCEMENT (same pass): `_diagErrorSummary` now prints the FULL
 message for non-Postgrest errors only (socket/OS/TLS errors carry no
 ledger content — the content rule still holds for Postgrest messages);
 this is what surfaced the DNS denial. Kept, gated behind SYNC_DIAG.
+
+## 2026-08-05 — FINAL: 11:10 acceptance record corrected (definitive, staff-engineer directed) + manifest-permission lesson
+CORRECTION, DEFINITIVE (supersedes the "in doubt" framing in the
+INTERNET-fix entry above): Plan 11-H Phase 1 acceptance (chip flips,
+entries stamped) was verified on a DEBUG build. Release builds could not
+sync due to missing INTERNET permission (fixed 14:53). First successful
+release-mode sync was 14:53. The remote stamps at 11:10 are real; the
+"release APK" build label in the record was wrong.
+LESSON (manifest-permission verification): the "release" label on any
+acceptance evidence must be verified by checking the artifact's manifest
+permissions (e.g., `dumpsys package ... | grep INTERNET` on the install,
+or inspecting the merged manifest), not just by which build mode was
+selected when it was produced. A debug/profiled artifact can be mistaken
+for a release artifact when only runtime behavior is observed — and
+release-only defects (permission gaps, tree-shaken code) survive unseen
+until a clean release build is exercised.

@@ -111,11 +111,31 @@
   snake_case `LedgerEntryType.wireName`). **Deploy gate:** cleared 2026-08-04 —
   `supabase/migrations/0002_expense_category.sql` applied to the live project,
   `rls_isolation_test.sql` re-run green. 159 tests green, analyzer clean;
-  backfill verified via raw-seeded fixtures (no real pilot DB copy).
+   backfill verified via raw-seeded fixtures (no real pilot DB copy).
+- 11_PILOT_HARDENING_AND_OBSERVABILITY_PLAN — pilot hardening and
+  observability: guarded DB open (`DatabaseOpenException` +
+  `openWithGuard`, `openAppDatabase` failure → non-destructive fatal
+  screen with copy-report + manual retry — never deletes/recreates the
+  file, never auto-retries), derived backup staleness (`oldestUnsyncedAt`
+  on `LedgerRepository`, pure `evaluateBackupStaleness` vs 48h threshold
+  — no schema change, no `sync_metadata` table; clock-set-backward masks
+  staleness as pending, accepted), stale warning chip + explanation
+  dialog on the backup indicator (stale overrides error display),
+  sync-scheduler catch-all hardening (non-`StateError` identity-layer
+  throws now surface via the error log instead of escaping the run
+  loop), `RELEASES.md` (version-tag conventions + per-release checklist)
+  and `SUPPORT_AND_ROLLBACK.md` §5 pilot-ops protocol. 179 tests green,
+  analyzer clean, release APK builds. Release-mode runtime pass on the
+  emulator: onboarding → dashboard, product + sale entry, live dashboard
+  aggregation, error-state indicator non-destructive (live 401 from a
+  stale local anon key — config issue, not app code), cold-restart data
+  persistence. Stale-state runtime repro blocked by emulator environment
+  (no adb root, `-qemu -rtc` unsupported) — covered by unit/widget
+  tests instead.
 
 ## In progress
-None — all P0 plans (01–09) and plan 10 are complete. Next work is gated
-on pilot feedback and the P1 confirmations in the roadmap below.
+None — all P0 plans (01–09), plan 10, and plan 11 are complete. Next work
+is gated on pilot feedback and the P1 confirmations in the roadmap below.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |
@@ -130,6 +150,7 @@ on pilot feedback and the P1 confirmations in the roadmap below.
 | 08 | `PLANS/08_TESTING_AND_RELEASE_HARDENING_PLAN.md` | pilot readiness gate |
 | 09 | `PLANS/09_CRASH_VISIBILITY_PLAN.md` | crash visibility for the pilot (post-review) |
 | 10 | `PLANS/10_EXPENSES_ACTIVITY_AND_SETTINGS_PLAN.md` | where money goes beyond draws; activity visibility; ETA prep |
+| 11 | `PLANS/11_PILOT_HARDENING_AND_OBSERVABILITY_PLAN.md` | pilot hardening: DB-open safety, backup staleness visibility |
 
 ## Roadmap — P1 (not started, not yet planned in detail)
 - Expiry alerting logic (data field already ships in P0 — see

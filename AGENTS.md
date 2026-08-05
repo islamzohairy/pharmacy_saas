@@ -34,6 +34,20 @@ default despite this being a money-movement app is recorded in
 `DECISIONS.md` (the audit-trail need is met by the ledger design, not by
 switching state management).
 
+## Standing rule — schema migrations (PLANS/11 §8)
+- Never edit an applied migration in place (neither the remote
+  `supabase/migrations/` SQL nor the drift `onUpgrade` steps that shipped
+  in a released version). Schema changes are always a NEW additive
+  migration + a `schemaVersion` bump.
+- Every release that ships a local `schemaVersion` bump must rehearse the
+  migration against a copy of REAL pilot data before release, and record
+  the rehearsal (data source, before/after counts) in `DECISIONS.md` —
+  fixture-seeded verification is not a rehearsal. See
+  `SUPPORT_AND_ROLLBACK.md` §5.3.
+- Remote schema changes additionally require the deploy gate: migration
+  applied to the live project + `rls_isolation_test.sql` re-run green,
+  user-confirmed, before any build pushing the new wire format ships.
+
 ## Discovery and scope control (user directive 2026-08-03)
 Applies to every plan in this project:
 - Follow the existing plan instructions first. Do not expand scope or

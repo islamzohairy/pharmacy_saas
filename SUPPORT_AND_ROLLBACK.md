@@ -108,3 +108,78 @@ visibility now:
   equivalent, dependency-governance check first) — automatic delivery
   replaces manual copy-paste; revisit when pilot count moves past one
   device.
+
+## 5. Pilot operations protocol (PLANS/11)
+
+Standing protocol for the two failure classes a pilot install can actually
+hit — plus the migration-rehearsal rule. Priority order: business data
+correctness → pilot stability → UX → sync reliability.
+
+### 5.1 Database open failure (the fatal screen)
+
+If the app shows "تعذر فتح البيانات" (cannot open data) instead of the
+dashboard:
+
+- **What happened:** the local encrypted database failed to open — corrupt
+  file, lost encryption key, or a failed migration. The file is NEVER
+  deleted or recreated by the app, so **her data is intact on the device**.
+  This is the one screen that deliberately does NOT write to the error log
+  (the log lives inside the DB).
+- **First response — do NOT tell her to clear data or reinstall.** Those
+  are data-loss actions.
+- Ask her to tap "نسخ التقرير" (copy report) and send the clipboard text.
+  The report is minimal by design: timestamp + error text + stack — no
+  ledger content, no token material.
+- Tap "إعادة المحاولة" (retry) once or twice with her (no automatic loops
+  exist — a manual tap is the only retry). If it persists:
+  1. Collect the report (above) — this is the primary artifact.
+  2. `adb logcat -d` if the device is reachable (USB debugging).
+  3. Use §2 rollback: install the previous tagged APK — rollback is
+     non-destructive and does NOT fix a corrupt local file by itself, but
+     it isolates whether the failure is app-version or device-storage
+     related (e.g. failing migration introduced by the new version).
+  4. If the file itself is corrupt (report says "malformed"/"not a
+     database"), the recovery decision is made by the operator with the
+     evidence in hand — never remotely instruct a wipe unprompted.
+
+### 5.2 Backup staleness (the old-backup warning)
+
+If the dashboard shows "آخر نسخة احتياطية قديمة — تحقق من الاتصال" (last
+backup is old — check connectivity):
+
+- **What it means:** ledger records have not reached the backup server for
+  more than 48 hours. Her data is safe on the device; only the off-device
+  copy is at risk.
+- Causes, in order of likelihood: phone offline / connectivity issue,
+  battery-optimization killing the app's background passes, backend
+  problem.
+- Operator actions: confirm the Supabase project is up (health check on the
+  project dashboard / logs), then ask her to open the app and keep it in
+  the foreground a few minutes — each foreground resume and every 60s tick
+  retries with backoff. The warning clears itself once a sync succeeds.
+- The stale signal is derived (unsynced-entry age vs. device clock) — a
+  device clock set backward masks it. If she reports the warning is wrong,
+  check the device clock setting before anything else.
+
+### 5.3 Migration rehearsal (standing rule)
+
+- **Every release that ships a local schema change (drift `schemaVersion`
+  bump) must rehearse the migration against a copy of real pilot data
+  BEFORE the release, and the rehearsal result recorded in `DECISIONS.md`**
+  (standing rule, `AGENTS.md`).
+- Plan 10's v4→v5 backfill was verified on raw-seeded fixtures only — the
+  FIRST real-data migration rehearsal happens before the first pilot
+  install and every release after that.
+- Rehearsal method: pull a copy of the pilot device's DB file (encrypted —
+  use the app's key; or rehearse on a restored-backup dataset), apply the
+  new migration path, and verify row counts / typed values match the
+  migration's expectation. Record: source of the data copy, before/after
+  row counts, and any corrections needed.
+
+### 5.4 Handoff expectations for the pilot
+
+- She will not be told to manage files, clear data, or reinstall — any
+  such instruction must come from the operator after §5.1/§5.2 triage.
+- All in-app copy is Arabic/RTL; support conversations happen over
+  WhatsApp/phone per §1.
+

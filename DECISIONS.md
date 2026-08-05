@@ -1071,3 +1071,27 @@ selected when it was produced. A debug/profiled artifact can be mistaken
 for a release artifact when only runtime behavior is observed — and
 release-only defects (permission gaps, tree-shaken code) survive unseen
 until a clean release build is exercised.
+
+## 2026-08-05 — Plan 11-H CLOSED: cleanup verified, final live-project state
+CLEANUP VERIFIED (human-executed, owner-privilege psql, 2026-08-05):
+probe tenant 24 (uuid `probe-709A6FBC382F4225816EAF44699C9FB4`) deleted —
+exactly 2 ledger_entries, 1 device, 1 pharmacy; landscape query after
+cleanup shows exactly two tenants: 14 (`ae1e4e62-…`, REAL pilot tenant,
+2 entries, untouched) and 25 (`9b2b5683-b21a-47ee-8d31-667c460aeeb1`,
+5556 emulator test tenant, 9 entries — 5 pre-gate Phase A/B-era + 4 gate
+— untouched, KEPT).
+GATE EVIDENCE LOCATION (correcting the verification misread): the four
+Phase 1 trigger-path pushes (14:32/14:34/14:38/14:54 local) physically
+live in tenant 25 — the 5556 install registers against that tenant, not
+against PharmacyTest. Tenant 25 DISPOSAL TRIGGER: emulator 5556
+retirement; it is not to become untracked cruft.
+TIMESTAMP AXIS (the exact confusion that produced the stale criterion):
+the LOCAL Drift ledger stamps `synced_at` client-side AFTER a successful
+push — that is the unsynced-tracking/quarantine axis; the REMOTE
+`ledger_entries.synced_at` is NEVER written by `push_ledger_entries`
+(0001 insert omits it; NULL on every row by design) — `occurred_at` is
+the remote timestamp axis, and remote-push verification must use it.
+LESSON: verification criteria must be derived from the ACTUAL
+schema/column semantics and the device's ACTUAL registered tenant — not
+carried forward from an earlier memo. Same family as the
+manifest-permission lesson: check reality, not the assumption.

@@ -245,9 +245,16 @@ cleaning sweep — the gate now tests the app's actual wire shape, which the
 "آخر نسخة: 5/8/2026 11:10", both sales stamped remotely, staleness healthy.
 Indicator no-op bug fixed in the same pass (relaunch no longer lingers at
 "syncing"; last-sync time derived via new `LedgerRepository.lastSyncedAt`).
-Live project state: exactly one tenant (`PharmacyTest`, uuid
-`ae1e4e62-8974-4fac-bee2-383d4d3424a0`, 1 device, 2 ledger entries) — all
-gate/probe residue cleaned (2026-08-05). Phase 2 (permanent-failure
+Live project state (final, 2026-08-05, verified via landscape query after
+cleanup): exactly TWO tenants — 14 (`PharmacyTest`, uuid
+`ae1e4e62-8974-4fac-bee2-383d4d3424a0`, REAL pilot tenant, 2 ledger
+entries) and 25 (`9b2b5683-b21a-47ee-8d31-667c460aeeb1`, the 5556
+emulator test tenant, 9 entries — 5 pre-gate + the 4 Plan 11-H Phase 1
+gate pushes; KEPT, disposal trigger = 5556 retirement). Probe tenant 24
+deleted (2 entries/1 device/1 pharmacy). Remote timestamp axis is
+`ledger_entries.occurred_at` — the RPC never writes remote `synced_at`
+(local Drift stamps it client-side post-push; that's the unsynced/
+quarantine axis). Phase 2 (permanent-failure
 quarantine, schemaVersion 6) is designed and deferred pending Phase 1
 sign-off — see DECISIONS.md 2026-08-05.
 

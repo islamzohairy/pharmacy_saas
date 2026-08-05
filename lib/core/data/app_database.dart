@@ -14,6 +14,7 @@ import 'tables/ledger_entries_table.dart';
 import 'tables/pharmacies_table.dart';
 import 'tables/products_table.dart';
 import 'tables/suppliers_table.dart';
+import 'tables/sync_quarantine_table.dart';
 import 'tables/user_profiles_table.dart';
 
 part 'app_database.g.dart';
@@ -26,8 +27,10 @@ part 'app_database.g.dart';
 /// (`products`, `suppliers`, `customers`, `ledger_entries`); version 4
 /// adds the local error log (`error_log_entries`, PLANS/09); version 5
 /// renames `cashDraw` → `expense` with a `category` column and adds
-/// compliance-prep fields to `pharmacies` (PLANS/10). The append-only
-/// ledger rule applies to the schema added in version 3.
+/// compliance-prep fields to `pharmacies` (PLANS/10); version 6 adds the
+/// sync-failure quarantine (`sync_quarantine_entries`, PLANS/11-H Phase
+/// 2). The append-only ledger rule applies to the schema added in
+/// version 3.
 @DriftDatabase(
   tables: [
     Pharmacies,
@@ -37,13 +40,14 @@ part 'app_database.g.dart';
     Customers,
     LedgerEntries,
     ErrorLogEntries,
+    SyncQuarantineEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,6 +59,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createTable(customers);
       await m.createTable(ledgerEntries);
       await m.createTable(errorLogEntries);
+      await m.createTable(syncQuarantineEntries);
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -86,6 +91,9 @@ class AppDatabase extends _$AppDatabase {
           "UPDATE ledger_entries SET type = 'expense', "
           "category = 'ownerDraw' WHERE type = 'cashDraw'",
         );
+      }
+      if (from < 6) {
+        await m.createTable(syncQuarantineEntries);
       }
     },
     beforeOpen: (details) async {

@@ -231,9 +231,25 @@ Runtime-verified on the emulator (onboarding → dashboard, product/sale
 entry, live aggregation, non-destructive error indicator, cold-restart
 persistence); the stale-state runtime repro is blocked by the emulator
 environment (no adb root, `-qemu -rtc` unsupported on this image) and is
-covered by unit/widget tests. Note: the local `.env.local` anon key
-returns 401 against its Supabase project — runtime sync failures in local
-dev builds are expected until it's regenerated.
+covered by unit/widget tests. SUPABASE CREDENTIALS: `.env.local` anon key is
+VALID for project `vhzvvveikzmuzxzrgbsr` (byte-verified in the release APK;
+register_device RPC returns 200) — the earlier "401 = invalid key" note was
+wrong (that 401 is RLS denial on direct table access, by design).
+REMOTE BACKUP FIXED (2026-08-05, Plan 11-H, staff-engineer approved): the
+FK-23503 bug is CLOSED — remote migration `0003_ledger_party_reference_fks.sql`
+applied to the live project (drops the four never-populated reference FKs;
+`pharmacy_id` FK + type CHECK + RLS untouched); deploy gate re-run green
+with the upgraded gate (FK-count assertion + real app payload push + self-
+cleaning sweep — the gate now tests the app's actual wire shape, which the
+08-02/08-04 gate runs never did); on-device acceptance: chip error →
+"آخر نسخة: 5/8/2026 11:10", both sales stamped remotely, staleness healthy.
+Indicator no-op bug fixed in the same pass (relaunch no longer lingers at
+"syncing"; last-sync time derived via new `LedgerRepository.lastSyncedAt`).
+Live project state: exactly one tenant (`PharmacyTest`, uuid
+`ae1e4e62-8974-4fac-bee2-383d4d3424a0`, 1 device, 2 ledger entries) — all
+gate/probe residue cleaned (2026-08-05). Phase 2 (permanent-failure
+quarantine, schemaVersion 6) is designed and deferred pending Phase 1
+sign-off — see DECISIONS.md 2026-08-05.
 
 ## Tooling (installed 2026-08-02, AI Engineering OS full setup)
 - Global OpenCode config (`~/.config/opencode/`): global `AGENTS.md`

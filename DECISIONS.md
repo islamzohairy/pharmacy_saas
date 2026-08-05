@@ -852,3 +852,126 @@ runtime effect: local dev builds show the backup error indicator because sync
 always fails; pilot/dev sync is broken until the key is regenerated in the
 Supabase dashboard and `.env.local` updated. Plan 11's error surface made this
 visible — by design.
+
+## 2026-08-05 — CORRECTION + root cause of the backup failure: remote FK bug, key is valid
+CORRECTION (supersedes the FINDING in the closure entry above): the `.env.local`
+anon key is VALID for project `vhzvvveikzmuzxzrgbsr`. Byte-level APK proof:
+`app-release.apk` (built with `--dart-define-from-file=.env.local`) embeds the
+identical URL and the identical 208-char key (sha256 `7435f72c…` == file's). The
+earlier "401 = invalid key" reading was WRONG: that 401 was
+`{"code":"42501","message":"permission denied for table ledger_entries"}` —
+PostgREST's RLS denial for anon DIRECT table access, which is by design (anon is
+locked to the two SECURITY DEFINER RPCs). No key rotation was performed and none
+is needed.
+ACTUAL ROOT CAUSE (verified live, 2026-08-05): the exact requests the app sends
+succeed on the key and fail on the DATA:
+- `POST /rest/v1/rpc/register_device` (exact app headers `apikey`+`Bearer`+app
+  body) → HTTP 200.
+- `POST /rest/v1/rpc/push_ledger_entries` with the app's exact
+  `RemoteLedgerEntry.toJson()` payload → HTTP 409
+  `{"code":"23503","details":"Key (profile_id)=(1) is not present in table
+  \"user_profiles\"","message":"insert or update on table \"ledger_entries\"
+  violates foreign key constraint \"ledger_entries_profile_id_fkey\"}`; the same
+  with `product_id` → 409 `ledger_entries_product_id_fkey` on `products`.
+- Identical payload with NO party ids → HTTP 200 (entry inserted).
+WHY: `ledger_entries` (0001) FK-constrains `product_id/supplier_id/customer_id/
+profile_id` against remote `products/suppliers/customers/user_profiles` — tables
+that are NEVER populated because P0 sync scope is ledger-only (DECISIONS.md
+2026-08-02). Every real app entry carries `profile_id` (and `product_id` on
+sales), so EVERY real push 409s. The 2026-08-04 deploy-gate e2e passed because
+its test payloads omit party ids — the gate verified RLS isolation, not the
+app's real wire payload. The 401/409 responses are captured in the session
+record; probe rows (pharmacy `verify-probe-uuid`, device, ledger id 900003)
+were left on the dev project, pending user decision on cleanup.
+DECISION: this is a REMOTE SCHEMA bug, not a client bug — the client's payload
+matches the documented wire contract. Fix requires a NEW additive remote
+migration (0003) + deploy gate; NOT implemented — reported and awaiting
+user direction (AGENTS.md discovery rule: schema/architecture impact → stop
+and ask). Candidate fix (recommended): drop the four `ledger_entries` FKs on
+never-populated tables (0003), keeping the `type` CHECK and everything else;
+client unchanged.
+
+## 2026-08-05 — Plan 11-H executed: remote FK fix (migration 0003) + gate upgrade + cleanup (staff-engineer approved)
+EVIDENCE CHAIN (each step verified live against the pilot project):
+1. **On-device root-cause confirmation:** instrumented the installed app's
+   sync path (temporary debugPrint, reverted after diagnosis) — the app's
+   real payload 409s with `PostgrestException 23503: Key (product_id)=(1)
+   is not present in table "products"` (`ledger_entries_product_id_fkey`),
+   the same FK class as the earlier profile_id probe. Client payload
+   matches the documented wire contract; this is a remote-schema bug.
+2. **Migration 0003** (`supabase/migrations/0003_ledger_party_reference_fks.sql`)
+   — drops the four never-populated reference FKs (`profile_id`,
+   `product_id`, `supplier_id`, `customer_id`); `pharmacy_id` FK, type
+   CHECK, RLS, anon surface untouched. Columns stay; re-add path documented
+   in the file (NOT VALID → VALIDATE in a NEW migration). **Applied to the
+   live project** (2026-08-05); post-state verified: exactly one FK remains
+   (`ledger_entries_pharmacy_id_fkey`).
+3. **Deploy gate re-run, upgraded permanently:** `rls_isolation_test.sql`
+   now (a) asserts the FK count on `ledger_entries` = 1 (post-0003
+   assertion, not assumption), (b) pushes a REAL app payload (sale with
+   `product_id` + `profile_id`, expense with `profile_id` + `category`)
+   under a dedicated disposable tenant and asserts persisted VALUES, (c)
+   self-cleans at script end — its own a/b/gate tenants AND `live-test-%`
+   e2e residue (anon cannot delete; the SQL gate runs with owner privilege
+   at the same deploy gate, so it is the cleanup vehicle for the whole
+   gate). Result live: ALL CHECKS PASSED. The 08-02/08-04 gate runs proved
+   RLS isolation only — never the app's wire payload (payloads omitted
+   party ids); that gap is closed.
+4. **test_live e2e** (client contract, incl. the real-shape push) green.
+5. **Proof curl:** exact original failing payload (sale `product_id=1
+   profile_id=1`) under a fresh disposable tenant → 200, 2 rows persisted.
+6. **One-off cleanup executed (user-confirmed 2026-08-05)** — the residue
+   inventory classified every live tenant (10 found, zero orphans): 4
+   md5-32hex SQL-gate tenants (plans 03/10 gate runs), 3 `live-test-*`
+   e2e tenants (today's e2e; the gate sweep ran before it), 2 of my
+   disposable probe/proof tenants, 1 REAL (`PharmacyTest`, uuid
+   ae1e4e62-8974-4fac-bee2-383d4d3424a0 — kept). SQL executed verbatim:
+   ```sql
+   begin;
+   delete from public.ledger_entries where pharmacy_id in (5,6,9,10,13,20,21,22,23);
+   delete from public.devices where pharmacy_id in (5,6,9,10,13,20,21,22,23);
+   delete from public.pharmacies where id in (5,6,9,10,13,20,21,22,23);
+   commit;
+   ```
+   (14 entries, 9 devices, 9 pharmacies; executed as a one-off via psql,
+   never committed as a file.) Post-state: the live project holds exactly
+   the real tenant (1 device, 2 ledger entries).
+7. **On-device acceptance (release APK, real app):** chip before =
+   "تعذر النسخ الاحتياطي — سنحاول مرة أخرى" (error); after 0003 + retry =
+   "آخر نسخة: 5/8/2026 11:10" (synced); both sales stamped and present
+   remotely under the app's tenant; staleness derived healthy (0
+   unsynced); relaunch state correct.
+DISCOVERED AND FIXED (indicator no-op bug, Plan 11 code): a sync pass with
+nothing to push and the device already registered returned `SyncResult`
+indistinguishable from "skipped", so the scheduler early-returned and the
+chip lingered at "syncing" forever after relaunch once the backlog was
+empty. Fix in `sync_scheduler.dart`: a skipped result from a configured
+pass now derives the real last-sync time from stamped entries
+(`LedgerRepository.lastSyncedAt` — new read of max `synced_at`, derived,
+never stored, same philosophy as staleness) and shows "synced" with that
+time; the register-only first pass keeps its original synced semantics.
+Covered by 2 new scheduler tests; 181 tests green, analyzer clean. The
+release APK was rebuilt with this fix (only code change since the last
+release build).
+COORDINATION ON RECORD (staff-review Q3/adjustment 4): repo-wide grep for
+Supabase URL/host references finds exactly ONE concrete host in the whole
+repo — `vhzvvveikzmuzxzrgbsr.supabase.co` (this DECISIONS.md entry); every
+other reference is the generic define-name/placeholder. `.env*` = only
+`.env.local`; CI workflow and Android configs contain no URL. Single live
+project statement confirmed on record.
+V5/v6 COORDINATION (staff-review adjustment 4): Plan 11 Phase 0 V5 outcome
+on record — a derived unsynced signal EXISTS (oldestUnsyncedAt), so the
+`sync_metadata` fallback table was NOT used and no V5 migration shipped.
+`schemaVersion` 6 is therefore FREE for Plan 11-H Phase 2's
+`sync_quarantine` table; no two additive migrations race. When Phase 2
+lands, the v6 rehearsal record goes here per the AGENTS.md standing rule
+(fixture v5→v6 integrity pass + emulator runtime migration; full
+rehearsal-on-real-data rule activates at the first migration after pilot
+devices hold real data).
+PHASE 2 DEFERRED (user decision, pending Phase 1 sign-off): SyncJob
+permanent-failure classification — set stays EXACTLY
+{23514,23503,23502,22P02} → quarantine in a new local drift table
+(`sync_quarantine`, schemaVersion 6, excluded from unsyncedEntries, one
+error-log record per quarantine, no auto-release); 23505 → success;
+everything else (incl. 401/403) → existing capped backoff. Staleness
+remains the visibility for those.

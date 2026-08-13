@@ -151,14 +151,19 @@ void main() {
       await v6.customStatement(
         'ALTER TABLE pharmacies DROP COLUMN auto_deduct_stock',
       );
+      // The v9-only column must go too — same reason (reopen ladder's
+      // from<9 addColumn step; PLANS/14).
+      await v6.customStatement(
+        'ALTER TABLE products DROP COLUMN low_stock_threshold',
+      );
       await v6.customStatement('PRAGMA user_version = 6');
       await v6.close();
 
       final db = await open();
 
-      // Schema version advanced to the shipping head (v8 as of PLANS/13).
+      // Schema version advanced to the shipping head (v9 as of PLANS/14).
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 8);
+      expect(version.read<int>('user_version'), 9);
 
       // The stock movements table exists and is empty.
       expect(await db.select(db.stockMovements).get(), isEmpty);

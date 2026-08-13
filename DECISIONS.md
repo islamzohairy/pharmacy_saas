@@ -1403,7 +1403,10 @@ Suite 257/257, analyzer clean, release APK builds.
   mirrors origin/main. The pilot release gate currently rests on local
   gates (analyze + full suite + release APK build). Restoring `ci.yaml`
   on main is a follow-up before the pilot build.
-- Plans 12 + 13 merged to main via PR #<PR> (merge commit <hash>).
+- Plans 12 + 13 merged to main via merge commit `78e9f0f` (2026-08-13;
+  `git merge --no-ff` + push — `gh` was unavailable on this machine, so
+  no GitHub PR was created; the merge commit message carries the full
+  PR-style description, Plans 12 AND 13, and the handoff notes).
   Plan 14 branches from main, not from the feature branch.
 
 ## 2026-08-13 — lesson: drift watch streams never complete under widget-test fake-async

@@ -346,6 +346,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get lowStockThresholdInvalid => 'أدخل عددًا صحيحًا (مثال: 25)';
 
   @override
+  String get lowStockBadge => 'مخزون منخفض';
+
+  @override
+  String get outOfStockBadge => 'نفد المخزون';
+
+  @override
   String get adjustStockAction => 'المخزون: إضافة / تصحيح';
 
   @override

@@ -742,6 +742,18 @@ abstract class AppLocalizations {
   /// **'أدخل عددًا صحيحًا (مثال: 25)'**
   String get lowStockThresholdInvalid;
 
+  /// Product-list badge for a tracked product at or below its low-stock threshold (PLANS/14, D14)
+  ///
+  /// In ar, this message translates to:
+  /// **'مخزون منخفض'**
+  String get lowStockBadge;
+
+  /// Product-list badge for a tracked product with zero or negative on-hand (PLANS/14, D14)
+  ///
+  /// In ar, this message translates to:
+  /// **'نفد المخزون'**
+  String get outOfStockBadge;
+
   /// Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)
   ///
   /// In ar, this message translates to:

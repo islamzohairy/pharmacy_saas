@@ -719,4 +719,78 @@ void main() {
       expect(product.lowStockThreshold, isNull);
     });
   });
+
+  group('Product-list signal badges', () {
+    Future<int> seedTracked(
+      AppDatabase db,
+      int pharmacyId,
+      int quantity, {
+      int? threshold,
+    }) async {
+      final productId = await seedProduct(db, pharmacyId, name: 'بروفين');
+      await seedMovement(db, pharmacyId, productId, quantity: quantity);
+      if (threshold != null) {
+        await (db.update(db.products)..where((t) => t.id.equals(productId)))
+            .write(const ProductsCompanion(lowStockThreshold: Value(3)));
+      }
+      return productId;
+    }
+
+    testWidgets('tracked product at zero shows the out-of-stock badge', (
+      tester,
+    ) async {
+      await seedTracked(db, pharmacyId, 0);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('نفد المخزون'), findsOneWidget);
+      expect(find.text('مخزون منخفض'), findsNothing);
+      // The stock line co-exists with the badge (no displacement).
+      expect(find.text('المخزون: ٠'), findsOneWidget);
+    });
+
+    testWidgets('negative on-hand keeps the out-of-stock badge (never '
+        'hidden, D3 lineage)', (tester) async {
+      await seedTracked(db, pharmacyId, -4);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('نفد المخزون'), findsOneWidget);
+    });
+
+    testWidgets('tracked product at or below its threshold shows the '
+        'low-stock badge', (tester) async {
+      await seedTracked(db, pharmacyId, 3, threshold: 3);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('مخزون منخفض'), findsOneWidget);
+      expect(find.text('نفد المخزون'), findsNothing);
+    });
+
+    testWidgets('threshold unset with small stock shows no badge '
+        '(out-of-stock signal only — D14)', (tester) async {
+      await seedTracked(db, pharmacyId, 1);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('مخزون منخفض'), findsNothing);
+      expect(find.text('نفد المخزون'), findsNothing);
+    });
+
+    testWidgets('untracked product never shows a badge', (tester) async {
+      await seedProduct(db, pharmacyId, name: 'بانادول');
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('مخزون منخفض'), findsNothing);
+      expect(find.text('نفد المخزون'), findsNothing);
+      expect(find.text('المخزون: —'), findsOneWidget);
+    });
+
+    testWidgets('the badge coexists with the row tap — tapping still opens '
+        'the action sheet', (tester) async {
+      await seedTracked(db, pharmacyId, 0);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.text('بروفين'));
+      await tester.pumpAndSettle();
+      expect(find.text('المخزون: إضافة / تصحيح'), findsOneWidget);
+    });
+  });
 }

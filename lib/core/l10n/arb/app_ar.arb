@@ -447,6 +447,14 @@
   "@lowStockThresholdInvalid": {
     "description": "Validation error when the threshold is not a whole number or is negative"
   },
+  "lowStockBadge": "مخزون منخفض",
+  "@lowStockBadge": {
+    "description": "Product-list badge for a tracked product at or below its low-stock threshold (PLANS/14, D14)"
+  },
+  "outOfStockBadge": "نفد المخزون",
+  "@outOfStockBadge": {
+    "description": "Product-list badge for a tracked product with zero or negative on-hand (PLANS/14, D14)"
+  },
   "adjustStockAction": "المخزون: إضافة / تصحيح",
   "@adjustStockAction": {
     "description": "Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)"

@@ -460,6 +460,24 @@ abstract class AppLocalizations {
   /// **'حفظ'**
   String get settingsSave;
 
+  /// Section title for the inventory settings block (PLANS/13)
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون'**
+  String get settingsInventorySection;
+
+  /// Settings toggle: when ON, a sale automatically posts a stock_out movement for tracked products
+  ///
+  /// In ar, this message translates to:
+  /// **'خصم المخزون تلقائيًا عند البيع'**
+  String get autoDeductStockLabel;
+
+  /// Helper line under the auto-deduct toggle explaining its behavior
+  ///
+  /// In ar, this message translates to:
+  /// **'عند تفعيله تُخصم الكميات المباعة من المخزون تلقائيًا للمنتجات المُتتبَّعة'**
+  String get autoDeductStockHelper;
+
   /// Display label for the owner role (informational — role is not enforced in P0)
   ///
   /// In ar, this message translates to:
@@ -681,6 +699,114 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'إزالة التاريخ'**
   String get clearExpiry;
+
+  /// Label of the optional initial-stock input on product creation (PLANS/12)
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون الابتدائي'**
+  String get initialStockLabel;
+
+  /// Helper text under the initial-stock input, only shown on product creation
+  ///
+  /// In ar, this message translates to:
+  /// **'اختياري — عدد الوحدات المتوفرة عند الإنشاء'**
+  String get initialStockOptional;
+
+  /// Validation error when initial stock is not a whole number or is negative
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عددًا صحيحًا (مثال: 25)'**
+  String get initialStockInvalid;
+
+  /// Product-list row label for the live on-hand quantity
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون'**
+  String get onHandLabel;
+
+  /// Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون: إضافة / تصحيح'**
+  String get adjustStockAction;
+
+  /// Product-row action-sheet entry opening the product edit form
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل بيانات المنتج'**
+  String get editProductAction;
+
+  /// Adjustment-sheet header label for the current on-hand quantity
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون الحالي'**
+  String get currentOnHandLabel;
+
+  /// Adjustment-sheet mode segment: post a positive stock_in
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة كمية'**
+  String get addQuantity;
+
+  /// Adjustment-sheet mode segment: set the quantity to an exact target
+  ///
+  /// In ar, this message translates to:
+  /// **'تصحيح الكمية'**
+  String get correctQuantity;
+
+  /// Adjustment-sheet input label for the quantity field
+  ///
+  /// In ar, this message translates to:
+  /// **'الكمية'**
+  String get quantityLabel;
+
+  /// Add-mode live preview of the resulting on-hand quantity
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد الإضافة: {quantity}'**
+  String afterAddPreview(String quantity);
+
+  /// Correct-mode live preview of the signed delta and the new total
+  ///
+  /// In ar, this message translates to:
+  /// **'الفرق: {delta} · الجديد: {total}'**
+  String correctPreview(String delta, String total);
+
+  /// Correct-mode inline state when the target equals the current on-hand (commit disabled)
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد تغيير'**
+  String get noChange;
+
+  /// Optional free-text note field on the adjustment sheet
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة (اختياري)'**
+  String get noteOptional;
+
+  /// Adjustment-sheet commit button posting the stock movement
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث المخزون'**
+  String get updateStock;
+
+  /// Snackbar shown when the stock movement write fails
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل تحديث المخزون'**
+  String get stockUpdateFailed;
+
+  /// Activity-feed label for a manual stock_in movement, naming the product
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة مخزون: {product}'**
+  String stockAddLabel(String product);
+
+  /// Activity-feed label for a manual adjustment movement, naming the product
+  ///
+  /// In ar, this message translates to:
+  /// **'تصحيح مخزون: {product}'**
+  String stockAdjustLabel(String product);
 
   /// Hint of the product search field in sales entry
   ///

@@ -3,15 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/format/money.dart';
+import '../../../core/format/quantity.dart';
 import '../../../core/l10n/app_l10n.dart';
+import '../../inventory/inventory.dart';
 import '../../ledger/ledger.dart';
 import '../domain/activity_row.dart';
 import 'activity_providers.dart';
 
-/// Activity history (PLANS/10 Phase 3): the last 100 ledger entries, newest
-/// first, each labeled by type/category with its amount and the profile that
-/// recorded it. Read-only — the ledger's append-only rule means there is
-/// nothing to edit here.
+/// Activity history (PLANS/10 Phase 3 + PLANS/13 §5.5): the last 100
+/// ledger entries and manual stock movements, newest first, each labeled
+/// with its amount/quantity and the profile that recorded it. Read-only —
+/// the append-only rules mean there is nothing to edit here.
 class ActivityScreen extends ConsumerWidget {
   const ActivityScreen({super.key});
 
@@ -64,23 +66,52 @@ class _ActivityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final entry = row.entry;
-    return ListTile(
-      leading: Icon(_iconFor(entry.type)),
-      title: Text(_labelFor(l10n, entry)),
-      subtitle: Text(
-        [
-          DateFormat('d/M/yyyy HH:mm').format(entry.occurredAt),
-          if (row.actorDisplayName != null)
-            l10n.activityRecordedBy(row.actorDisplayName!),
-        ].join(' · '),
+    return switch (row) {
+      LedgerActivityRow(:final entry, :final actorDisplayName) => ListTile(
+        leading: Icon(_iconFor(entry.type)),
+        title: Text(_labelFor(l10n, entry)),
+        subtitle: Text(
+          [
+            DateFormat('d/M/yyyy HH:mm').format(entry.occurredAt),
+            if (actorDisplayName != null)
+              l10n.activityRecordedBy(actorDisplayName),
+          ].join(' · '),
+        ),
+        trailing: Text(
+          formatEgp(entry.amountMinor),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
-      trailing: Text(
-        formatEgp(entry.amountMinor),
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-    );
+      MovementActivityRow(
+        :final movement,
+        :final productName,
+        :final actorDisplayName,
+      ) =>
+        ListTile(
+          leading: Icon(_iconForMovement(movement.type)),
+          title: Text(_labelForMovement(l10n, movement, productName)),
+          subtitle: Text(
+            [
+              DateFormat('d/M/yyyy HH:mm').format(movement.occurredAt),
+              if (actorDisplayName != null)
+                l10n.activityRecordedBy(actorDisplayName),
+            ].join(' · '),
+          ),
+          trailing: Text(
+            _signedQuantity(movement.quantity),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+    };
   }
+
+  /// Signed display quantity, e.g. `+5` → `+٥` and `-3` → `؜-٣` — the
+  /// locale's digits and minus sign via the shared quantity formatter;
+  /// positive values carry an explicit plus so direction never reads
+  /// ambiguously in the feed.
+  static String _signedQuantity(int quantity) => quantity >= 0
+      ? '+${formatQuantity(quantity)}'
+      : formatQuantity(quantity);
 
   IconData _iconFor(LedgerEntryType type) {
     return switch (type) {
@@ -89,6 +120,30 @@ class _ActivityTile extends StatelessWidget {
       LedgerEntryType.supplierDebt => Icons.local_shipping_outlined,
       LedgerEntryType.customerDebt => Icons.people_outline,
       LedgerEntryType.debtRepayment => Icons.currency_exchange,
+    };
+  }
+
+  IconData _iconForMovement(StockMovementType type) {
+    return switch (type) {
+      StockMovementType.stockIn => Icons.add_box_outlined,
+      // stock_out and initial never reach the feed (D10), but the
+      // exhaustive switch needs a shape for them.
+      StockMovementType.stockOut || StockMovementType.initial ||
+      StockMovementType.adjustment =>
+        Icons.build_outlined,
+    };
+  }
+
+  String _labelForMovement(
+    AppLocalizations l10n,
+    StockMovement movement,
+    String productName,
+  ) {
+    return switch (movement.type) {
+      StockMovementType.stockIn => l10n.stockAddLabel(productName),
+      StockMovementType.adjustment => l10n.stockAdjustLabel(productName),
+      StockMovementType.stockOut || StockMovementType.initial =>
+        movement.type.name,
     };
   }
 

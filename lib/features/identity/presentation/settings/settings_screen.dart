@@ -24,6 +24,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _legalNameController = TextEditingController();
   bool _loaded = false;
   bool _saving = false;
+  bool _autoDeductStock = true;
 
   /// Basic length cap only — the fields are optional and inert.
   static const _maxLength = 100;
@@ -41,6 +42,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (!mounted) return;
     _taxController.text = pharmacy.taxRegistrationNumber ?? '';
     _legalNameController.text = pharmacy.legalBusinessName ?? '';
+    _autoDeductStock = pharmacy.autoDeductStock;
     setState(() => _loaded = true);
   }
 
@@ -55,6 +57,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         legalBusinessName: _legalNameController.text.trim().isEmpty
             ? null
             : _legalNameController.text.trim(),
+        autoDeductStock: _autoDeductStock,
       );
       if (!mounted) return;
       setState(() => _saving = false);
@@ -106,6 +109,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 labelText: l10n.settingsLegalBusinessNameLabel,
               ),
               maxLength: _maxLength,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              l10n.settingsInventorySection,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.autoDeductStockLabel),
+              subtitle: Text(l10n.autoDeductStockHelper),
+              value: _autoDeductStock,
+              onChanged: _saving
+                  ? null
+                  : (value) => setState(() => _autoDeductStock = value),
             ),
             const SizedBox(height: 24),
             FilledButton(

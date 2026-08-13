@@ -315,3 +315,71 @@ trap.
 - No e-invoicing/ETA implementation — gated behind `COMPLIANCE.md`
   confirmation, not a normal backlog item.
 - No iOS build — Android only this round.
+
+Plan 12 (inventory foundation) is complete — schemaVersion 7, local-only:
+append-only `stock_movements` drift table (table + `StockMovementType`
+enum in `lib/core/data/tables/`; types initial/stock_in/stock_out/
+adjustment; quantity is a signed delta, negative subtracts; `profile_id`
+attribution + nullable `note`; `occurred_at` non-null; NO sync surface —
+nothing inventory-related leaves the device, no remote migration, the
+standing V6 negative-grep covers `stock_movements` in `supabase/` and
+`lib/core/data/sync/`). New `inventory` feature (domain: StockMovement,
+StockRepository interface, pure `reduceOnHand` (unclamped SUM — negative
+stock allowed by D3, error-color display); data: DriftStockRepository
+(grouped SUM over the movement ledger, `watchAllOnHand`; `watchOnHand`,
+`getMovements`, `recordMovement`); presentation: `stockRepositoryProvider`
++ `allOnHandProvider`; barrel `inventory.dart`). Product form captures
+OPTIONAL initial stock on creation only (hidden when editing; empty→null,
+≥0, `normalizeDigits` Arabic-Indic normalization; posts one `initial`
+movement with active-profile attribution). Product list shows live
+`المخزون: <formatQuantity>` per row (`productsWithOnHandProvider` =
+combineLatest2 over `watchActive` + `watchAllOnHand`) with theme error
+color when negative. `formatQuantity` (ar_EG) in `core/format/quantity.dart`;
+`normalizeDigits` extracted to `core/format/money.dart` (behavior-
+preserving — money tests untouched). Migration rehearsed TWICE: v6→v7
+fixture (test/core/data/stock_movements_migration_test.dart) and on-
+device against REAL pilot data (emulator-5556 acceptance install, release
+build `install -r`, data intact, chip "آخر نسخة: 13/8/2026 10:14"). 225
+unit/widget tests green (close-out at `50a0492`), analyzer clean,
+release APK builds.
+
+Plan 13 (sale auto-deduction + manual adjustment) is complete —
+schemaVersion 8, local-only (zero changes under `supabase/` or
+`core/data/sync/`): additive drift migration adds
+`pharmacies.auto_deduct_stock` (INTEGER, default 1; default ON, persisted
+per pharmacy, fresh-read at sale-confirm time so a Settings change applies
+to the very next sale). Settings screen gained the المخزون section toggle
+"خصم المخزون تلقائيًا عند البيع". Sales confirm now runs
+`recordSaleWithAutoDeduct` (in `lib/features/sales/domain/`): sale ledger
+write FIRST, then one `stock_out` movement (−qty) per line ONLY for
+tracked products with auto-deduct ON (D6); a stock-write failure never
+blocks/reverts the sale — logged via the Plan 09 error path (D8/D9).
+`StockRepository.allOnHand` is a one-shot snapshot for confirm-time reads
+(see fake-async lesson below). Products rows open an action sheet
+("المخزون: إضافة / تصحيح" vs "تعديل بيانات المنتج", chevron cue);
+`stock_adjustment_sheet.dart` has add/correct segments with live Arabic
+previews (add posts `stock_in` +qty≥1; correct posts `adjustment` with
+delta = target − current, target ≥ 0, absent on-hand = 0; zero-delta
+rejected). Activity feed now merges ledger entries + manual movements
+(`activity_feed.dart` `mergeActivityFeed`, cap 100 combined by recency,
+D10 — auto `stock_out` and `initial` excluded; sealed `ActivityRow`
+base with `LedgerActivityRow`/`MovementActivityRow`; providers
+combineLatest3 over ledger `watchEntries` + stock `watchMovements` +
+products `watchAll`). Fake-async lesson: drift `watch()` streams never
+complete under widget-test fake-async — confirm-time reads use one-shot
+`get()`-based repository methods, never `stream.first`. Migration
+rehearsed TWICE: v7→v8 fixture (`auto_deduct_migration_test.dart`) and
+on-device against real pilot data (emulator-5556, release `install -r`,
+all Plan 12 data intact; live-exercised: tracked sale deducts, untracked
+no-op, toggle off stops deduction, add/correct work, feed shows
+attributed signed-quantity movement rows). 257 tests green (Plan 12
+baseline 225 at `50a0492` + 32 new; the earlier-recorded 224 was a
+pre-`50a0492` momentary count), analyzer clean, release APK builds. The
+three Step-8 test sales were confirmed synced to tenant 14 (ids 4–6,
+2026-08-13 13:20) once the release APK was built WITH
+`--dart-define-from-file=.env.local` — the runtime-pass APK had lacked
+the backend defines, which is the scheduler's documented
+unconfigured-backend no-op; RELEASE BUILDS MUST ALWAYS CARRY `.env.local`
+defines (else sync silently never runs). Documented
+`.github/workflows/ci.yaml` does not exist in the repo — pilot release
+gate relies on local gates; restoring CI on main is a follow-up.

@@ -84,6 +84,21 @@ class $PharmaciesTable extends Pharmacies
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _autoDeductStockMeta = const VerificationMeta(
+    'autoDeductStock',
+  );
+  @override
+  late final GeneratedColumn<bool> autoDeductStock = GeneratedColumn<bool>(
+    'auto_deduct_stock',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_deduct_stock" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -104,6 +119,7 @@ class $PharmaciesTable extends Pharmacies
     remoteUuid,
     taxRegistrationNumber,
     legalBusinessName,
+    autoDeductStock,
     createdAt,
   ];
   @override
@@ -161,6 +177,15 @@ class $PharmaciesTable extends Pharmacies
         ),
       );
     }
+    if (data.containsKey('auto_deduct_stock')) {
+      context.handle(
+        _autoDeductStockMeta,
+        autoDeductStock.isAcceptableOrUnknown(
+          data['auto_deduct_stock']!,
+          _autoDeductStockMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -200,6 +225,10 @@ class $PharmaciesTable extends Pharmacies
         DriftSqlType.string,
         data['${effectivePrefix}legal_business_name'],
       ),
+      autoDeductStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_deduct_stock'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -225,6 +254,11 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
   /// behind COMPLIANCE.md's confirmed-by-counsel gate.
   final String? taxRegistrationNumber;
   final String? legalBusinessName;
+
+  /// Whether a sale automatically posts a `stock_out` movement for
+  /// tracked products (PLANS/13 D6/D9, schema v8). Default ON for fresh
+  /// pharmacies; the Settings screen toggle is the only write path.
+  final bool autoDeductStock;
   final DateTime createdAt;
   const StoredPharmacy({
     required this.id,
@@ -233,6 +267,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     this.remoteUuid,
     this.taxRegistrationNumber,
     this.legalBusinessName,
+    required this.autoDeductStock,
     required this.createdAt,
   });
   @override
@@ -250,6 +285,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     if (!nullToAbsent || legalBusinessName != null) {
       map['legal_business_name'] = Variable<String>(legalBusinessName);
     }
+    map['auto_deduct_stock'] = Variable<bool>(autoDeductStock);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -268,6 +304,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       legalBusinessName: legalBusinessName == null && nullToAbsent
           ? const Value.absent()
           : Value(legalBusinessName),
+      autoDeductStock: Value(autoDeductStock),
       createdAt: Value(createdAt),
     );
   }
@@ -288,6 +325,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       legalBusinessName: serializer.fromJson<String?>(
         json['legalBusinessName'],
       ),
+      autoDeductStock: serializer.fromJson<bool>(json['autoDeductStock']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -303,6 +341,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
         taxRegistrationNumber,
       ),
       'legalBusinessName': serializer.toJson<String?>(legalBusinessName),
+      'autoDeductStock': serializer.toJson<bool>(autoDeductStock),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -314,6 +353,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     Value<String?> remoteUuid = const Value.absent(),
     Value<String?> taxRegistrationNumber = const Value.absent(),
     Value<String?> legalBusinessName = const Value.absent(),
+    bool? autoDeductStock,
     DateTime? createdAt,
   }) => StoredPharmacy(
     id: id ?? this.id,
@@ -326,6 +366,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     legalBusinessName: legalBusinessName.present
         ? legalBusinessName.value
         : this.legalBusinessName,
+    autoDeductStock: autoDeductStock ?? this.autoDeductStock,
     createdAt: createdAt ?? this.createdAt,
   );
   StoredPharmacy copyWithCompanion(PharmaciesCompanion data) {
@@ -342,6 +383,9 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       legalBusinessName: data.legalBusinessName.present
           ? data.legalBusinessName.value
           : this.legalBusinessName,
+      autoDeductStock: data.autoDeductStock.present
+          ? data.autoDeductStock.value
+          : this.autoDeductStock,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -355,6 +399,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
           ..write('remoteUuid: $remoteUuid, ')
           ..write('taxRegistrationNumber: $taxRegistrationNumber, ')
           ..write('legalBusinessName: $legalBusinessName, ')
+          ..write('autoDeductStock: $autoDeductStock, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -368,6 +413,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     remoteUuid,
     taxRegistrationNumber,
     legalBusinessName,
+    autoDeductStock,
     createdAt,
   );
   @override
@@ -380,6 +426,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
           other.remoteUuid == this.remoteUuid &&
           other.taxRegistrationNumber == this.taxRegistrationNumber &&
           other.legalBusinessName == this.legalBusinessName &&
+          other.autoDeductStock == this.autoDeductStock &&
           other.createdAt == this.createdAt);
 }
 
@@ -390,6 +437,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
   final Value<String?> remoteUuid;
   final Value<String?> taxRegistrationNumber;
   final Value<String?> legalBusinessName;
+  final Value<bool> autoDeductStock;
   final Value<DateTime> createdAt;
   const PharmaciesCompanion({
     this.id = const Value.absent(),
@@ -398,6 +446,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     this.remoteUuid = const Value.absent(),
     this.taxRegistrationNumber = const Value.absent(),
     this.legalBusinessName = const Value.absent(),
+    this.autoDeductStock = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   PharmaciesCompanion.insert({
@@ -407,6 +456,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     this.remoteUuid = const Value.absent(),
     this.taxRegistrationNumber = const Value.absent(),
     this.legalBusinessName = const Value.absent(),
+    this.autoDeductStock = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : name = Value(name),
        currency = Value(currency);
@@ -417,6 +467,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     Expression<String>? remoteUuid,
     Expression<String>? taxRegistrationNumber,
     Expression<String>? legalBusinessName,
+    Expression<bool>? autoDeductStock,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -427,6 +478,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
       if (taxRegistrationNumber != null)
         'tax_registration_number': taxRegistrationNumber,
       if (legalBusinessName != null) 'legal_business_name': legalBusinessName,
+      if (autoDeductStock != null) 'auto_deduct_stock': autoDeductStock,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -438,6 +490,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     Value<String?>? remoteUuid,
     Value<String?>? taxRegistrationNumber,
     Value<String?>? legalBusinessName,
+    Value<bool>? autoDeductStock,
     Value<DateTime>? createdAt,
   }) {
     return PharmaciesCompanion(
@@ -448,6 +501,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
       taxRegistrationNumber:
           taxRegistrationNumber ?? this.taxRegistrationNumber,
       legalBusinessName: legalBusinessName ?? this.legalBusinessName,
+      autoDeductStock: autoDeductStock ?? this.autoDeductStock,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -475,6 +529,9 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     if (legalBusinessName.present) {
       map['legal_business_name'] = Variable<String>(legalBusinessName.value);
     }
+    if (autoDeductStock.present) {
+      map['auto_deduct_stock'] = Variable<bool>(autoDeductStock.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -490,6 +547,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
           ..write('remoteUuid: $remoteUuid, ')
           ..write('taxRegistrationNumber: $taxRegistrationNumber, ')
           ..write('legalBusinessName: $legalBusinessName, ')
+          ..write('autoDeductStock: $autoDeductStock, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3554,6 +3612,528 @@ class SyncQuarantineEntriesCompanion
   }
 }
 
+class $StockMovementsTable extends StockMovements
+    with TableInfo<$StockMovementsTable, StoredStockMovement> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StockMovementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _pharmacyIdMeta = const VerificationMeta(
+    'pharmacyId',
+  );
+  @override
+  late final GeneratedColumn<int> pharmacyId = GeneratedColumn<int>(
+    'pharmacy_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES pharmacies (id)',
+    ),
+  );
+  static const VerificationMeta _productIdMeta = const VerificationMeta(
+    'productId',
+  );
+  @override
+  late final GeneratedColumn<int> productId = GeneratedColumn<int>(
+    'product_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES products (id)',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<StockMovementType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<StockMovementType>($StockMovementsTable.$convertertype);
+  static const VerificationMeta _quantityMeta = const VerificationMeta(
+    'quantity',
+  );
+  @override
+  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+    'quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _occurredAtMeta = const VerificationMeta(
+    'occurredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+    'occurred_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<int> profileId = GeneratedColumn<int>(
+    'profile_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES user_profiles (id)',
+    ),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    pharmacyId,
+    productId,
+    type,
+    quantity,
+    occurredAt,
+    profileId,
+    note,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'stock_movements';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StoredStockMovement> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('pharmacy_id')) {
+      context.handle(
+        _pharmacyIdMeta,
+        pharmacyId.isAcceptableOrUnknown(data['pharmacy_id']!, _pharmacyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pharmacyIdMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(
+        _productIdMeta,
+        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(
+        _quantityMeta,
+        quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_quantityMeta);
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+        _occurredAtMeta,
+        occurredAt.isAcceptableOrUnknown(data['occurred_at']!, _occurredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StoredStockMovement map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StoredStockMovement(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      pharmacyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}pharmacy_id'],
+      )!,
+      productId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}product_id'],
+      )!,
+      type: $StockMovementsTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
+      quantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}quantity'],
+      )!,
+      occurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}occurred_at'],
+      )!,
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}profile_id'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+    );
+  }
+
+  @override
+  $StockMovementsTable createAlias(String alias) {
+    return $StockMovementsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<StockMovementType, String, String> $convertertype =
+      const EnumNameConverter<StockMovementType>(StockMovementType.values);
+}
+
+class StoredStockMovement extends DataClass
+    implements Insertable<StoredStockMovement> {
+  final int id;
+  final int pharmacyId;
+  final int productId;
+  final StockMovementType type;
+  final int quantity;
+  final DateTime occurredAt;
+
+  /// Caller-resolved attribution (plan-04 precedent); NULL allowed for
+  /// system-initiated movements.
+  final int? profileId;
+  final String? note;
+  const StoredStockMovement({
+    required this.id,
+    required this.pharmacyId,
+    required this.productId,
+    required this.type,
+    required this.quantity,
+    required this.occurredAt,
+    this.profileId,
+    this.note,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['pharmacy_id'] = Variable<int>(pharmacyId);
+    map['product_id'] = Variable<int>(productId);
+    {
+      map['type'] = Variable<String>(
+        $StockMovementsTable.$convertertype.toSql(type),
+      );
+    }
+    map['quantity'] = Variable<int>(quantity);
+    map['occurred_at'] = Variable<DateTime>(occurredAt);
+    if (!nullToAbsent || profileId != null) {
+      map['profile_id'] = Variable<int>(profileId);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    return map;
+  }
+
+  StockMovementsCompanion toCompanion(bool nullToAbsent) {
+    return StockMovementsCompanion(
+      id: Value(id),
+      pharmacyId: Value(pharmacyId),
+      productId: Value(productId),
+      type: Value(type),
+      quantity: Value(quantity),
+      occurredAt: Value(occurredAt),
+      profileId: profileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profileId),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+    );
+  }
+
+  factory StoredStockMovement.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StoredStockMovement(
+      id: serializer.fromJson<int>(json['id']),
+      pharmacyId: serializer.fromJson<int>(json['pharmacyId']),
+      productId: serializer.fromJson<int>(json['productId']),
+      type: $StockMovementsTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
+      quantity: serializer.fromJson<int>(json['quantity']),
+      occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
+      profileId: serializer.fromJson<int?>(json['profileId']),
+      note: serializer.fromJson<String?>(json['note']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'pharmacyId': serializer.toJson<int>(pharmacyId),
+      'productId': serializer.toJson<int>(productId),
+      'type': serializer.toJson<String>(
+        $StockMovementsTable.$convertertype.toJson(type),
+      ),
+      'quantity': serializer.toJson<int>(quantity),
+      'occurredAt': serializer.toJson<DateTime>(occurredAt),
+      'profileId': serializer.toJson<int?>(profileId),
+      'note': serializer.toJson<String?>(note),
+    };
+  }
+
+  StoredStockMovement copyWith({
+    int? id,
+    int? pharmacyId,
+    int? productId,
+    StockMovementType? type,
+    int? quantity,
+    DateTime? occurredAt,
+    Value<int?> profileId = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+  }) => StoredStockMovement(
+    id: id ?? this.id,
+    pharmacyId: pharmacyId ?? this.pharmacyId,
+    productId: productId ?? this.productId,
+    type: type ?? this.type,
+    quantity: quantity ?? this.quantity,
+    occurredAt: occurredAt ?? this.occurredAt,
+    profileId: profileId.present ? profileId.value : this.profileId,
+    note: note.present ? note.value : this.note,
+  );
+  StoredStockMovement copyWithCompanion(StockMovementsCompanion data) {
+    return StoredStockMovement(
+      id: data.id.present ? data.id.value : this.id,
+      pharmacyId: data.pharmacyId.present
+          ? data.pharmacyId.value
+          : this.pharmacyId,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      type: data.type.present ? data.type.value : this.type,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      occurredAt: data.occurredAt.present
+          ? data.occurredAt.value
+          : this.occurredAt,
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      note: data.note.present ? data.note.value : this.note,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StoredStockMovement(')
+          ..write('id: $id, ')
+          ..write('pharmacyId: $pharmacyId, ')
+          ..write('productId: $productId, ')
+          ..write('type: $type, ')
+          ..write('quantity: $quantity, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('profileId: $profileId, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    pharmacyId,
+    productId,
+    type,
+    quantity,
+    occurredAt,
+    profileId,
+    note,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StoredStockMovement &&
+          other.id == this.id &&
+          other.pharmacyId == this.pharmacyId &&
+          other.productId == this.productId &&
+          other.type == this.type &&
+          other.quantity == this.quantity &&
+          other.occurredAt == this.occurredAt &&
+          other.profileId == this.profileId &&
+          other.note == this.note);
+}
+
+class StockMovementsCompanion extends UpdateCompanion<StoredStockMovement> {
+  final Value<int> id;
+  final Value<int> pharmacyId;
+  final Value<int> productId;
+  final Value<StockMovementType> type;
+  final Value<int> quantity;
+  final Value<DateTime> occurredAt;
+  final Value<int?> profileId;
+  final Value<String?> note;
+  const StockMovementsCompanion({
+    this.id = const Value.absent(),
+    this.pharmacyId = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.type = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+    this.profileId = const Value.absent(),
+    this.note = const Value.absent(),
+  });
+  StockMovementsCompanion.insert({
+    this.id = const Value.absent(),
+    required int pharmacyId,
+    required int productId,
+    required StockMovementType type,
+    required int quantity,
+    required DateTime occurredAt,
+    this.profileId = const Value.absent(),
+    this.note = const Value.absent(),
+  }) : pharmacyId = Value(pharmacyId),
+       productId = Value(productId),
+       type = Value(type),
+       quantity = Value(quantity),
+       occurredAt = Value(occurredAt);
+  static Insertable<StoredStockMovement> custom({
+    Expression<int>? id,
+    Expression<int>? pharmacyId,
+    Expression<int>? productId,
+    Expression<String>? type,
+    Expression<int>? quantity,
+    Expression<DateTime>? occurredAt,
+    Expression<int>? profileId,
+    Expression<String>? note,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (pharmacyId != null) 'pharmacy_id': pharmacyId,
+      if (productId != null) 'product_id': productId,
+      if (type != null) 'type': type,
+      if (quantity != null) 'quantity': quantity,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+      if (profileId != null) 'profile_id': profileId,
+      if (note != null) 'note': note,
+    });
+  }
+
+  StockMovementsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? pharmacyId,
+    Value<int>? productId,
+    Value<StockMovementType>? type,
+    Value<int>? quantity,
+    Value<DateTime>? occurredAt,
+    Value<int?>? profileId,
+    Value<String?>? note,
+  }) {
+    return StockMovementsCompanion(
+      id: id ?? this.id,
+      pharmacyId: pharmacyId ?? this.pharmacyId,
+      productId: productId ?? this.productId,
+      type: type ?? this.type,
+      quantity: quantity ?? this.quantity,
+      occurredAt: occurredAt ?? this.occurredAt,
+      profileId: profileId ?? this.profileId,
+      note: note ?? this.note,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (pharmacyId.present) {
+      map['pharmacy_id'] = Variable<int>(pharmacyId.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<int>(productId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(
+        $StockMovementsTable.$convertertype.toSql(type.value),
+      );
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<int>(quantity.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    if (profileId.present) {
+      map['profile_id'] = Variable<int>(profileId.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StockMovementsCompanion(')
+          ..write('id: $id, ')
+          ..write('pharmacyId: $pharmacyId, ')
+          ..write('productId: $productId, ')
+          ..write('type: $type, ')
+          ..write('quantity: $quantity, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('profileId: $profileId, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3568,6 +4148,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $SyncQuarantineEntriesTable syncQuarantineEntries =
       $SyncQuarantineEntriesTable(this);
+  late final $StockMovementsTable stockMovements = $StockMovementsTable(this);
   late final Index idxLedgerPharmacyOccurredAt = Index(
     'idx_ledger_pharmacy_occurred_at',
     'CREATE INDEX idx_ledger_pharmacy_occurred_at ON ledger_entries (pharmacy_id, occurred_at)',
@@ -3575,6 +4156,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index idxLedgerPharmacyType = Index(
     'idx_ledger_pharmacy_type',
     'CREATE INDEX idx_ledger_pharmacy_type ON ledger_entries (pharmacy_id, type)',
+  );
+  late final Index idxStockMovementPharmacyProduct = Index(
+    'idx_stock_movement_pharmacy_product',
+    'CREATE INDEX idx_stock_movement_pharmacy_product ON stock_movements (pharmacy_id, product_id)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -3589,8 +4174,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ledgerEntries,
     errorLogEntries,
     syncQuarantineEntries,
+    stockMovements,
     idxLedgerPharmacyOccurredAt,
     idxLedgerPharmacyType,
+    idxStockMovementPharmacyProduct,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3612,6 +4199,7 @@ typedef $$PharmaciesTableCreateCompanionBuilder =
       Value<String?> remoteUuid,
       Value<String?> taxRegistrationNumber,
       Value<String?> legalBusinessName,
+      Value<bool> autoDeductStock,
       Value<DateTime> createdAt,
     });
 typedef $$PharmaciesTableUpdateCompanionBuilder =
@@ -3622,6 +4210,7 @@ typedef $$PharmaciesTableUpdateCompanionBuilder =
       Value<String?> remoteUuid,
       Value<String?> taxRegistrationNumber,
       Value<String?> legalBusinessName,
+      Value<bool> autoDeductStock,
       Value<DateTime> createdAt,
     });
 
@@ -3718,6 +4307,24 @@ final class $$PharmaciesTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$StockMovementsTable, List<StoredStockMovement>>
+  _stockMovementsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.stockMovements,
+    aliasName: 'pharmacies__id__stock_movements__pharmacy_id',
+  );
+
+  $$StockMovementsTableProcessedTableManager get stockMovementsRefs {
+    final manager = $$StockMovementsTableTableManager(
+      $_db,
+      $_db.stockMovements,
+    ).filter((f) => f.pharmacyId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_stockMovementsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$PharmaciesTableFilterComposer
@@ -3756,6 +4363,11 @@ class $$PharmaciesTableFilterComposer
 
   ColumnFilters<String> get legalBusinessName => $composableBuilder(
     column: $table.legalBusinessName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoDeductStock => $composableBuilder(
+    column: $table.autoDeductStock,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3888,6 +4500,31 @@ class $$PharmaciesTableFilterComposer
     );
     return f(composer);
   }
+
+  Expression<bool> stockMovementsRefs(
+    Expression<bool> Function($$StockMovementsTableFilterComposer f) f,
+  ) {
+    final $$StockMovementsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.stockMovements,
+      getReferencedColumn: (t) => t.pharmacyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StockMovementsTableFilterComposer(
+            $db: $db,
+            $table: $db.stockMovements,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$PharmaciesTableOrderingComposer
@@ -3929,6 +4566,11 @@ class $$PharmaciesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get autoDeductStock => $composableBuilder(
+    column: $table.autoDeductStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3965,6 +4607,11 @@ class $$PharmaciesTableAnnotationComposer
 
   GeneratedColumn<String> get legalBusinessName => $composableBuilder(
     column: $table.legalBusinessName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get autoDeductStock => $composableBuilder(
+    column: $table.autoDeductStock,
     builder: (column) => column,
   );
 
@@ -4095,6 +4742,31 @@ class $$PharmaciesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> stockMovementsRefs<T extends Object>(
+    Expression<T> Function($$StockMovementsTableAnnotationComposer a) f,
+  ) {
+    final $$StockMovementsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.stockMovements,
+      getReferencedColumn: (t) => t.pharmacyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StockMovementsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.stockMovements,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$PharmaciesTableTableManager
@@ -4116,6 +4788,7 @@ class $$PharmaciesTableTableManager
             bool suppliersRefs,
             bool customersRefs,
             bool ledgerEntriesRefs,
+            bool stockMovementsRefs,
           })
         > {
   $$PharmaciesTableTableManager(_$AppDatabase db, $PharmaciesTable table)
@@ -4137,6 +4810,7 @@ class $$PharmaciesTableTableManager
                 Value<String?> remoteUuid = const Value.absent(),
                 Value<String?> taxRegistrationNumber = const Value.absent(),
                 Value<String?> legalBusinessName = const Value.absent(),
+                Value<bool> autoDeductStock = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => PharmaciesCompanion(
                 id: id,
@@ -4145,6 +4819,7 @@ class $$PharmaciesTableTableManager
                 remoteUuid: remoteUuid,
                 taxRegistrationNumber: taxRegistrationNumber,
                 legalBusinessName: legalBusinessName,
+                autoDeductStock: autoDeductStock,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -4155,6 +4830,7 @@ class $$PharmaciesTableTableManager
                 Value<String?> remoteUuid = const Value.absent(),
                 Value<String?> taxRegistrationNumber = const Value.absent(),
                 Value<String?> legalBusinessName = const Value.absent(),
+                Value<bool> autoDeductStock = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => PharmaciesCompanion.insert(
                 id: id,
@@ -4163,6 +4839,7 @@ class $$PharmaciesTableTableManager
                 remoteUuid: remoteUuid,
                 taxRegistrationNumber: taxRegistrationNumber,
                 legalBusinessName: legalBusinessName,
+                autoDeductStock: autoDeductStock,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -4180,6 +4857,7 @@ class $$PharmaciesTableTableManager
                 suppliersRefs = false,
                 customersRefs = false,
                 ledgerEntriesRefs = false,
+                stockMovementsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -4189,6 +4867,7 @@ class $$PharmaciesTableTableManager
                     if (suppliersRefs) db.suppliers,
                     if (customersRefs) db.customers,
                     if (ledgerEntriesRefs) db.ledgerEntries,
+                    if (stockMovementsRefs) db.stockMovements,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4298,6 +4977,27 @@ class $$PharmaciesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (stockMovementsRefs)
+                        await $_getPrefetchedData<
+                          StoredPharmacy,
+                          $PharmaciesTable,
+                          StoredStockMovement
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PharmaciesTableReferences
+                              ._stockMovementsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PharmaciesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).stockMovementsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.pharmacyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4324,6 +5024,7 @@ typedef $$PharmaciesTableProcessedTableManager =
         bool suppliersRefs,
         bool customersRefs,
         bool ledgerEntriesRefs,
+        bool stockMovementsRefs,
       })
     >;
 typedef $$UserProfilesTableCreateCompanionBuilder =
@@ -4378,6 +5079,24 @@ final class $$UserProfilesTableReferences
     ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_ledgerEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$StockMovementsTable, List<StoredStockMovement>>
+  _stockMovementsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.stockMovements,
+    aliasName: 'user_profiles__id__stock_movements__profile_id',
+  );
+
+  $$StockMovementsTableProcessedTableManager get stockMovementsRefs {
+    final manager = $$StockMovementsTableTableManager(
+      $_db,
+      $_db.stockMovements,
+    ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_stockMovementsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4452,6 +5171,31 @@ class $$UserProfilesTableFilterComposer
           }) => $$LedgerEntriesTableFilterComposer(
             $db: $db,
             $table: $db.ledgerEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> stockMovementsRefs(
+    Expression<bool> Function($$StockMovementsTableFilterComposer f) f,
+  ) {
+    final $$StockMovementsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.stockMovements,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StockMovementsTableFilterComposer(
+            $db: $db,
+            $table: $db.stockMovements,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4587,6 +5331,31 @@ class $$UserProfilesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> stockMovementsRefs<T extends Object>(
+    Expression<T> Function($$StockMovementsTableAnnotationComposer a) f,
+  ) {
+    final $$StockMovementsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.stockMovements,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StockMovementsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.stockMovements,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$UserProfilesTableTableManager
@@ -4602,7 +5371,11 @@ class $$UserProfilesTableTableManager
           $$UserProfilesTableUpdateCompanionBuilder,
           (StoredUserProfile, $$UserProfilesTableReferences),
           StoredUserProfile,
-          PrefetchHooks Function({bool pharmacyId, bool ledgerEntriesRefs})
+          PrefetchHooks Function({
+            bool pharmacyId,
+            bool ledgerEntriesRefs,
+            bool stockMovementsRefs,
+          })
         > {
   $$UserProfilesTableTableManager(_$AppDatabase db, $UserProfilesTable table)
     : super(
@@ -4652,11 +5425,16 @@ class $$UserProfilesTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({pharmacyId = false, ledgerEntriesRefs = false}) {
+              ({
+                pharmacyId = false,
+                ledgerEntriesRefs = false,
+                stockMovementsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (ledgerEntriesRefs) db.ledgerEntries,
+                    if (stockMovementsRefs) db.stockMovements,
                   ],
                   addJoins:
                       <
@@ -4715,6 +5493,27 @@ class $$UserProfilesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (stockMovementsRefs)
+                        await $_getPrefetchedData<
+                          StoredUserProfile,
+                          $UserProfilesTable,
+                          StoredStockMovement
+                        >(
+                          currentTable: table,
+                          referencedTable: $$UserProfilesTableReferences
+                              ._stockMovementsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UserProfilesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).stockMovementsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.profileId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4735,7 +5534,11 @@ typedef $$UserProfilesTableProcessedTableManager =
       $$UserProfilesTableUpdateCompanionBuilder,
       (StoredUserProfile, $$UserProfilesTableReferences),
       StoredUserProfile,
-      PrefetchHooks Function({bool pharmacyId, bool ledgerEntriesRefs})
+      PrefetchHooks Function({
+        bool pharmacyId,
+        bool ledgerEntriesRefs,
+        bool stockMovementsRefs,
+      })
     >;
 typedef $$ProductsTableCreateCompanionBuilder =
     ProductsCompanion Function({
@@ -4794,6 +5597,24 @@ final class $$ProductsTableReferences
     ).filter((f) => f.productId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_ledgerEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$StockMovementsTable, List<StoredStockMovement>>
+  _stockMovementsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.stockMovements,
+    aliasName: 'products__id__stock_movements__product_id',
+  );
+
+  $$StockMovementsTableProcessedTableManager get stockMovementsRefs {
+    final manager = $$StockMovementsTableTableManager(
+      $_db,
+      $_db.stockMovements,
+    ).filter((f) => f.productId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_stockMovementsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4883,6 +5704,31 @@ class $$ProductsTableFilterComposer
           }) => $$LedgerEntriesTableFilterComposer(
             $db: $db,
             $table: $db.ledgerEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> stockMovementsRefs(
+    Expression<bool> Function($$StockMovementsTableFilterComposer f) f,
+  ) {
+    final $$StockMovementsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.stockMovements,
+      getReferencedColumn: (t) => t.productId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StockMovementsTableFilterComposer(
+            $db: $db,
+            $table: $db.stockMovements,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5040,6 +5886,31 @@ class $$ProductsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> stockMovementsRefs<T extends Object>(
+    Expression<T> Function($$StockMovementsTableAnnotationComposer a) f,
+  ) {
+    final $$StockMovementsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.stockMovements,
+      getReferencedColumn: (t) => t.productId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StockMovementsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.stockMovements,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ProductsTableTableManager
@@ -5055,7 +5926,11 @@ class $$ProductsTableTableManager
           $$ProductsTableUpdateCompanionBuilder,
           (StoredProduct, $$ProductsTableReferences),
           StoredProduct,
-          PrefetchHooks Function({bool pharmacyId, bool ledgerEntriesRefs})
+          PrefetchHooks Function({
+            bool pharmacyId,
+            bool ledgerEntriesRefs,
+            bool stockMovementsRefs,
+          })
         > {
   $$ProductsTableTableManager(_$AppDatabase db, $ProductsTable table)
     : super(
@@ -5117,11 +5992,16 @@ class $$ProductsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({pharmacyId = false, ledgerEntriesRefs = false}) {
+              ({
+                pharmacyId = false,
+                ledgerEntriesRefs = false,
+                stockMovementsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (ledgerEntriesRefs) db.ledgerEntries,
+                    if (stockMovementsRefs) db.stockMovements,
                   ],
                   addJoins:
                       <
@@ -5178,6 +6058,27 @@ class $$ProductsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (stockMovementsRefs)
+                        await $_getPrefetchedData<
+                          StoredProduct,
+                          $ProductsTable,
+                          StoredStockMovement
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProductsTableReferences
+                              ._stockMovementsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProductsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).stockMovementsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.productId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -5198,7 +6099,11 @@ typedef $$ProductsTableProcessedTableManager =
       $$ProductsTableUpdateCompanionBuilder,
       (StoredProduct, $$ProductsTableReferences),
       StoredProduct,
-      PrefetchHooks Function({bool pharmacyId, bool ledgerEntriesRefs})
+      PrefetchHooks Function({
+        bool pharmacyId,
+        bool ledgerEntriesRefs,
+        bool stockMovementsRefs,
+      })
     >;
 typedef $$SuppliersTableCreateCompanionBuilder =
     SuppliersCompanion Function({
@@ -7250,6 +8155,571 @@ typedef $$SyncQuarantineEntriesTableProcessedTableManager =
       StoredSyncQuarantineEntry,
       PrefetchHooks Function()
     >;
+typedef $$StockMovementsTableCreateCompanionBuilder =
+    StockMovementsCompanion Function({
+      Value<int> id,
+      required int pharmacyId,
+      required int productId,
+      required StockMovementType type,
+      required int quantity,
+      required DateTime occurredAt,
+      Value<int?> profileId,
+      Value<String?> note,
+    });
+typedef $$StockMovementsTableUpdateCompanionBuilder =
+    StockMovementsCompanion Function({
+      Value<int> id,
+      Value<int> pharmacyId,
+      Value<int> productId,
+      Value<StockMovementType> type,
+      Value<int> quantity,
+      Value<DateTime> occurredAt,
+      Value<int?> profileId,
+      Value<String?> note,
+    });
+
+final class $$StockMovementsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $StockMovementsTable,
+          StoredStockMovement
+        > {
+  $$StockMovementsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $PharmaciesTable _pharmacyIdTable(_$AppDatabase db) =>
+      db.pharmacies.createAlias('stock_movements__pharmacy_id__pharmacies__id');
+
+  $$PharmaciesTableProcessedTableManager get pharmacyId {
+    final $_column = $_itemColumn<int>('pharmacy_id')!;
+
+    final manager = $$PharmaciesTableTableManager(
+      $_db,
+      $_db.pharmacies,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_pharmacyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ProductsTable _productIdTable(_$AppDatabase db) =>
+      db.products.createAlias('stock_movements__product_id__products__id');
+
+  $$ProductsTableProcessedTableManager get productId {
+    final $_column = $_itemColumn<int>('product_id')!;
+
+    final manager = $$ProductsTableTableManager(
+      $_db,
+      $_db.products,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_productIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $UserProfilesTable _profileIdTable(_$AppDatabase db) => db.userProfiles
+      .createAlias('stock_movements__profile_id__user_profiles__id');
+
+  $$UserProfilesTableProcessedTableManager? get profileId {
+    final $_column = $_itemColumn<int>('profile_id');
+    if ($_column == null) return null;
+    final manager = $$UserProfilesTableTableManager(
+      $_db,
+      $_db.userProfiles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_profileIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$StockMovementsTableFilterComposer
+    extends Composer<_$AppDatabase, $StockMovementsTable> {
+  $$StockMovementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<StockMovementType, StockMovementType, String>
+  get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$PharmaciesTableFilterComposer get pharmacyId {
+    final $$PharmaciesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pharmacyId,
+      referencedTable: $db.pharmacies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PharmaciesTableFilterComposer(
+            $db: $db,
+            $table: $db.pharmacies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ProductsTableFilterComposer get productId {
+    final $$ProductsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.products,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductsTableFilterComposer(
+            $db: $db,
+            $table: $db.products,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UserProfilesTableFilterComposer get profileId {
+    final $$UserProfilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.userProfiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserProfilesTableFilterComposer(
+            $db: $db,
+            $table: $db.userProfiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$StockMovementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $StockMovementsTable> {
+  $$StockMovementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$PharmaciesTableOrderingComposer get pharmacyId {
+    final $$PharmaciesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pharmacyId,
+      referencedTable: $db.pharmacies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PharmaciesTableOrderingComposer(
+            $db: $db,
+            $table: $db.pharmacies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ProductsTableOrderingComposer get productId {
+    final $$ProductsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.products,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductsTableOrderingComposer(
+            $db: $db,
+            $table: $db.products,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UserProfilesTableOrderingComposer get profileId {
+    final $$UserProfilesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.userProfiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserProfilesTableOrderingComposer(
+            $db: $db,
+            $table: $db.userProfiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$StockMovementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StockMovementsTable> {
+  $$StockMovementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<StockMovementType, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<int> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  $$PharmaciesTableAnnotationComposer get pharmacyId {
+    final $$PharmaciesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pharmacyId,
+      referencedTable: $db.pharmacies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PharmaciesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.pharmacies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ProductsTableAnnotationComposer get productId {
+    final $$ProductsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.products,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.products,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UserProfilesTableAnnotationComposer get profileId {
+    final $$UserProfilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.userProfiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserProfilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.userProfiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$StockMovementsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StockMovementsTable,
+          StoredStockMovement,
+          $$StockMovementsTableFilterComposer,
+          $$StockMovementsTableOrderingComposer,
+          $$StockMovementsTableAnnotationComposer,
+          $$StockMovementsTableCreateCompanionBuilder,
+          $$StockMovementsTableUpdateCompanionBuilder,
+          (StoredStockMovement, $$StockMovementsTableReferences),
+          StoredStockMovement,
+          PrefetchHooks Function({
+            bool pharmacyId,
+            bool productId,
+            bool profileId,
+          })
+        > {
+  $$StockMovementsTableTableManager(
+    _$AppDatabase db,
+    $StockMovementsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StockMovementsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StockMovementsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StockMovementsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> pharmacyId = const Value.absent(),
+                Value<int> productId = const Value.absent(),
+                Value<StockMovementType> type = const Value.absent(),
+                Value<int> quantity = const Value.absent(),
+                Value<DateTime> occurredAt = const Value.absent(),
+                Value<int?> profileId = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+              }) => StockMovementsCompanion(
+                id: id,
+                pharmacyId: pharmacyId,
+                productId: productId,
+                type: type,
+                quantity: quantity,
+                occurredAt: occurredAt,
+                profileId: profileId,
+                note: note,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int pharmacyId,
+                required int productId,
+                required StockMovementType type,
+                required int quantity,
+                required DateTime occurredAt,
+                Value<int?> profileId = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+              }) => StockMovementsCompanion.insert(
+                id: id,
+                pharmacyId: pharmacyId,
+                productId: productId,
+                type: type,
+                quantity: quantity,
+                occurredAt: occurredAt,
+                profileId: profileId,
+                note: note,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$StockMovementsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({pharmacyId = false, productId = false, profileId = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (pharmacyId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.pharmacyId,
+                                    referencedTable:
+                                        $$StockMovementsTableReferences
+                                            ._pharmacyIdTable(db),
+                                    referencedColumn:
+                                        $$StockMovementsTableReferences
+                                            ._pharmacyIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (productId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.productId,
+                                    referencedTable:
+                                        $$StockMovementsTableReferences
+                                            ._productIdTable(db),
+                                    referencedColumn:
+                                        $$StockMovementsTableReferences
+                                            ._productIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (profileId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.profileId,
+                                    referencedTable:
+                                        $$StockMovementsTableReferences
+                                            ._profileIdTable(db),
+                                    referencedColumn:
+                                        $$StockMovementsTableReferences
+                                            ._profileIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$StockMovementsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StockMovementsTable,
+      StoredStockMovement,
+      $$StockMovementsTableFilterComposer,
+      $$StockMovementsTableOrderingComposer,
+      $$StockMovementsTableAnnotationComposer,
+      $$StockMovementsTableCreateCompanionBuilder,
+      $$StockMovementsTableUpdateCompanionBuilder,
+      (StoredStockMovement, $$StockMovementsTableReferences),
+      StoredStockMovement,
+      PrefetchHooks Function({bool pharmacyId, bool productId, bool profileId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7270,4 +8740,6 @@ class $AppDatabaseManager {
       $$ErrorLogEntriesTableTableManager(_db, _db.errorLogEntries);
   $$SyncQuarantineEntriesTableTableManager get syncQuarantineEntries =>
       $$SyncQuarantineEntriesTableTableManager(_db, _db.syncQuarantineEntries);
+  $$StockMovementsTableTableManager get stockMovements =>
+      $$StockMovementsTableTableManager(_db, _db.stockMovements);
 }

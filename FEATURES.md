@@ -169,9 +169,48 @@
   until the INTERNET manifest fix (first successful release-mode sync
   14:53) — see DECISIONS.md 2026-08-05.
 
+- 12_INVENTORY_FOUNDATION_PLAN — inventory foundation: append-only
+  `stock_movements` drift table (schemaVersion 7; `initial` /
+  `stock_in` / `stock_out` / `adjustment` types, signed-delta quantities,
+  profile attribution, nullable note; local-only — nothing leaves the
+  device), `inventory` feature (StockRepository, live on-hand via grouped
+  SUM over the movement ledger), optional initial-stock capture on
+  product creation (one `initial` movement, Arabic-Indic digit
+  normalization, hidden on edit), live on-hand + negative-stock error
+  color on the product list. Migration rehearsed twice: v6→v7 fixture
+  (2026-08-13, first checkpoint) and on-device against real pilot data
+  (emulator-5556 acceptance install, release build — data intact,
+  first successful push observed on the new build). Deploy gate re-run
+  green on the resumed backend (RLS isolation test, self-cleaning).
+  224 tests green, analyzer clean. See DECISIONS.md 2026-08-13.
+  (Count corrected at Plan 13 acceptance: the "224" was a momentary
+  pre-`50a0492` measurement — Plan 12 closed at 225/225 at `50a0492`.)
+
+- 13_INVENTORY_DEDUCTION_AND_ADJUSTMENT_PLAN — sale auto-deduction and
+  manual stock adjustment (schemaVersion 8, local-only — zero changes
+  under `supabase/` or `core/data/sync/`): `pharmacies.auto_deduct_stock`
+  drift column (default ON, additive migration, rehearsed twice — v7→v8
+  fixture 2026-08-13 and on-device 2026-08-13-13:00 on emulator-5556 with
+  Plan 12's real data intact), Settings toggle (fresh-read inside sale
+  confirm, D8), sequential sale-first auto-deduct hook posting one
+  `stock_out` per sale line for tracked products only (D6/D9), product-row
+  action sheet ("المخزون: إضافة / تصحيح" vs "تعديل بيانات المنتج",
+  chevron cue), two-mode adjustment sheet (add posts `stock_in`; correct
+  posts signed-delta `adjustment`; zero-delta rejected; live Arabic
+  previews), and the activity feed merged across ledger + manual movements
+  (D10: auto `stock_out`/`initial` absent; 100-combined cap by recency).
+  Runtime-passed end-to-end on the release APK (tracked sale deducts
+  ١٠٠→٩٩; untracked sale no-op; toggle off stops deduction; add ٩٩→١٠٤;
+  correct →١٢٠ with "الفرق: ١٦ · الجديد: ١٢٠" previews; feed renders both
+  movement types attributed + signed quantities). 257 tests green (225 baseline at
+  `50a0492` + 32 new: +1 migration, +15 deduct, +8 adjustment, +8 feed),
+  analyzer clean. See DECISIONS.md 2026-08-13 (D6–D10, device-leg pass,
+  fake-async lesson, acceptance reconciliation + sync confirmation).
+
 ## In progress
-None — all P0 plans (01–09), plan 10, and plan 11 are complete. Next work
-is gated on pilot feedback and the P1 confirmations in the roadmap below.
+None — all P0 plans (01–09), plans 10–13 are complete.
+Next work is gated on pilot feedback and the P1 confirmations in the
+roadmap below.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |
@@ -187,6 +226,8 @@ is gated on pilot feedback and the P1 confirmations in the roadmap below.
 | 09 | `PLANS/09_CRASH_VISIBILITY_PLAN.md` | crash visibility for the pilot (post-review) |
 | 10 | `PLANS/10_EXPENSES_ACTIVITY_AND_SETTINGS_PLAN.md` | where money goes beyond draws; activity visibility; ETA prep |
 | 11 | `PLANS/11_PILOT_HARDENING_AND_OBSERVABILITY_PLAN.md` | pilot hardening: DB-open safety, backup staleness visibility |
+| 12 | `PLANS/12_INVENTORY_FOUNDATION_PLAN.md` | inventory: on-hand visibility, initial stock capture |
+| 13 | `PLANS/13_INVENTORY_DEDUCTION_AND_ADJUSTMENT_PLAN.md` | sale auto-deduction, manual stock adjustment, movements in activity feed |
 
 ## Roadmap — P1 (not started, not yet planned in detail)
 - Expiry alerting logic (data field already ships in P0 — see

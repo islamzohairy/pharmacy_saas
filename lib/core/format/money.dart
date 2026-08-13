@@ -20,6 +20,24 @@ String formatEgp(int minorUnits) {
 final RegExp _egpPattern = RegExp(r'^\d+(\.\d{1,2})?$');
 const String _arabicDigits = '٠١٢٣٤٥٦٧٨٩';
 
+/// Maps Arabic-Indic digits (`٠١٢٣٤٥٦٧٨٩`) to their Western equivalents,
+/// leaving every other character untouched. Shared by [parseEgpToMinor]
+/// and the inventory quantity parsing path (PLANS/12) so both accept
+/// Arabic-Indic keyboard input through one convention — no second parsing
+/// path with its own digit handling.
+///
+/// Behavior-preserving by contract: extracting this helper must not
+/// change [parseEgpToMinor]'s behavior — the existing money tests are
+/// the proof.
+String normalizeDigits(String input) {
+  final buffer = StringBuffer();
+  for (final rune in input.runes) {
+    final digit = _arabicDigits.indexOf(String.fromCharCode(rune));
+    buffer.write(digit >= 0 ? '$digit' : String.fromCharCode(rune));
+  }
+  return buffer.toString();
+}
+
 /// Parses a user-typed EGP amount into piastres.
 ///
 /// Accepts Western or Arabic-Indic digits, an optional single decimal
@@ -32,12 +50,7 @@ int parseEgpToMinor(String input) {
       .replaceAll('٫', '.')
       .replaceAll(',', '')
       .replaceAll('٬', '');
-  final buffer = StringBuffer();
-  for (final rune in normalized.runes) {
-    final digit = _arabicDigits.indexOf(String.fromCharCode(rune));
-    buffer.write(digit >= 0 ? '$digit' : String.fromCharCode(rune));
-  }
-  normalized = buffer.toString();
+  normalized = normalizeDigits(normalized);
 
   if (!_egpPattern.hasMatch(normalized)) {
     throw FormatException('invalid EGP amount: $input');

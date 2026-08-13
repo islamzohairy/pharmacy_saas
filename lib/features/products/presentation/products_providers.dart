@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/data/database_providers.dart';
+import '../../../core/streams/combine_latest.dart';
 import '../../identity/identity.dart';
+import '../../inventory/inventory.dart';
 import '../data/product_repository_impl.dart';
 import '../domain/product.dart';
 import '../domain/product_repository.dart';
@@ -19,4 +21,33 @@ final activeProductsProvider = StreamProvider.autoDispose<List<Product>>((ref) {
   return ref
       .watch(productRepositoryProvider)
       .watchActive(pharmacyId: pharmacyId);
+});
+
+/// Active products joined with their live on-hand quantity (PLANS/12
+/// §5.4), computed from the grouped stock-movement aggregate — one
+/// stream per source, merged with combineLatest semantics.
+///
+/// `null` means **not tracked**: the product has no movements at all —
+/// distinct from a tracked on-hand of 0 (staff-review finding, fixed
+/// pre-merge: absence in the aggregate map IS the signal and must never
+/// be `?? 0`'d back into a false zero — see DECISIONS.md 2026-08-13).
+final productsWithOnHandProvider =
+    StreamProvider.autoDispose<List<(Product, int?)>>((ref) {
+  final pharmacyId = ref.watch(activeProfileProvider).value?.pharmacyId;
+  if (pharmacyId == null) return Stream.value(const []);
+  final products = ref
+      .watch(productRepositoryProvider)
+      .watchActive(pharmacyId: pharmacyId);
+  final onHandByProduct = ref
+      .watch(stockRepositoryProvider)
+      .watchAllOnHand(pharmacyId: pharmacyId);
+  return combineLatest2(products, onHandByProduct).map(
+    (tuple) {
+      final (productRows, onHandMap) = tuple;
+      return [
+        for (final product in productRows)
+          (product, onHandMap[product.id]),
+      ];
+    },
+  );
 });

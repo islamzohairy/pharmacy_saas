@@ -196,6 +196,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsSave => 'حفظ';
 
   @override
+  String get settingsInventorySection => 'المخزون';
+
+  @override
+  String get autoDeductStockLabel => 'خصم المخزون تلقائيًا عند البيع';
+
+  @override
+  String get autoDeductStockHelper =>
+      'عند تفعيله تُخصم الكميات المباعة من المخزون تلقائيًا للمنتجات المُتتبَّعة';
+
+  @override
   String get roleOwner => 'المالك';
 
   @override
@@ -311,6 +321,69 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get clearExpiry => 'إزالة التاريخ';
+
+  @override
+  String get initialStockLabel => 'المخزون الابتدائي';
+
+  @override
+  String get initialStockOptional =>
+      'اختياري — عدد الوحدات المتوفرة عند الإنشاء';
+
+  @override
+  String get initialStockInvalid => 'أدخل عددًا صحيحًا (مثال: 25)';
+
+  @override
+  String get onHandLabel => 'المخزون';
+
+  @override
+  String get adjustStockAction => 'المخزون: إضافة / تصحيح';
+
+  @override
+  String get editProductAction => 'تعديل بيانات المنتج';
+
+  @override
+  String get currentOnHandLabel => 'المخزون الحالي';
+
+  @override
+  String get addQuantity => 'إضافة كمية';
+
+  @override
+  String get correctQuantity => 'تصحيح الكمية';
+
+  @override
+  String get quantityLabel => 'الكمية';
+
+  @override
+  String afterAddPreview(String quantity) {
+    return 'بعد الإضافة: $quantity';
+  }
+
+  @override
+  String correctPreview(String delta, String total) {
+    return 'الفرق: $delta · الجديد: $total';
+  }
+
+  @override
+  String get noChange => 'لا يوجد تغيير';
+
+  @override
+  String get noteOptional => 'ملاحظة (اختياري)';
+
+  @override
+  String get updateStock => 'تحديث المخزون';
+
+  @override
+  String get stockUpdateFailed => 'فشل تحديث المخزون';
+
+  @override
+  String stockAddLabel(String product) {
+    return 'إضافة مخزون: $product';
+  }
+
+  @override
+  String stockAdjustLabel(String product) {
+    return 'تصحيح مخزون: $product';
+  }
 
   @override
   String get searchProducts => 'ابحث عن منتج…';

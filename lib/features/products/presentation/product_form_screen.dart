@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/format/money.dart';
 import '../../../core/l10n/app_l10n.dart';
 import '../../identity/identity.dart';
+import '../../inventory/inventory.dart';
 import '../domain/product.dart';
 import 'products_providers.dart';
 
@@ -13,6 +14,9 @@ import 'products_providers.dart';
 /// no validation forces it. Cost and sell prices are required and must be
 /// positive: a sale of a product with no cost would silently misstate
 /// profit, so it is blocked here, never allowed (PLANS/05 edge cases).
+/// Initial stock (PLANS/12 §5.3) is an optional integer field on
+/// **creation only** — editing never touches stock; a non-empty value
+/// posts exactly one `initial` stock movement on create.
 class ProductFormScreen extends ConsumerStatefulWidget {
   const ProductFormScreen({super.key, this.product});
 
@@ -28,6 +32,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _costController;
   late final TextEditingController _sellController;
+  late final TextEditingController _initialStockController;
   DateTime? _expiryDate;
   bool _saving = false;
 
@@ -44,6 +49,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _sellController = TextEditingController(
       text: product == null ? '' : _formatPriceInput(product.sellMinor),
     );
+    // Initial stock exists only on creation (PLANS/12 §5.3): editing a
+    // product never touches stock — a fresh movement on edit would
+    // double-count the catalog's opening balance.
+    _initialStockController = TextEditingController();
     _expiryDate = product?.expiryDate;
   }
 
@@ -52,6 +61,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _nameController.dispose();
     _costController.dispose();
     _sellController.dispose();
+    _initialStockController.dispose();
     super.dispose();
   }
 
@@ -71,6 +81,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       }
     } on FormatException {
       return context.l10n.priceInvalid;
+    }
+    return null;
+  }
+
+  /// Parses the optional initial-stock input: empty → `null` (no
+  /// movement), otherwise a non-negative integer with Arabic-Indic
+  /// digits accepted through the shared [normalizeDigits] path — no
+  /// second parsing convention (PLANS/12 V3, §5.3).
+  int? _parseInitialStock(String input) {
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) return null;
+    return int.tryParse(normalizeDigits(trimmed));
+  }
+
+  String? _initialStockValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final parsed = _parseInitialStock(value);
+    if (parsed == null || parsed < 0) {
+      return context.l10n.initialStockInvalid;
     }
     return null;
   }
@@ -116,13 +145,29 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         ),
       );
     } else {
-      await repository.create(
+      final product = await repository.create(
         pharmacyId: pharmacyId,
         name: name,
         costMinor: costMinor,
         sellMinor: sellMinor,
         expiryDate: _expiryDate,
       );
+      // Optional initial stock → exactly one `initial` movement on
+      // creation, attributed to the active profile. Empty or zero posts
+      // nothing — on-hand defaults to 0 (PLANS/12 §9). Never on edit.
+      final initialStock = _parseInitialStock(
+        _initialStockController.text,
+      );
+      if (initialStock != null && initialStock > 0) {
+        await ref.read(stockRepositoryProvider).recordMovement(
+          pharmacyId: pharmacyId,
+          productId: product.id,
+          type: StockMovementType.initial,
+          quantity: initialStock,
+          occurredAt: DateTime.now(),
+          profileId: profile?.id,
+        );
+      }
     }
     if (mounted) context.pop();
   }
@@ -172,6 +217,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               validator: _priceValidator,
             ),
             const SizedBox(height: 16),
+            if (!_isEditing) ...[
+              TextFormField(
+                controller: _initialStockController,
+                decoration: InputDecoration(
+                  labelText: l10n.initialStockLabel,
+                  helperText: l10n.initialStockOptional,
+                ),
+                keyboardType: TextInputType.number,
+                validator: _initialStockValidator,
+              ),
+              const SizedBox(height: 16),
+            ],
             InputDecorator(
               isEmpty: _expiryDate == null,
               decoration: InputDecoration(

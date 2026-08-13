@@ -91,6 +91,13 @@ void main() {
         find.byType(Directionality).first,
       );
       expect(directionality.textDirection, TextDirection.rtl);
+
+      // The next iteration swaps this widget tree while the DB-backed
+      // routes' drift-watch providers are still mounted — without
+      // flushing their close timers the fake-async zone wedges (Plan 07
+      // lesson; the products route now watches two drift streams, so the
+      // single-stream margin no longer covers this loop).
+      await unmountAndFlushDriftTimers(tester);
     }
   });
 

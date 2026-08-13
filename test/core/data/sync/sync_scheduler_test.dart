@@ -136,6 +136,7 @@ class FakeIdentity implements IdentityRepository {
   Future<Pharmacy> updatePharmacySettings({
     required String? taxRegistrationNumber,
     required String? legalBusinessName,
+    bool? autoDeductStock,
   }) {
     throw UnimplementedError();
   }

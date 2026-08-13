@@ -1095,3 +1095,322 @@ LESSON: verification criteria must be derived from the ACTUAL
 schema/column semantics and the device's ACTUAL registered tenant — not
 carried forward from an earlier memo. Same family as the
 manifest-permission lesson: check reality, not the assumption.
+
+## 2026-08-13 — Plan 12 Phase 0 verification report + baseline (staff-engineer approved 2026-08-13)
+DECISION: Phase 0 (PLANS/12 §4) concluded all six checks PASS; no stop
+conditions triggered (schemaVersion == 6, no `double` in money/quantity
+paths); staff sign-off recorded. Implementation proceeds per plan §6,
+branch `feature/12-inventory-foundation`.
+- V1 — schemaVersion == 6 (`sync_quarantine` from Plan 11-H Phase 2
+  shipped), v7 is the next slot — PASS (`app_database.dart:50`).
+- V2 — table registration pattern: core-owned tables in
+  `lib/core/data/tables/`, drift list + onCreate + onUpgrade ladder in
+  `app_database.dart:34–98` — PASS; the v6 rehearsal test's DROP-TABLE +
+  `PRAGMA user_version` rollback is the fixture template to mirror.
+- V3 — product form: create-vs-edit is `widget.product != null`;
+  `parseEgpToMinor` (core/format/money.dart) is pure int; the only
+  `double` in lib/ is a layout width. Digit normalization is INLINE in
+  `parseEgpToMinor` — extractable into a shared helper (Step 4) — PASS
+  with that note recorded.
+- V4 — product list: `activeProductsProvider` StreamProvider +
+  `combineLatest2` join (dashboard precedent) avoids N+1 — PASS.
+- V5 — barrels: `products.dart`/`ledger.dart`/identity barrels confirmed;
+  new `inventory.dart` barrel follows the same shape — PASS.
+- V6 — sync layer early negative check: zero references to
+  products/suppliers/customers in `lib/core/data/sync/` — PASS;
+  post-implementation grep re-run at closure.
+BASELINE (empirical, supersedes the written "181 at scheduler-fix
+checkpoint" and confirms the plan's "199" claim): full suite =
+**199/199 tests green**, `flutter analyze` clean, on main
+@542a0e4. The 181 record was stale by the quarantine/migration tests
+added after the scheduler fix. Every later count is measured, not
+carried from a memo — the 11-H "verify reality" lesson, applied.
+FINDINGS RECORDED (per staff review): the gen-l10n failure mode is
+runtime-only (analyzer can't catch a missed run — Step 9 makes it
+explicit); the emulator runtime pass depends on rebuilding the release
+APK with `.env.local` defines (its acceptance build is not reusable
+with app-data-preserving install); `normalizeDigits` extraction must be
+behavior-preserving (zero money-test edits allowed, else STOP).
+
+## 2026-08-13 — Plan 12 decisions D1–D5 (recorded verbatim from PLANS/12 §3)
+D1 — Stock model: append-only `stock_movements` ledger; on-hand = live
+aggregate. Movements are never updated or deleted; a correction is a new
+offsetting movement (same rule as the financial ledger).
+D2 — Activity feed: stock movements merge into the activity history in
+Plan 13, not Plan 12. Plan 12's only movement type is `initial` (one per
+product, low signal); Plan 13 is where movement volume begins. The pilot
+build ships after Plan 14, so no user-visible gap exists.
+D3 — Negative stock: allowed, displayed gracefully. On-hand may go
+negative (selling before a restock is logged). Never clamp, never block a
+sale — the recording loop is Tier-1 behavior and must not depend on
+inventory state. Negative on-hand is displayed in a distinct visual state
+with correct Arabic negative formatting (numeric form `-٢` chosen at
+implementation for consistency with other numeric displays, per staff
+review). Rationale consistent with the existing never-clamp precedent
+(supplier overpayment shows as credit, `رصيد دائن`).
+D4 — Units: plain integer units (no minor units, no fractions).
+Fractional stock is a future evidence-gated decision.
+D5 — Placement: `stock_movements` drift table lives in
+`lib/core/data/tables/` (multiple features will read/write it — products
+now, sales in Plan 13 — per the 2026-08-02 cross-feature-tables
+precedent); domain/data/presentation live in a new `inventory` feature
+consumed through its barrel.
+
+## 2026-08-13 — Plan 12 migration rehearsal, FIXTURE leg: v6→v7 PASSED
+REHEARSAL (AGENTS.md standing rule, second execution of the standard;
+template kept consistent with the v5→v6 run): fixture DB seeded as a real
+v6 install — 1 pharmacy, 1 profile, 1 product, 1 supplier, 1 customer, 6
+ledger entries (all five types; expense with `rent` + `ownerDraw`
+categories; 3 synced + 3 unsynced), 1 quarantine row — then the v7-only
+table dropped and `user_version` rewound to 6; reopen ran the REAL
+`onUpgrade(6 → 7)`. BEFORE: 6 ledger entries / 3 unsynced / 1
+quarantine / 5 identity+catalog rows. AFTER: `user_version == 7`;
+`stock_movements` exists and EMPTY; every pre-existing row intact (all
+types/categories/amounts/synced flags byte-identical; unsynced count
+still 3; quarantine row intact). Data source: fixture (real pilot data
+rehearsal applies at the first post-pilot migration). Test:
+`test/core/data/stock_movements_migration_test.dart`.
+
+## 2026-08-13 — Plan 12 migration rehearsal, DEVICE leg (real pilot data): v6→v7 PASSED
+REHEARSAL completed on the real acceptance install per the AGENTS.md
+standing rule (fixture leg above + this device leg = the standard). Target:
+Medium_Phone AVD (emulator-5556), the 11-H acceptance device — release
+install (versionName 1.0.0), tenant 25 (DiagPharma), not debuggable.
+Sequence: (1) before-state captured (UI hierarchy: dashboard sums ٥٫٠٠ /
+١٥٫٠٠ / ١٠٫٠٠ for صافي/مبيعات/تكلفة on this-month view); (2) new release
+APK (Plan 12 build, `--dart-define-from-file=.env.local`) installed with
+`adb install -r` over the v6 install (data-preserving; signature matched);
+(3) launch → `user_version` migrated 6→7 silently, dashboard loads with all
+prior data intact (this-month view reproduces identical sums; the "today"
+view showing zeros is the period filter, not data loss — confirmed by
+switching periods); (4) sync: chip "آخر نسخة: 13/8/2026 10:14" on the new
+build — the old installed build could never push (pre-INTERNET-fix, its
+chip showed the failure banner); remote count for tenant 25 unchanged at 12
+entries (nothing new to push — inventory movements are local-only by
+design); (5) feature check: product "Aspirin" created with initial stock
+100 → appears in list with "المخزون: ١٠٠" live; pre-existing product shows
+"المخزون: ٠". Evidence: uiautomator dumps + logcat + remote psql counts.
+Data source: REAL pilot device data. No rollback needed (no delete/update
+path exists; failure mode would have been DB-open fatal screen, absent).
+
+## 2026-08-13 — Pilot backend pause/delete incident + resume (user-confirmed)
+FINDING: `vhzvvveikzmuzxzrgbsr.supabase.co` returned NXDOMAIN from host,
+Google DNS, and the emulator (anon key JWT `ref` matched the URL — not a
+typo). Consistent with Supabase free-tier pause→delete after ~7 days of
+inactivity; last verified activity 2026-08-05 14:53. The device's backup
+failure banner was the symptom. The user resumed the project from the
+Supabase dashboard (option 1 per the project's stop-and-ask rule). POST-
+RESUME: DNS resolves (Cloudflare), REST + anon key auth healthy (RLS
+denies anon table access as designed — 42501 on direct select is expected),
+direct DB host `db.<ref>.supabase.co` is IPv6-only (no route from this
+host) → owner-privilege psql now runs via the IPv4 session pooler
+(`aws-0-eu-west-1.pooler.supabase.com`, user `postgres.<ref>`;
+DATABASE_PASSWORD from `.env.local`, region discovered by probing). Schema
+verified post-resume: migration 0003 applied (FK count on ledger_entries =
+1), `expense_categories` present. DEPLOY GATE: `rls_isolation_test.sql`
+re-run GREEN (all 12 checks, self-cleaning, zero residue). NOTE: tenant 25
+now holds 12 remote entries
+(9 documented at the 11-H gate + 3 pushed by the 14:53 acceptance push).
+LESSON: a paused/deleted backend degrades silently into a stale "آخر نسخة"
+chip + failure banner; the gate suite is the restore-time health check.
+
+## 2026-08-13 — Plan 12 review fix: tracked-vs-zero distinction (staff-engineer approved)
+FINDING (code review of commit 05cdbd7): the joined on-hand provider flattened
+the aggregate map's key-absence into a false zero (`onHandMap[product.id] ??
+0`), so products with no movements rendered `المخزون: ٠` — indistinguishable
+from genuinely tracked-and-zero. Two harms: (1) Plan 12 UX — a wall of false
+zeros on untracked products reads as "out of stock" during pilot adoption;
+(2) Plan 14 correctness — a low-stock/needs-attention signal keying off
+on-hand would flag every untracked product as out of stock. Root cause is the
+join layer, not the aggregate: `DriftStockRepository.watchAllOnHand` already
+returns absence for movement-less products — the signal existed and was
+discarded. DECISION (supersedes the plan's original "empty history → 0"
+display default): absence in the on-hand map = "not tracked" (0 movements);
+absence IS the signal. The joined provider yields `List<(Product, int?)>`
+(null = not tracked); the product list renders a neutral "—" for untracked
+rows (stable layout, language-neutral, no l10n string) and keeps the error
+color for negatives. `reduceOnHand` is untouched (empty → 0 remains the pure
+SUM rule over a product's movements — that is not the same fact as
+tracked-vs-zero). `watchOnHand` (single-product) is deliberately not
+distinguished — its only consumers today are tests and the Plan 13
+adjustment UI; Plan 13 must inherit the absence signal instead of re-adding
+`?? 0` (flagged for the Plan 13 header). Verified: 224 tests green, analyzer
+clean, on-device products list shows "—" for the untracked Paracetamol row.
+
+## 2026-08-13 — Sync verified end-to-end; earlier "stuck sync" diagnosis corrected
+FOLLOW-UP to the 05cdbd7 verification: the emulator's sync appeared stuck
+(chip stuck at 10:23, sales never appearing remotely), and a quarantine
+(FK 23503) was suspected. Root cause was a WRONG-TENANT query: the emulator
+is tenant pharmacy 14 "PharmacyTest" (device token hash ef97…, registered
+2026-08-05 08:05 UTC), while the 12-entry ledger belongs to tenant 25
+"DiagPharma" — a different device's data. VERIFIED WORKING end-to-end: a
+sale recorded via the app UI (sales screen confirm) appeared in remote
+`ledger_entries` pharmacy 14 (id=3, 5000 @ 08:27:56 UTC) within one sync
+pass, chip advancing 10:23 → 11:27. Confirmed by design: RLS enabled with
+ZERO table policies (anon's only surface is the two SECURITY DEFINER RPCs
+per 0001); `ledger_entries` has NO FK on product_id (remote products table
+empty = expected, products are local-only in P0). The stray 5000 sale dated
+10:23 (created by an accidental sales-screen tap during earlier UI probing
+at the fix-APK reinstall window) was never pushed and will not be — it is
+absent from the unsynced set (not present in the same 11:27 pass's batch),
+so it is either synced-marked or quarantined locally; no future remote
+pollution. LESSON: when diagnosing sync from the remote, query by the
+device's ACTUAL tenant (derivable from `devices.token_hash` →
+`pharmacies.id`), not by the tenant with the most rows; and distinguish
+"sync stuck" from "syncing to a different tenant" before suspecting
+quarantine. One test sale (5000, pharmacy 14) remains in the remote ledger
+as verification evidence.
+
+## 2026-08-13 — Plan 13 Phase 0 gate passed (staff-engineer approved)
+Phase 0 verification of PLANS/13, all six checks carried out read-only,
+no stop conditions triggered; staff engineer approved with three
+affirmations and three watch-items. Verbatim findings:
+
+- V1: `schemaVersion` == 7 (Plan 12 slot); v8 is the next slot.
+- V2 / D8 transaction finding: `recordSale` (sales_screen.dart:68 →
+  record_sale.dart → LedgerRepository.append, ledger_repository_impl.dart:21)
+  already wraps each append in its own `_db.transaction`, and
+  DriftStockRepository.recordMovement runs a single insertReturning with no
+  exposed executor. Both repositories hold private `_db`; no interface
+  surfaces a transaction/executor, and the coordinator lives above the
+  repositories (presentation layer, plan §5.2). SHARING ONE DRIFT
+  TRANSACTION ACROSS BOTH WRITES IS NOT ACHIEVABLE without restructuring
+  repository interfaces or a cross-feature data-layer caller — both
+  violate the barrel/layering rules. DECISION: D8's pre-sanctioned fallback
+  applies — sequential, sale-first, per-line (matching the existing loop);
+  a stock-write failure after a successful sale logs via the Plan 09 error
+  path, the sale stands, recovery is manual adjustment. Money correctness
+  outranks stock.
+- V3: `_ProductTile` (products_screen.dart:70) has NO row `onTap` — edit
+  and deactivate are trailing IconButtons (pushNamed productForm with
+  extra: product at line 93-97; delete → confirm dialog). The action sheet
+  replaces those trailing affordances; tests asserting direct-edit
+  navigation must be updated.
+- V4: settings save path is `IdentityRepository.updatePharmacySettings`
+  (identity_repository.dart:26-28) with named params, implemented inside
+  `_db.transaction` (identity_repository_impl.dart:100-121); column-add
+  precedent is the v5 migration (m.addColumn on `pharmacies`). No streaming
+  pharmacy provider exists — the deduct coordinator needs a fresh read of
+  the flag at confirm time.
+- V5: `activityFeedProvider` (activity_providers.dart:13-35) is a single
+  `watchEntries(limit: 100)` stream → ActivityRow.fromEntry with
+  one-time profile names. GAP FOUND: StockRepository has no all-pharmacy
+  movement stream (aggregate map + single-product reads only) — the D2
+  feed merge requires a new `watchMovements(pharmacyId)` read plus
+  ActivityRow generalization; D10 filter (stock_in/adjustment only) and
+  100-combined cap confirmed. In scope, planned not improvised.
+- V6: baseline must be measured empirically at execution start (do not
+  carry 225 forward per plan §4).
+
+Watch-items from staff engineer (non-blocking, implemented in this plan):
+(1) row needs a tappable cue (chevron) since icon affordances move into
+   the sheet — don't ship an invisible gesture; (2) sheet labels must be
+   unambiguous side-by-side — "تعديل المخزون" vs "تعديل المنتج" lead with
+   the same word; differentiate (stock: "المخزون: إضافة / تصحيح", product:
+   "تعديل بيانات المنتج"); (3) auto_deduct flag and on-hand map must be
+   read FRESH inside the confirm handler, so a Settings toggle change takes
+   effect on the very next sale.
+
+## 2026-08-13 — Plan 13 confirmed decisions D6–D10 (recorded verbatim from PLANS/13 §3)
+- D6 — Auto-deduct applies only to tracked products. Tracked = has ≥1
+  movement. Selling an untracked product never creates a movement, even
+  with auto-deduct ON — you cannot subtract from a quantity that was never
+  declared, and a phantom negative would contradict the tracked-vs-zero
+  distinction Plan 12 established. Tracking activates per product with its
+  first movement.
+- D7 — Adjustment is two modes with a live preview. Add mode posts
+  `stock_in` (+qty, qty ≥ 1). Correct mode posts `adjustment` with delta =
+  target − current on-hand (target ≥ 0; absent on-hand counts as 0).
+  Zero-delta corrections are rejected gracefully, never posted — no noise
+  movements. `initial` remains creation-form-only.
+- D8 — Sale-first ordering for the sale+stock_out pair. If a single drift
+  transaction across the two writes is not achievable without
+  restructuring, the sale ledger write must succeed first; a failed stock
+  movement after a successful sale is logged via the Plan 09 error path
+  and recoverable via manual adjustment. Money correctness outranks stock.
+  Phase 0 determined: NOT achievable without restructuring → sequential,
+  sale-first, per-line path applies (see phase-0 entry above).
+- D9 — One `stock_out` movement per sale line, mirroring the sale.
+  Auto-deduct never blocks or reorders a sale, regardless of resulting
+  on-hand (negatives allowed per D3).
+- D10 — Activity feed shows manual movements only. `stock_in` and
+  `adjustment` appear in the feed attributed to the recording profile;
+  auto `stock_out` does not get its own feed row — the sale row already
+  represents the event, and doubling feed rows per sale violates the
+  low-information-density principle. The movement ledger remains the full
+  audit record.
+
+## 2026-08-13 — Plan 13 emulator runtime pass (device leg): v7→v8 + live exercise PASSED
+Data source: emulator-5556, pharmacy 14 "PharmacyTest" — the SAME device
+that carried Plan 12's device-leg rehearsal data (Aspirin initial 100 +
+untracked A/Paracetamol; remote ledger ph14 = 3 entries). Release APK
+installed with `adb install -r` (data preserved, no run-as).
+Before/after: dashboard balances identical (sales ١٠٠٫٠٠ / net ٤٠٫٠٠),
+Aspirin on-hand ١٠٠ intact post-upgrade — v7→v8 upgrade preserved every
+pre-existing row (matches the fixture-leg counts in `auto_deduct_
+migration_test.dart`).
+Live exercise (uiautomator dumps + remote psql):
+1. Tracked sale Aspirin×1 (auto-deduct ON) → on-hand ١٠٠→٩٩. PASS
+2. Untracked sale A×1 (ON) → on-hand stays —, no movement (D6). PASS
+3. Toggle OFF in settings → Aspirin sale → on-hand stays ٩٩ (D8 flag
+   read fresh inside confirm; Settings change applies to next sale). PASS
+   Toggle restored to ON afterwards (checked=true via dump).
+4. Manual add +5 on Aspirin → ٩٩→١٠٤, preview showed "بعد الإضافة: ١٠٤".
+   PASS
+5. Correct Aspirin → ١٢٠ (delta +16), preview "الفرق: ١٦ · الجديد: ١٢٠".
+   PASS
+6. Activity feed: "إضافة مخزون: Aspirin +٥" and "تصحيح مخزون: Aspirin +١٦"
+   rendered attributed with product names and signed quantities, merged
+   newest-first with the six sale rows; NO auto `stock_out` rows (D10)
+   and no `initial` rows. PASS
+7. Remote psql: pharmacy 14 ledger intact. The three new sales appeared
+   pending at the time (this pass's APK lacked the backend defines — see
+   the acceptance reconciliation entry below for the CLOSED resolution:
+   ids 4–6 confirmed remote 13:20 with the correctly-configured build).
+Suite 257/257, analyzer clean, release APK builds.
+
+## 2026-08-13 — Plan 13 acceptance: test-count reconciliation + sync observation CLOSED (merge record)
+- Counts reconcile to the measured truth: Plan 12 closed at 225/225 at
+  commit `50a0492`. The "224 tests green" figures in the tracked-vs-zero
+  review entry and the Plan 12 `FEATURES.md` line were momentary
+  pre-`50a0492` measurements, not a vanished test. Plan 13 added 32:
+  +1 auto-deduct migration test (`bacf355`), +0 (`3fe345d`, stale-rehearsal
+  fixes only), +15 deduct matrix — 8 unit + 5 sales widgets + 2 toggle
+  widgets (`007f9ce`), +8 adjustment sheet (`e3978fe`), +8 activity feed —
+  5 unit + 3 widget (`58e6c1e`). 225 + 32 = 257, matching the source tally
+  (3 + 84 core + 170 features) and both measured suite runs.
+- Sync observation CLOSED 2026-08-13 ~13:20. The three Step-8 sales
+  (ledger ids 4, 5, 6 — 5000/200/5000 minor) were confirmed remote in
+  tenant 14 after reinstalling the release APK built WITH
+  `--dart-define-from-file=.env.local`. Root cause of the earlier
+  "pending" state: the Step-8 runtime-pass APK was built WITHOUT the
+  backend defines — the scheduler's documented unconfigured-backend
+  quiet no-op, not a backend pause (backend was up throughout; psql
+  readable 12:43–13:25) and not device network (ping to
+  vhzvvveikzmuzxzrgbsr.supabase.co OK at ~13:19). With the configured
+  build the chip flipped to "آخر نسخة: 13:20" and all pending rows landed
+  in one push. lesson: a release build's sync state is meaningless unless
+  the APK carries the backend defines — the release gate must build with
+  `.env.local`, always.
+- The same push carried an extra row, id 7 (1000 minor, product 3,
+  profile 1, 09:57:54 UTC), not attributable to any scripted Step-8 step.
+  All sale writes go through the confirm dialog — no code path writes
+  unattributed sales; most likely an unscripted tap during the live
+  session. Logged for the record; no Plan 13 code impact.
+- CI find: documented `.github/workflows/ci.yaml` (Plan 08; referenced in
+  `DECISIONS.md`, `FEATURES.md`, `PROJECT_MEMORY.md`, `REVIEW_PACKAGE.md`)
+  does NOT exist in the repo — no `.github/` directory, working tree
+  mirrors origin/main. The pilot release gate currently rests on local
+  gates (analyze + full suite + release APK build). Restoring `ci.yaml`
+  on main is a follow-up before the pilot build.
+- Plans 12 + 13 merged to main via PR #<PR> (merge commit <hash>).
+  Plan 14 branches from main, not from the feature branch.
+
+## 2026-08-13 — lesson: drift watch streams never complete under widget-test fake-async
+Diagnosed while writing the auto-deduct hook test (Plan 13 step 5): a
+`watch()`-based repository read inside a widget test's fake-async zone
+hangs `pumpAndSettle` forever — drift schedules zero-duration timers the
+fake clock never fires. Pattern going forward: confirm-time reads that
+must return a value inside a widget test use a ONE-SHOT drift
+`get()`-based repository method (`allOnHand`), never `stream.first`;
+`watch*` streams stay provider-only.

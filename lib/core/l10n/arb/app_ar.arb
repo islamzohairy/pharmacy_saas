@@ -249,6 +249,18 @@
   "@settingsSave": {
     "description": "Button that saves the settings screen fields"
   },
+  "settingsInventorySection": "المخزون",
+  "@settingsInventorySection": {
+    "description": "Section title for the inventory settings block (PLANS/13)"
+  },
+  "autoDeductStockLabel": "خصم المخزون تلقائيًا عند البيع",
+  "@autoDeductStockLabel": {
+    "description": "Settings toggle: when ON, a sale automatically posts a stock_out movement for tracked products"
+  },
+  "autoDeductStockHelper": "عند تفعيله تُخصم الكميات المباعة من المخزون تلقائيًا للمنتجات المُتتبَّعة",
+  "@autoDeductStockHelper": {
+    "description": "Helper line under the auto-deduct toggle explaining its behavior"
+  },
   "roleOwner": "المالك",
   "@roleOwner": {
     "description": "Display label for the owner role (informational — role is not enforced in P0)"
@@ -406,6 +418,101 @@
   "clearExpiry": "إزالة التاريخ",
   "@clearExpiry": {
     "description": "Tooltip to remove the chosen expiry date"
+  },
+  "initialStockLabel": "المخزون الابتدائي",
+  "@initialStockLabel": {
+    "description": "Label of the optional initial-stock input on product creation (PLANS/12)"
+  },
+  "initialStockOptional": "اختياري — عدد الوحدات المتوفرة عند الإنشاء",
+  "@initialStockOptional": {
+    "description": "Helper text under the initial-stock input, only shown on product creation"
+  },
+  "initialStockInvalid": "أدخل عددًا صحيحًا (مثال: 25)",
+  "@initialStockInvalid": {
+    "description": "Validation error when initial stock is not a whole number or is negative"
+  },
+  "onHandLabel": "المخزون",
+  "@onHandLabel": {
+    "description": "Product-list row label for the live on-hand quantity"
+  },
+  "adjustStockAction": "المخزون: إضافة / تصحيح",
+  "@adjustStockAction": {
+    "description": "Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)"
+  },
+  "editProductAction": "تعديل بيانات المنتج",
+  "@editProductAction": {
+    "description": "Product-row action-sheet entry opening the product edit form"
+  },
+  "currentOnHandLabel": "المخزون الحالي",
+  "@currentOnHandLabel": {
+    "description": "Adjustment-sheet header label for the current on-hand quantity"
+  },
+  "addQuantity": "إضافة كمية",
+  "@addQuantity": {
+    "description": "Adjustment-sheet mode segment: post a positive stock_in"
+  },
+  "correctQuantity": "تصحيح الكمية",
+  "@correctQuantity": {
+    "description": "Adjustment-sheet mode segment: set the quantity to an exact target"
+  },
+  "quantityLabel": "الكمية",
+  "@quantityLabel": {
+    "description": "Adjustment-sheet input label for the quantity field"
+  },
+  "afterAddPreview": "بعد الإضافة: {quantity}",
+  "@afterAddPreview": {
+    "description": "Add-mode live preview of the resulting on-hand quantity",
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "correctPreview": "الفرق: {delta} · الجديد: {total}",
+  "@correctPreview": {
+    "description": "Correct-mode live preview of the signed delta and the new total",
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "noChange": "لا يوجد تغيير",
+  "@noChange": {
+    "description": "Correct-mode inline state when the target equals the current on-hand (commit disabled)"
+  },
+  "noteOptional": "ملاحظة (اختياري)",
+  "@noteOptional": {
+    "description": "Optional free-text note field on the adjustment sheet"
+  },
+  "updateStock": "تحديث المخزون",
+  "@updateStock": {
+    "description": "Adjustment-sheet commit button posting the stock movement"
+  },
+  "stockUpdateFailed": "فشل تحديث المخزون",
+  "@stockUpdateFailed": {
+    "description": "Snackbar shown when the stock movement write fails"
+  },
+  "stockAddLabel": "إضافة مخزون: {product}",
+  "@stockAddLabel": {
+    "description": "Activity-feed label for a manual stock_in movement, naming the product",
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "stockAdjustLabel": "تصحيح مخزون: {product}",
+  "@stockAdjustLabel": {
+    "description": "Activity-feed label for a manual adjustment movement, naming the product",
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
   },
   "searchProducts": "ابحث عن منتج…",
   "@searchProducts": {

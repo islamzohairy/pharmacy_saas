@@ -339,8 +339,9 @@ color when negative. `formatQuantity` (ar_EG) in `core/format/quantity.dart`;
 preserving — money tests untouched). Migration rehearsed TWICE: v6→v7
 fixture (test/core/data/stock_movements_migration_test.dart) and on-
 device against REAL pilot data (emulator-5556 acceptance install, release
-build `install -r`, data intact, chip "آخر نسخة: 13/8/2026 10:14"). 224
-unit/widget tests green, analyzer clean, release APK builds.
+build `install -r`, data intact, chip "آخر نسخة: 13/8/2026 10:14"). 225
+unit/widget tests green (close-out at `50a0492`), analyzer clean,
+release APK builds.
 
 Plan 13 (sale auto-deduction + manual adjustment) is complete —
 schemaVersion 8, local-only (zero changes under `supabase/` or
@@ -371,6 +372,14 @@ rehearsed TWICE: v7→v8 fixture (`auto_deduct_migration_test.dart`) and
 on-device against real pilot data (emulator-5556, release `install -r`,
 all Plan 12 data intact; live-exercised: tracked sale deducts, untracked
 no-op, toggle off stops deduction, add/correct work, feed shows
-attributed signed-quantity movement rows). 257 tests green, analyzer
-clean, release APK builds. Pending remote sync of the 3 test sales from
-the runtime pass (best-effort backoff; Plan 09 scope).
+attributed signed-quantity movement rows). 257 tests green (Plan 12
+baseline 225 at `50a0492` + 32 new; the earlier-recorded 224 was a
+pre-`50a0492` momentary count), analyzer clean, release APK builds. The
+three Step-8 test sales were confirmed synced to tenant 14 (ids 4–6,
+2026-08-13 13:20) once the release APK was built WITH
+`--dart-define-from-file=.env.local` — the runtime-pass APK had lacked
+the backend defines, which is the scheduler's documented
+unconfigured-backend no-op; RELEASE BUILDS MUST ALWAYS CARRY `.env.local`
+defines (else sync silently never runs). Documented
+`.github/workflows/ci.yaml` does not exist in the repo — pilot release
+gate relies on local gates; restoring CI on main is a follow-up.

@@ -183,6 +183,8 @@
   first successful push observed on the new build). Deploy gate re-run
   green on the resumed backend (RLS isolation test, self-cleaning).
   224 tests green, analyzer clean. See DECISIONS.md 2026-08-13.
+  (Count corrected at Plan 13 acceptance: the "224" was a momentary
+  pre-`50a0492` measurement — Plan 12 closed at 225/225 at `50a0492`.)
 
 - 13_INVENTORY_DEDUCTION_AND_ADJUSTMENT_PLAN — sale auto-deduction and
   manual stock adjustment (schemaVersion 8, local-only — zero changes
@@ -200,9 +202,10 @@
   Runtime-passed end-to-end on the release APK (tracked sale deducts
   ١٠٠→٩٩; untracked sale no-op; toggle off stops deduction; add ٩٩→١٠٤;
   correct →١٢٠ with "الفرق: ١٦ · الجديد: ١٢٠" previews; feed renders both
-  movement types attributed + signed quantities). 257 tests green,
+  movement types attributed + signed quantities). 257 tests green (225 baseline at
+  `50a0492` + 32 new: +1 migration, +15 deduct, +8 adjustment, +8 feed),
   analyzer clean. See DECISIONS.md 2026-08-13 (D6–D10, device-leg pass,
-  fake-async lesson).
+  fake-async lesson, acceptance reconciliation + sync confirmation).
 
 ## In progress
 None — all P0 plans (01–09), plans 10–13 are complete.

@@ -1363,10 +1363,48 @@ Live exercise (uiautomator dumps + remote psql):
    rendered attributed with product names and signed quantities, merged
    newest-first with the six sale rows; NO auto `stock_out` rows (D10)
    and no `initial` rows. PASS
-7. Remote psql: pharmacy 14 ledger intact; the three new sales remained
-   pending best-effort sync (scheduler backoff) — same observed behavior
-   class as Plan 09; not part of Plan 13 scope (local-only features).
+7. Remote psql: pharmacy 14 ledger intact. The three new sales appeared
+   pending at the time (this pass's APK lacked the backend defines — see
+   the acceptance reconciliation entry below for the CLOSED resolution:
+   ids 4–6 confirmed remote 13:20 with the correctly-configured build).
 Suite 257/257, analyzer clean, release APK builds.
+
+## 2026-08-13 — Plan 13 acceptance: test-count reconciliation + sync observation CLOSED (merge record)
+- Counts reconcile to the measured truth: Plan 12 closed at 225/225 at
+  commit `50a0492`. The "224 tests green" figures in the tracked-vs-zero
+  review entry and the Plan 12 `FEATURES.md` line were momentary
+  pre-`50a0492` measurements, not a vanished test. Plan 13 added 32:
+  +1 auto-deduct migration test (`bacf355`), +0 (`3fe345d`, stale-rehearsal
+  fixes only), +15 deduct matrix — 8 unit + 5 sales widgets + 2 toggle
+  widgets (`007f9ce`), +8 adjustment sheet (`e3978fe`), +8 activity feed —
+  5 unit + 3 widget (`58e6c1e`). 225 + 32 = 257, matching the source tally
+  (3 + 84 core + 170 features) and both measured suite runs.
+- Sync observation CLOSED 2026-08-13 ~13:20. The three Step-8 sales
+  (ledger ids 4, 5, 6 — 5000/200/5000 minor) were confirmed remote in
+  tenant 14 after reinstalling the release APK built WITH
+  `--dart-define-from-file=.env.local`. Root cause of the earlier
+  "pending" state: the Step-8 runtime-pass APK was built WITHOUT the
+  backend defines — the scheduler's documented unconfigured-backend
+  quiet no-op, not a backend pause (backend was up throughout; psql
+  readable 12:43–13:25) and not device network (ping to
+  vhzvvveikzmuzxzrgbsr.supabase.co OK at ~13:19). With the configured
+  build the chip flipped to "آخر نسخة: 13:20" and all pending rows landed
+  in one push. lesson: a release build's sync state is meaningless unless
+  the APK carries the backend defines — the release gate must build with
+  `.env.local`, always.
+- The same push carried an extra row, id 7 (1000 minor, product 3,
+  profile 1, 09:57:54 UTC), not attributable to any scripted Step-8 step.
+  All sale writes go through the confirm dialog — no code path writes
+  unattributed sales; most likely an unscripted tap during the live
+  session. Logged for the record; no Plan 13 code impact.
+- CI find: documented `.github/workflows/ci.yaml` (Plan 08; referenced in
+  `DECISIONS.md`, `FEATURES.md`, `PROJECT_MEMORY.md`, `REVIEW_PACKAGE.md`)
+  does NOT exist in the repo — no `.github/` directory, working tree
+  mirrors origin/main. The pilot release gate currently rests on local
+  gates (analyze + full suite + release APK build). Restoring `ci.yaml`
+  on main is a follow-up before the pilot build.
+- Plans 12 + 13 merged to main via PR #<PR> (merge commit <hash>).
+  Plan 14 branches from main, not from the feature branch.
 
 ## 2026-08-13 — lesson: drift watch streams never complete under widget-test fake-async
 Diagnosed while writing the auto-deduct hook test (Plan 13 step 5): a

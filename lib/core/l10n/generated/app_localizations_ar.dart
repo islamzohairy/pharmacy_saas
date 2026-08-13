@@ -196,6 +196,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsSave => 'حفظ';
 
   @override
+  String get settingsInventorySection => 'المخزون';
+
+  @override
+  String get autoDeductStockLabel => 'خصم المخزون تلقائيًا عند البيع';
+
+  @override
+  String get autoDeductStockHelper =>
+      'عند تفعيله تُخصم الكميات المباعة من المخزون تلقائيًا للمنتجات المُتتبَّعة';
+
+  @override
   String get roleOwner => 'المالك';
 
   @override

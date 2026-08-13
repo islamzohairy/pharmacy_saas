@@ -140,15 +140,21 @@ void main() {
       // Roll the fixture back to the v5 shape: drop the v6-only table and
       // rewind user_version so the reopen exercises the real 5 → 6 step.
       await v5.customStatement('DROP TABLE sync_quarantine_entries');
+      // The v8-only column must also go — a real v5 install predates it,
+      // and the reopen would otherwise collide with the real onUpgrade
+      // chain's from<8 addColumn step.
+      await v5.customStatement(
+        'ALTER TABLE pharmacies DROP COLUMN auto_deduct_stock',
+      );
       await v5.customStatement('PRAGMA user_version = 5');
       await v5.close();
 
       final db = await open();
 
-      // Schema version advanced to the shipping head (v7 as of PLANS/12 —
-      // the rollback-to-5 restart runs the full real 5 → 7 ladder).
+      // Schema version advanced to the shipping head (v8 as of PLANS/13 —
+      // the rollback-to-5 restart runs the full real 5 → 8 ladder).
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 7);
+      expect(version.read<int>('user_version'), 8);
 
       // The quarantine table exists and is empty.
       expect(await db.select(db.syncQuarantineEntries).get(), isEmpty);

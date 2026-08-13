@@ -22,10 +22,12 @@ abstract interface class IdentityRepository {
   /// Updates the compliance-prep fields on the pharmacy — the first
   /// update-after-onboarding path for this entity (everything else is
   /// create-once). Both fields optional and inert (PLANS/10 Phase 4);
-  /// missing fields keep their current value.
+  /// missing fields keep their current value. [autoDeductStock] mirrors
+  /// that: `null` keeps the current value (PLANS/13 §5.4).
   Future<Pharmacy> updatePharmacySettings({
     required String? taxRegistrationNumber,
     required String? legalBusinessName,
+    bool? autoDeductStock,
   });
 
   /// The device's secret backup token: a random 256-bit value generated

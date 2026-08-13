@@ -8,6 +8,7 @@ class Pharmacy {
     this.remoteUuid,
     this.taxRegistrationNumber,
     this.legalBusinessName,
+    this.autoDeductStock = true,
   });
 
   final int id;
@@ -28,4 +29,9 @@ class Pharmacy {
   /// explicitly not part of any compliance feature today (COMPLIANCE.md).
   final String? taxRegistrationNumber;
   final String? legalBusinessName;
+
+  /// Whether sales auto-post a `stock_out` movement for tracked products
+  /// (PLANS/13 D6/D9). Default ON; the Settings toggle is the only write
+  /// path.
+  final bool autoDeductStock;
 }

@@ -460,6 +460,24 @@ abstract class AppLocalizations {
   /// **'حفظ'**
   String get settingsSave;
 
+  /// Section title for the inventory settings block (PLANS/13)
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون'**
+  String get settingsInventorySection;
+
+  /// Settings toggle: when ON, a sale automatically posts a stock_out movement for tracked products
+  ///
+  /// In ar, this message translates to:
+  /// **'خصم المخزون تلقائيًا عند البيع'**
+  String get autoDeductStockLabel;
+
+  /// Helper line under the auto-deduct toggle explaining its behavior
+  ///
+  /// In ar, this message translates to:
+  /// **'عند تفعيله تُخصم الكميات المباعة من المخزون تلقائيًا للمنتجات المُتتبَّعة'**
+  String get autoDeductStockHelper;
+
   /// Display label for the owner role (informational — role is not enforced in P0)
   ///
   /// In ar, this message translates to:

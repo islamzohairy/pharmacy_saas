@@ -145,14 +145,20 @@ void main() {
       // Roll the fixture back to the v6 shape: drop the v7-only table and
       // rewind user_version so the reopen exercises the real 6 → 7 step.
       await v6.customStatement('DROP TABLE stock_movements');
+      // The v8-only column must also go — a real v6 install predates it,
+      // and the reopen would otherwise collide with the real onUpgrade
+      // chain's from<8 addColumn step.
+      await v6.customStatement(
+        'ALTER TABLE pharmacies DROP COLUMN auto_deduct_stock',
+      );
       await v6.customStatement('PRAGMA user_version = 6');
       await v6.close();
 
       final db = await open();
 
-      // Schema version advanced.
+      // Schema version advanced to the shipping head (v8 as of PLANS/13).
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 7);
+      expect(version.read<int>('user_version'), 8);
 
       // The stock movements table exists and is empty.
       expect(await db.select(db.stockMovements).get(), isEmpty);

@@ -301,10 +301,10 @@ void main() {
 
       // A fresh pharmacy created post-migration also defaults to ON.
       final freshPharmacyId = await seedPharmacy(db);
-      final fresh = (await db.select(db.pharmacies)
-              ..where((t) => t.id.equals(freshPharmacyId)))
+      final fresh = await (db.select(db.pharmacies)
+            ..where((t) => t.id.equals(freshPharmacyId)))
           .getSingle();
-      expect((await fresh).autoDeductStock, isTrue);
+      expect(fresh.autoDeductStock, isTrue);
 
       await db.close();
     },

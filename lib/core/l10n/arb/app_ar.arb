@@ -249,6 +249,18 @@
   "@settingsSave": {
     "description": "Button that saves the settings screen fields"
   },
+  "settingsInventorySection": "المخزون",
+  "@settingsInventorySection": {
+    "description": "Section title for the inventory settings block (PLANS/13)"
+  },
+  "autoDeductStockLabel": "خصم المخزون تلقائيًا عند البيع",
+  "@autoDeductStockLabel": {
+    "description": "Settings toggle: when ON, a sale automatically posts a stock_out movement for tracked products"
+  },
+  "autoDeductStockHelper": "عند تفعيله تُخصم الكميات المباعة من المخزون تلقائيًا للمنتجات المُتتبَّعة",
+  "@autoDeductStockHelper": {
+    "description": "Helper line under the auto-deduct toggle explaining its behavior"
+  },
   "roleOwner": "المالك",
   "@roleOwner": {
     "description": "Display label for the owner role (informational — role is not enforced in P0)"

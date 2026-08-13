@@ -100,6 +100,7 @@ class DriftIdentityRepository implements IdentityRepository {
   Future<Pharmacy> updatePharmacySettings({
     required String? taxRegistrationNumber,
     required String? legalBusinessName,
+    bool? autoDeductStock,
   }) {
     return _db.transaction(() async {
       final pharmacy = await getPharmacy();
@@ -110,6 +111,9 @@ class DriftIdentityRepository implements IdentityRepository {
                 taxRegistrationNumber?.trim(),
               ),
               legalBusinessName: Value(legalBusinessName?.trim()),
+              autoDeductStock: Value(
+                autoDeductStock ?? pharmacy.autoDeductStock,
+              ),
             ),
           );
       return (_db.select(
@@ -253,6 +257,7 @@ extension on StoredPharmacy {
     remoteUuid: remoteUuid,
     taxRegistrationNumber: taxRegistrationNumber,
     legalBusinessName: legalBusinessName,
+    autoDeductStock: autoDeductStock,
   );
 }
 

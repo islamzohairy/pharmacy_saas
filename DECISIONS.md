@@ -1260,3 +1260,82 @@ device's ACTUAL tenant (derivable from `devices.token_hash` →
 "sync stuck" from "syncing to a different tenant" before suspecting
 quarantine. One test sale (5000, pharmacy 14) remains in the remote ledger
 as verification evidence.
+
+## 2026-08-13 — Plan 13 Phase 0 gate passed (staff-engineer approved)
+Phase 0 verification of PLANS/13, all six checks carried out read-only,
+no stop conditions triggered; staff engineer approved with three
+affirmations and three watch-items. Verbatim findings:
+
+- V1: `schemaVersion` == 7 (Plan 12 slot); v8 is the next slot.
+- V2 / D8 transaction finding: `recordSale` (sales_screen.dart:68 →
+  record_sale.dart → LedgerRepository.append, ledger_repository_impl.dart:21)
+  already wraps each append in its own `_db.transaction`, and
+  DriftStockRepository.recordMovement runs a single insertReturning with no
+  exposed executor. Both repositories hold private `_db`; no interface
+  surfaces a transaction/executor, and the coordinator lives above the
+  repositories (presentation layer, plan §5.2). SHARING ONE DRIFT
+  TRANSACTION ACROSS BOTH WRITES IS NOT ACHIEVABLE without restructuring
+  repository interfaces or a cross-feature data-layer caller — both
+  violate the barrel/layering rules. DECISION: D8's pre-sanctioned fallback
+  applies — sequential, sale-first, per-line (matching the existing loop);
+  a stock-write failure after a successful sale logs via the Plan 09 error
+  path, the sale stands, recovery is manual adjustment. Money correctness
+  outranks stock.
+- V3: `_ProductTile` (products_screen.dart:70) has NO row `onTap` — edit
+  and deactivate are trailing IconButtons (pushNamed productForm with
+  extra: product at line 93-97; delete → confirm dialog). The action sheet
+  replaces those trailing affordances; tests asserting direct-edit
+  navigation must be updated.
+- V4: settings save path is `IdentityRepository.updatePharmacySettings`
+  (identity_repository.dart:26-28) with named params, implemented inside
+  `_db.transaction` (identity_repository_impl.dart:100-121); column-add
+  precedent is the v5 migration (m.addColumn on `pharmacies`). No streaming
+  pharmacy provider exists — the deduct coordinator needs a fresh read of
+  the flag at confirm time.
+- V5: `activityFeedProvider` (activity_providers.dart:13-35) is a single
+  `watchEntries(limit: 100)` stream → ActivityRow.fromEntry with
+  one-time profile names. GAP FOUND: StockRepository has no all-pharmacy
+  movement stream (aggregate map + single-product reads only) — the D2
+  feed merge requires a new `watchMovements(pharmacyId)` read plus
+  ActivityRow generalization; D10 filter (stock_in/adjustment only) and
+  100-combined cap confirmed. In scope, planned not improvised.
+- V6: baseline must be measured empirically at execution start (do not
+  carry 225 forward per plan §4).
+
+Watch-items from staff engineer (non-blocking, implemented in this plan):
+(1) row needs a tappable cue (chevron) since icon affordances move into
+   the sheet — don't ship an invisible gesture; (2) sheet labels must be
+   unambiguous side-by-side — "تعديل المخزون" vs "تعديل المنتج" lead with
+   the same word; differentiate (stock: "المخزون: إضافة / تصحيح", product:
+   "تعديل بيانات المنتج"); (3) auto_deduct flag and on-hand map must be
+   read FRESH inside the confirm handler, so a Settings toggle change takes
+   effect on the very next sale.
+
+## 2026-08-13 — Plan 13 confirmed decisions D6–D10 (recorded verbatim from PLANS/13 §3)
+- D6 — Auto-deduct applies only to tracked products. Tracked = has ≥1
+  movement. Selling an untracked product never creates a movement, even
+  with auto-deduct ON — you cannot subtract from a quantity that was never
+  declared, and a phantom negative would contradict the tracked-vs-zero
+  distinction Plan 12 established. Tracking activates per product with its
+  first movement.
+- D7 — Adjustment is two modes with a live preview. Add mode posts
+  `stock_in` (+qty, qty ≥ 1). Correct mode posts `adjustment` with delta =
+  target − current on-hand (target ≥ 0; absent on-hand counts as 0).
+  Zero-delta corrections are rejected gracefully, never posted — no noise
+  movements. `initial` remains creation-form-only.
+- D8 — Sale-first ordering for the sale+stock_out pair. If a single drift
+  transaction across the two writes is not achievable without
+  restructuring, the sale ledger write must succeed first; a failed stock
+  movement after a successful sale is logged via the Plan 09 error path
+  and recoverable via manual adjustment. Money correctness outranks stock.
+  Phase 0 determined: NOT achievable without restructuring → sequential,
+  sale-first, per-line path applies (see phase-0 entry above).
+- D9 — One `stock_out` movement per sale line, mirroring the sale.
+  Auto-deduct never blocks or reorders a sale, regardless of resulting
+  on-hand (negatives allowed per D3).
+- D10 — Activity feed shows manual movements only. `stock_in` and
+  `adjustment` appear in the feed attributed to the recording profile;
+  auto `stock_out` does not get its own feed row — the sale row already
+  represents the event, and doubling feed rows per sale violates the
+  low-information-density principle. The movement ledger remains the full
+  audit record.

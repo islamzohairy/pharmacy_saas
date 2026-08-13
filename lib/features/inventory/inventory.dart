@@ -10,5 +10,6 @@ export 'data/stock_repository_impl.dart';
 export 'domain/on_hand_reducer.dart';
 export 'domain/stock_movement.dart';
 export 'domain/stock_repository.dart';
+export 'domain/stock_signal.dart';
 export 'presentation/stock_adjustment_sheet.dart';
 export 'presentation/stock_providers.dart';

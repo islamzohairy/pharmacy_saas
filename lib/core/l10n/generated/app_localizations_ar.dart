@@ -376,6 +376,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get stockUpdateFailed => 'فشل تحديث المخزون';
 
   @override
+  String stockAddLabel(String product) {
+    return 'إضافة مخزون: $product';
+  }
+
+  @override
+  String stockAdjustLabel(String product) {
+    return 'تصحيح مخزون: $product';
+  }
+
+  @override
   String get searchProducts => 'ابحث عن منتج…';
 
   @override

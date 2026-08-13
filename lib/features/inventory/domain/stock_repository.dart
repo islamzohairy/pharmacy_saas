@@ -59,4 +59,12 @@ abstract interface class StockRepository {
     required int pharmacyId,
     required int productId,
   });
+
+  /// Live newest-first movement history for one pharmacy, capped at
+  /// [limit] — the activity feed's merge source (PLANS/13 §5.5). All
+  /// types are emitted; the feed applies its own D10 filter.
+  Stream<List<StockMovement>> watchMovements({
+    required int pharmacyId,
+    required int limit,
+  });
 }

@@ -115,6 +115,21 @@ class DriftStockRepository implements StockRepository {
     return query.get().then((rows) => rows.map(_toDomain).toList());
   }
 
+  @override
+  Stream<List<StockMovement>> watchMovements({
+    required int pharmacyId,
+    required int limit,
+  }) {
+    final query = _db.select(_db.stockMovements)
+      ..where((t) => t.pharmacyId.equals(pharmacyId))
+      ..orderBy([
+        (t) => OrderingTerm.desc(t.occurredAt),
+        (t) => OrderingTerm.desc(t.id),
+      ])
+      ..limit(limit);
+    return query.watch().map((rows) => rows.map(_toDomain).toList());
+  }
+
   StockMovement _toDomain(StoredStockMovement row) => StockMovement(
     id: row.id,
     pharmacyId: row.pharmacyId,

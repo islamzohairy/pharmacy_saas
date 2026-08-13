@@ -796,6 +796,18 @@ abstract class AppLocalizations {
   /// **'فشل تحديث المخزون'**
   String get stockUpdateFailed;
 
+  /// Activity-feed label for a manual stock_in movement, naming the product
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة مخزون: {product}'**
+  String stockAddLabel(String product);
+
+  /// Activity-feed label for a manual adjustment movement, naming the product
+  ///
+  /// In ar, this message translates to:
+  /// **'تصحيح مخزون: {product}'**
+  String stockAdjustLabel(String product);
+
   /// Hint of the product search field in sales entry
   ///
   /// In ar, this message translates to:

@@ -496,6 +496,24 @@
   "@stockUpdateFailed": {
     "description": "Snackbar shown when the stock movement write fails"
   },
+  "stockAddLabel": "إضافة مخزون: {product}",
+  "@stockAddLabel": {
+    "description": "Activity-feed label for a manual stock_in movement, naming the product",
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "stockAdjustLabel": "تصحيح مخزون: {product}",
+  "@stockAdjustLabel": {
+    "description": "Activity-feed label for a manual adjustment movement, naming the product",
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
   "searchProducts": "ابحث عن منتج…",
   "@searchProducts": {
     "description": "Hint of the product search field in sales entry"

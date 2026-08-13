@@ -64,6 +64,13 @@ class _ThrowingStockRepository implements StockRepository {
     required int pharmacyId,
     required int productId,
   }) async => [];
+
+  @override
+  Stream<List<StockMovement>> watchMovements({
+    required int pharmacyId,
+    required int limit,
+  }) =>
+      Stream.value(const []);
 }
 
 /// Pumps the full app on a memory DB with one seeded pharmacy, an active

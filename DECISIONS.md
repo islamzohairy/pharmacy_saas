@@ -1409,6 +1409,33 @@ Suite 257/257, analyzer clean, release APK builds.
   PR-style description, Plans 12 AND 13, and the handoff notes).
   Plan 14 branches from main, not from the feature branch.
 
+## 2026-08-13 — Plan 14 Phase 0 verification gate: PASSED (V1–V5)
+PLANS/14 Phase 0 report (branch `feature/14-inventory-signals` off
+`a44eded`; no code changes in this entry):
+- V1 `schemaVersion` == 8 on main (`app_database.dart:55`); v9 is the
+  next slot. PASS
+- V2 dashboard structure: `DashboardRangeSelector` at
+  `dashboard_screen.dart:83`; profit card 85–120; the expense-insight
+  slot fits between the profit card and the balances card (line 122).
+  Products hub tile = `_NavTile` (155–159), shared by all six nav tiles
+  with a chevron trailing — attention count implemented as a
+  nullable-count parameter on `_NavTile` (other five tiles pass null;
+  hidden-at-zero falls out for free). PASS
+- V3 product tile post-Plan-13: `products_screen.dart:71–107` — `ListTile`,
+  subtitle = price + on-hand line (untracked → "—"), trailing = delete +
+  chevron, row-tap → action sheet. Badge anchor chosen: the TITLE row
+  (name + chip), leaving the stock subtitle line and the tap affordance
+  untouched; RTL collision risk flagged for the runtime pass. PASS
+- V4 form/table precedent: `product_form_screen.dart` `_parseStock`
+  normalizeDigits path (90–95) reused for threshold parsing; initial
+  stock's movement-posting path (158–166) NOT reused — threshold is
+  config (D15). Column-add precedent = v5/v8 `addColumn` steps. PASS
+- V5 baseline RE-MEASURED: `flutter test` → 257/257, exact match with
+  the Plan 13 closeout (225 + 32). No stop conditions hit.
+- Note: `PLANS/14_INVENTORY_SIGNALS_AND_INSIGHTS_PLAN.md` itself was
+  untracked on main (present in the working tree, never committed);
+  committed with this entry.
+
 ## 2026-08-13 — lesson: drift watch streams never complete under widget-test fake-async
 Diagnosed while writing the auto-deduct hook test (Plan 13 step 5): a
 `watch()`-based repository read inside a widget test's fake-async zone

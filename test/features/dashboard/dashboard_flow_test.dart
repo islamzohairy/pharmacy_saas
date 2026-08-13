@@ -663,6 +663,19 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('٣'), findsNothing);
+
+      // Resolve the out-of-stock product back to healthy — the count must
+      // drop again: it reflects live state, not badge history.
+      await seedMovement(db, pharmacyId, lowProduct, quantity: 12);
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: productsTile, matching: find.text('١')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: productsTile, matching: find.text('٢')),
+        findsNothing,
+      );
     });
 
     testWidgets('the attention count is hidden when nothing needs attention', (

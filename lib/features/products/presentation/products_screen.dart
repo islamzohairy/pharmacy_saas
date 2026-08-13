@@ -55,13 +55,16 @@ class _ProductTile extends ConsumerWidget {
 
   final Product product;
 
-  /// Live on-hand quantity for this product (0 when no movements exist).
-  final int onHand;
+  /// Live on-hand quantity for this product, or `null` when the product
+  /// is **not tracked** (no movements at all) — displayed as a neutral
+  /// "—", never as a false zero (staff-review finding, DECISIONS.md
+  /// 2026-08-13).
+  final int? onHand;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final onHandStyle = onHand < 0
+    final onHandStyle = (onHand ?? 0) < 0
         ? TextStyle(color: Theme.of(context).colorScheme.error)
         : null;
     return ListTile(
@@ -70,11 +73,16 @@ class _ProductTile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(formatEgp(product.sellMinor)),
-          // Negative on-hand renders in a distinct visual state with
-          // locale-correct digits — never clamped, no warning dialog
-          // (D3; the signal treatment belongs to Plan 14).
+          // Not tracked → neutral "—" (stable layout, no structure shift
+          // vs. tracked rows). Negative on-hand renders in a distinct
+          // visual state with locale-correct digits — never clamped, no
+          // warning dialog (D3; the signal treatment belongs to Plan 14).
           Text(
-            '${l10n.onHandLabel}: ${formatQuantity(onHand)}',
+            onHand == null
+                ? '${l10n.onHandLabel}: —'
+                // Non-null in the else branch (public fields don't
+                // promote — nullness already tested above).
+                : '${l10n.onHandLabel}: ${formatQuantity(onHand!)}',
             style: onHandStyle,
           ),
         ],

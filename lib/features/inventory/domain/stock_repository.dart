@@ -35,6 +35,13 @@ abstract interface class StockRepository {
 
   /// Live on-hand for a single product — the same aggregation rule as
   /// [watchAllOnHand], applied per product.
+  ///
+  /// Note: tracked-vs-zero is deliberately NOT distinguished here — an
+  /// empty history reduces to 0. The distinction belongs to the
+  /// aggregate map (absence = not tracked) and its callers; a future
+  /// single-product consumer (Plan 13 adjustment UI) must inherit the
+  /// absence signal instead of re-introducing `?? 0` (DECISIONS.md
+  /// 2026-08-13).
   Stream<int> watchOnHand({required int pharmacyId, required int productId});
 
   /// Ordered movement history (oldest first) for one product — used by

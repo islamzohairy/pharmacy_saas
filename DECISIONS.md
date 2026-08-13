@@ -1213,3 +1213,50 @@ now holds 12 remote entries
 (9 documented at the 11-H gate + 3 pushed by the 14:53 acceptance push).
 LESSON: a paused/deleted backend degrades silently into a stale "آخر نسخة"
 chip + failure banner; the gate suite is the restore-time health check.
+
+## 2026-08-13 — Plan 12 review fix: tracked-vs-zero distinction (staff-engineer approved)
+FINDING (code review of commit 05cdbd7): the joined on-hand provider flattened
+the aggregate map's key-absence into a false zero (`onHandMap[product.id] ??
+0`), so products with no movements rendered `المخزون: ٠` — indistinguishable
+from genuinely tracked-and-zero. Two harms: (1) Plan 12 UX — a wall of false
+zeros on untracked products reads as "out of stock" during pilot adoption;
+(2) Plan 14 correctness — a low-stock/needs-attention signal keying off
+on-hand would flag every untracked product as out of stock. Root cause is the
+join layer, not the aggregate: `DriftStockRepository.watchAllOnHand` already
+returns absence for movement-less products — the signal existed and was
+discarded. DECISION (supersedes the plan's original "empty history → 0"
+display default): absence in the on-hand map = "not tracked" (0 movements);
+absence IS the signal. The joined provider yields `List<(Product, int?)>`
+(null = not tracked); the product list renders a neutral "—" for untracked
+rows (stable layout, language-neutral, no l10n string) and keeps the error
+color for negatives. `reduceOnHand` is untouched (empty → 0 remains the pure
+SUM rule over a product's movements — that is not the same fact as
+tracked-vs-zero). `watchOnHand` (single-product) is deliberately not
+distinguished — its only consumers today are tests and the Plan 13
+adjustment UI; Plan 13 must inherit the absence signal instead of re-adding
+`?? 0` (flagged for the Plan 13 header). Verified: 224 tests green, analyzer
+clean, on-device products list shows "—" for the untracked Paracetamol row.
+
+## 2026-08-13 — Sync verified end-to-end; earlier "stuck sync" diagnosis corrected
+FOLLOW-UP to the 05cdbd7 verification: the emulator's sync appeared stuck
+(chip stuck at 10:23, sales never appearing remotely), and a quarantine
+(FK 23503) was suspected. Root cause was a WRONG-TENANT query: the emulator
+is tenant pharmacy 14 "PharmacyTest" (device token hash ef97…, registered
+2026-08-05 08:05 UTC), while the 12-entry ledger belongs to tenant 25
+"DiagPharma" — a different device's data. VERIFIED WORKING end-to-end: a
+sale recorded via the app UI (sales screen confirm) appeared in remote
+`ledger_entries` pharmacy 14 (id=3, 5000 @ 08:27:56 UTC) within one sync
+pass, chip advancing 10:23 → 11:27. Confirmed by design: RLS enabled with
+ZERO table policies (anon's only surface is the two SECURITY DEFINER RPCs
+per 0001); `ledger_entries` has NO FK on product_id (remote products table
+empty = expected, products are local-only in P0). The stray 5000 sale dated
+10:23 (created by an accidental sales-screen tap during earlier UI probing
+at the fix-APK reinstall window) was never pushed and will not be — it is
+absent from the unsynced set (not present in the same 11:27 pass's batch),
+so it is either synced-marked or quarantined locally; no future remote
+pollution. LESSON: when diagnosing sync from the remote, query by the
+device's ACTUAL tenant (derivable from `devices.token_hash` →
+`pharmacies.id`), not by the tenant with the most rows; and distinguish
+"sync stuck" from "syncing to a different tenant" before suspecting
+quarantine. One test sale (5000, pharmacy 14) remains in the remote ledger
+as verification evidence.

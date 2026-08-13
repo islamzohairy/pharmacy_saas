@@ -25,10 +25,14 @@ final activeProductsProvider = StreamProvider.autoDispose<List<Product>>((ref) {
 
 /// Active products joined with their live on-hand quantity (PLANS/12
 /// §5.4), computed from the grouped stock-movement aggregate — one
-/// stream per source, merged with combineLatest semantics. Products with
-/// no movements yield on-hand 0.
+/// stream per source, merged with combineLatest semantics.
+///
+/// `null` means **not tracked**: the product has no movements at all —
+/// distinct from a tracked on-hand of 0 (staff-review finding, fixed
+/// pre-merge: absence in the aggregate map IS the signal and must never
+/// be `?? 0`'d back into a false zero — see DECISIONS.md 2026-08-13).
 final productsWithOnHandProvider =
-    StreamProvider.autoDispose<List<(Product, int)>>((ref) {
+    StreamProvider.autoDispose<List<(Product, int?)>>((ref) {
   final pharmacyId = ref.watch(activeProfileProvider).value?.pharmacyId;
   if (pharmacyId == null) return Stream.value(const []);
   final products = ref
@@ -42,7 +46,7 @@ final productsWithOnHandProvider =
       final (productRows, onHandMap) = tuple;
       return [
         for (final product in productRows)
-          (product, onHandMap[product.id] ?? 0),
+          (product, onHandMap[product.id]),
       ];
     },
   );

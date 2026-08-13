@@ -8,6 +8,7 @@ import 'package:pharmacy_saas/core/data/database_providers.dart';
 import 'package:pharmacy_saas/core/data/secure_store.dart';
 import 'package:pharmacy_saas/core/data/tables/stock_movement_type.dart';
 import 'package:pharmacy_saas/core/router/app_router.dart';
+import 'package:pharmacy_saas/features/products/presentation/products_providers.dart';
 
 import '../../support/helpers.dart';
 
@@ -82,7 +83,8 @@ void main() {
       expect(find.text('٢٥٫٥٠ ج.م'), findsOneWidget);
     });
 
-    testWidgets('shows the live on-hand per row, 0 when no movements exist',
+    testWidgets(
+        'shows live on-hand per row, "—" when a product is not tracked',
         (tester) async {
       await seedProduct(db, pharmacyId, name: 'بانادول');
       final stocked = await seedProduct(db, pharmacyId, name: 'بروفين');
@@ -90,9 +92,11 @@ void main() {
       await pumpProductsApp(tester, db, profileId: profileId);
 
       // Stocked product shows its aggregate; the movement-less product
-      // shows 0.
+      // is not tracked and shows the neutral dash — never a false zero
+      // (staff-review finding, DECISIONS.md 2026-08-13).
       expect(find.text('المخزون: ١٥'), findsOneWidget);
-      expect(find.text('المخزون: ٠'), findsOneWidget);
+      expect(find.text('المخزون: —'), findsOneWidget);
+      expect(find.text('المخزون: ٠'), findsNothing);
       expect(find.text('بانادول'), findsOneWidget);
       expect(find.text('بروفين'), findsOneWidget);
     });
@@ -136,6 +140,30 @@ void main() {
 
       expect(find.text('المخزون: ١٠'), findsOneWidget);
       expect(find.text('المخزون: ٣'), findsNothing);
+    });
+
+    testWidgets('provider join: null on-hand for untracked, value for tracked',
+        (tester) async {
+      // Untracked product (no movements) joins as null — never a false
+      // zero — while the tracked product carries its live aggregate
+      // (staff-review finding, DECISIONS.md 2026-08-13).
+      await seedProduct(db, pharmacyId, name: 'بانادول');
+      final stocked = await seedProduct(db, pharmacyId, name: 'بروفين');
+      await seedMovement(db, pharmacyId, stocked, quantity: 15);
+      final container = await pumpProductsApp(
+        tester,
+        db,
+        profileId: profileId,
+      );
+
+      final joined = await container
+          .read(productsWithOnHandProvider.future);
+      expect(joined.length, 2);
+      final byName = {
+        for (final (product, onHand) in joined) product.name: onHand,
+      };
+      expect(byName['بانادول'], isNull);
+      expect(byName['بروفين'], 15);
     });
 
     testWidgets('creates a product through the form and returns to the list', (

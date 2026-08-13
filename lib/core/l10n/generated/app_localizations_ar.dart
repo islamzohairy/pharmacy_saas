@@ -531,6 +531,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dashboardCost => 'تكلفة البضاعة';
 
   @override
+  String get topExpenseLabel => 'أعلى مصروف';
+
+  @override
+  String get attentionCountTooltip => 'منتجات تحتاج انتباهًا';
+
+  @override
   String get dashboardCurrentBalances => 'الأرصدة الحالية';
 
   @override

@@ -706,6 +706,14 @@
   "@dashboardCost": {
     "description": "Dashboard figure: cost of goods sold in the selected range"
   },
+  "topExpenseLabel": "أعلى مصروف",
+  "@topExpenseLabel": {
+    "description": "Dashboard insight line label: the expense category with the largest total in the selected range (PLANS/14, D16)"
+  },
+  "attentionCountTooltip": "منتجات تحتاج انتباهًا",
+  "@attentionCountTooltip": {
+    "description": "Tooltip/semantics for the dashboard products-tile attention count (PLANS/14 §5.4)"
+  },
   "dashboardCurrentBalances": "الأرصدة الحالية",
   "@dashboardCurrentBalances": {
     "description": "Dashboard section header: all-time supplier/customer debt balances"

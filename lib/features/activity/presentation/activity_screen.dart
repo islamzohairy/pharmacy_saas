@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/format/money.dart';
 import '../../../core/format/quantity.dart';
 import '../../../core/l10n/app_l10n.dart';
+import '../../../core/l10n/expense_category_labels.dart';
 import '../../inventory/inventory.dart';
 import '../../ledger/ledger.dart';
 import '../domain/activity_row.dart';
@@ -159,13 +160,7 @@ class _ActivityTile extends StatelessWidget {
   }
 
   String _categoryLabel(AppLocalizations l10n, ExpenseCategory? category) {
-    return switch (category) {
-      ExpenseCategory.ownerDraw => l10n.expenseCategoryOwnerDraw,
-      ExpenseCategory.rent => l10n.expenseCategoryRent,
-      ExpenseCategory.utilities => l10n.expenseCategoryUtilities,
-      ExpenseCategory.supplies => l10n.expenseCategorySupplies,
-      ExpenseCategory.other => l10n.expenseCategoryOther,
-      null => l10n.ledgerTypeExpense,
-    };
+    if (category == null) return l10n.ledgerTypeExpense;
+    return expenseCategoryLabel(l10n, category);
   }
 }

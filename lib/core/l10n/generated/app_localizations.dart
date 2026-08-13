@@ -1096,6 +1096,18 @@ abstract class AppLocalizations {
   /// **'تكلفة البضاعة'**
   String get dashboardCost;
 
+  /// Dashboard insight line label: the expense category with the largest total in the selected range (PLANS/14, D16)
+  ///
+  /// In ar, this message translates to:
+  /// **'أعلى مصروف'**
+  String get topExpenseLabel;
+
+  /// Tooltip/semantics for the dashboard products-tile attention count (PLANS/14 §5.4)
+  ///
+  /// In ar, this message translates to:
+  /// **'منتجات تحتاج انتباهًا'**
+  String get attentionCountTooltip;
+
   /// Dashboard section header: all-time supplier/customer debt balances
   ///
   /// In ar, this message translates to:

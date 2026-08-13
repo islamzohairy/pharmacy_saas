@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/money.dart';
+import '../../../core/format/quantity.dart';
 import '../../../core/l10n/app_l10n.dart';
+import '../../../core/l10n/expense_category_labels.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/backup_status_indicator.dart';
 import '../../../core/widgets/error_log_indicator.dart';
+import '../domain/top_expense.dart';
 import 'dashboard_providers.dart';
 import 'dashboard_range_selector.dart';
 
@@ -119,6 +122,10 @@ class _DashboardBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (data.topExpense != null) ...[
+          _ExpenseInsightLine(topExpense: data.topExpense!),
+          const SizedBox(height: 16),
+        ],
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -156,6 +163,7 @@ class _DashboardBody extends StatelessWidget {
                 icon: Icons.inventory_2_outlined,
                 label: l10n.productsTitle,
                 route: AppRoutes.products,
+                attentionCount: data.attentionCount,
               ),
               _NavTile(
                 icon: Icons.receipt_long_outlined,
@@ -206,23 +214,85 @@ class _FigureRow extends StatelessWidget {
   }
 }
 
+class _ExpenseInsightLine extends StatelessWidget {
+  const _ExpenseInsightLine({required this.topExpense});
+
+  final TopExpense topExpense;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '${l10n.topExpenseLabel}: '
+            '${expenseCategoryLabel(l10n, topExpense.category)}',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          Text(
+            // Share of the range's total expenses (D16).
+            '${formatEgp(topExpense.amountMinor)} '
+            '(${formatQuantity(topExpense.sharePercent)}٪)',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _NavTile extends StatelessWidget {
   const _NavTile({
     required this.icon,
     required this.label,
     required this.route,
+    this.attentionCount,
   });
 
   final IconData icon;
   final String label;
   final String route;
 
+  /// Products-hub attention count (PLANS/14 §5.4): tracked products
+  /// currently low or out of stock. The other five tiles pass null;
+  /// hidden at zero.
+  final int? attentionCount;
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return ListTile(
       leading: Icon(icon),
       title: Text(label),
-      trailing: const Icon(Icons.chevron_left),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (attentionCount != null && attentionCount! > 0)
+            Tooltip(
+              message: l10n.attentionCountTooltip,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  formatQuantity(attentionCount!),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ),
+            ),
+          const Icon(Icons.chevron_left),
+        ],
+      ),
       onTap: () => context.pushNamed(route),
     );
   }

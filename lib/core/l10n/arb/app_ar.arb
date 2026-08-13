@@ -435,6 +435,18 @@
   "@onHandLabel": {
     "description": "Product-list row label for the live on-hand quantity"
   },
+  "lowStockThresholdLabel": "حد تنبيه المخزون",
+  "@lowStockThresholdLabel": {
+    "description": "Label of the optional low-stock threshold input on the product form (PLANS/14, D15)"
+  },
+  "lowStockThresholdHelper": "اختياري — يُنبّه عندما يصل المخزون إلى هذا الحد فأقل (من الأفضل 1 فأكثر)",
+  "@lowStockThresholdHelper": {
+    "description": "Helper text under the low-stock threshold input, shown in both create and edit; guides toward >= 1 since 0 adds nothing beyond out-of-stock (D15)"
+  },
+  "lowStockThresholdInvalid": "أدخل عددًا صحيحًا (مثال: 25)",
+  "@lowStockThresholdInvalid": {
+    "description": "Validation error when the threshold is not a whole number or is negative"
+  },
   "adjustStockAction": "المخزون: إضافة / تصحيح",
   "@adjustStockAction": {
     "description": "Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)"

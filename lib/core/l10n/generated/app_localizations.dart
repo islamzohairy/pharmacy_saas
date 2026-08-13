@@ -724,6 +724,24 @@ abstract class AppLocalizations {
   /// **'المخزون'**
   String get onHandLabel;
 
+  /// Label of the optional low-stock threshold input on the product form (PLANS/14, D15)
+  ///
+  /// In ar, this message translates to:
+  /// **'حد تنبيه المخزون'**
+  String get lowStockThresholdLabel;
+
+  /// Helper text under the low-stock threshold input, shown in both create and edit; guides toward >= 1 since 0 adds nothing beyond out-of-stock (D15)
+  ///
+  /// In ar, this message translates to:
+  /// **'اختياري — يُنبّه عندما يصل المخزون إلى هذا الحد فأقل (من الأفضل 1 فأكثر)'**
+  String get lowStockThresholdHelper;
+
+  /// Validation error when the threshold is not a whole number or is negative
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عددًا صحيحًا (مثال: 25)'**
+  String get lowStockThresholdInvalid;
+
   /// Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)
   ///
   /// In ar, this message translates to:

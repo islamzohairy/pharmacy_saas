@@ -17,6 +17,7 @@ class DriftProductRepository implements ProductRepository {
     required int costMinor,
     required int sellMinor,
     DateTime? expiryDate,
+    int? lowStockThreshold,
   }) {
     return _db
         .into(_db.products)
@@ -27,6 +28,7 @@ class DriftProductRepository implements ProductRepository {
             costMinor: costMinor,
             sellMinor: sellMinor,
             expiryDate: Value(expiryDate),
+            lowStockThreshold: Value(lowStockThreshold),
           ),
         )
         .then(_toDomain);
@@ -42,6 +44,7 @@ class DriftProductRepository implements ProductRepository {
         costMinor: Value(product.costMinor),
         sellMinor: Value(product.sellMinor),
         expiryDate: Value(product.expiryDate),
+        lowStockThreshold: Value(product.lowStockThreshold),
       ),
     );
     return product;
@@ -84,6 +87,7 @@ class DriftProductRepository implements ProductRepository {
     costMinor: row.costMinor,
     sellMinor: row.sellMinor,
     expiryDate: row.expiryDate,
+    lowStockThreshold: row.lowStockThreshold,
     isActive: row.isActive,
     createdAt: row.createdAt,
   );

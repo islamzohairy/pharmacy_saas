@@ -8,6 +8,7 @@ class Product {
     required this.costMinor,
     required this.sellMinor,
     this.expiryDate,
+    this.lowStockThreshold,
     this.isActive = true,
     this.createdAt,
   });
@@ -18,10 +19,20 @@ class Product {
   final int costMinor;
   final int sellMinor;
   final DateTime? expiryDate;
+
+  /// Optional low-stock signal threshold (PLANS/14, D15). This is
+  /// configuration, never a stock movement — editing it posts nothing to
+  /// the movement ledger.
+  final int? lowStockThreshold;
   final bool isActive;
   final DateTime? createdAt;
 
-  Product copyWith({String? name, int? costMinor, int? sellMinor}) {
+  Product copyWith({
+    String? name,
+    int? costMinor,
+    int? sellMinor,
+    int? lowStockThreshold,
+  }) {
     return Product(
       id: id,
       pharmacyId: pharmacyId,
@@ -29,6 +40,7 @@ class Product {
       costMinor: costMinor ?? this.costMinor,
       sellMinor: sellMinor ?? this.sellMinor,
       expiryDate: expiryDate,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       isActive: isActive,
       createdAt: createdAt,
     );

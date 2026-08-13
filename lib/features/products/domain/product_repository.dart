@@ -13,6 +13,7 @@ abstract interface class ProductRepository {
     required int costMinor,
     required int sellMinor,
     DateTime? expiryDate,
+    int? lowStockThreshold,
   });
 
   Future<Product> update(Product product);

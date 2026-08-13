@@ -336,6 +336,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get onHandLabel => 'المخزون';
 
   @override
+  String get lowStockThresholdLabel => 'حد تنبيه المخزون';
+
+  @override
+  String get lowStockThresholdHelper =>
+      'اختياري — يُنبّه عندما يصل المخزون إلى هذا الحد فأقل (من الأفضل 1 فأكثر)';
+
+  @override
+  String get lowStockThresholdInvalid => 'أدخل عددًا صحيحًا (مثال: 25)';
+
+  @override
   String get adjustStockAction => 'المخزون: إضافة / تصحيح';
 
   @override

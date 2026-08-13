@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/data/error_log_providers.dart';
 import '../../../core/format/money.dart';
 import '../../../core/l10n/app_l10n.dart';
 import '../../../core/router/app_router.dart';
 import '../../identity/identity.dart';
+import '../../inventory/inventory.dart';
 import '../../ledger/ledger.dart';
 import '../../products/products.dart';
-import '../domain/record_sale.dart';
+import '../domain/record_sale_with_auto_deduct.dart';
 
 /// Sales entry (plan 05): pick products, set quantities, confirm — one
 /// scan-or-tap flow optimized for counter speed. Each line writes one
@@ -71,16 +73,33 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
     if (pharmacyId == null || _lines.isEmpty) return;
 
     setState(() => _saving = true);
-    final repository = ref.read(ledgerRepositoryProvider);
+    final ledger = ref.read(ledgerRepositoryProvider);
+    final stock = ref.read(stockRepositoryProvider);
+    final errorLog = ref.read(errorLogRepositoryProvider);
     try {
+      // Fresh settings and on-hand read at confirm time, not at build:
+      // toggling auto-deduct or tracking applies to the very next sale
+      // (PLANS/13 §5.2, staff review item).
+      final pharmacy =
+          await ref.read(identityRepositoryProvider).getPharmacy();
+      final onHand = await stock.allOnHand(pharmacyId: pharmacyId);
       for (final line in _lines) {
-        await recordSale(
-          repository,
+        await recordSaleWithAutoDeduct(
+          ledger,
+          stock,
+          autoDeduct: pharmacy.autoDeductStock,
+          isTracked: onHand.containsKey(line.product.id),
           pharmacyId: pharmacyId,
           productId: line.product.id,
           quantity: line.quantity,
           sellMinor: line.product.sellMinor,
           profileId: profile?.id,
+          onStockFailure: () => errorLog.record(
+            errorType: 'AutoDeductStock',
+            message: 'Auto stock deduction failed for product '
+                '${line.product.id} (pharmacy $pharmacyId); sale recorded, '
+                'adjust stock manually.',
+          ),
         );
       }
       if (!mounted) return;

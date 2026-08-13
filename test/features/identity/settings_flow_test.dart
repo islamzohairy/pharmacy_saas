@@ -111,5 +111,51 @@ void main() {
       final pharmacy = (await db.select(db.pharmacies).get()).single;
       expect(pharmacy.taxRegistrationNumber, isNull);
     });
+
+    testWidgets('auto-deduct toggle defaults ON and persists after save', (
+      tester,
+    ) async {
+      await pumpSettingsApp(tester, db, profileId: profileId);
+
+      // Default ON on a fresh pharmacy (PLANS/13 §5.4 + D27/D28).
+      expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          isTrue);
+
+      // Toggle off and save.
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pump();
+      expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          isFalse);
+      await tester.ensureVisible(_saveButton());
+      await tester.tap(_saveButton());
+      await tester.pumpAndSettle();
+      expect(find.text('تم حفظ الإعدادات'), findsOneWidget);
+
+      var pharmacy = (await db.select(db.pharmacies).get()).single;
+      expect(pharmacy.autoDeductStock, isFalse);
+
+      // "Restart" — a fresh pump over the same DB — stays OFF.
+      await unmountAndFlushDriftTimers(tester);
+      await pumpSettingsApp(tester, db, profileId: profileId);
+      expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          isFalse);
+      pharmacy = (await db.select(db.pharmacies).get()).single;
+      expect(pharmacy.autoDeductStock, isFalse);
+    });
+
+    testWidgets('toggle off keeps compliance fields untouched', (tester) async {
+      await seedPharmacySettings(db, pharmacyId);
+      await pumpSettingsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pump();
+      await tester.ensureVisible(_saveButton());
+      await tester.tap(_saveButton());
+      await tester.pumpAndSettle();
+
+      final pharmacy = (await db.select(db.pharmacies).get()).single;
+      expect(pharmacy.autoDeductStock, isFalse);
+      expect(pharmacy.taxRegistrationNumber, 'abc-123');
+    });
   });
 }

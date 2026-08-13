@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,8 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pharmacy_saas/app.dart';
 import 'package:pharmacy_saas/core/data/app_database.dart';
 import 'package:pharmacy_saas/core/data/database_providers.dart';
+import 'package:pharmacy_saas/core/data/error_log_providers.dart';
 import 'package:pharmacy_saas/core/data/secure_store.dart';
 import 'package:pharmacy_saas/core/router/app_router.dart';
+import 'package:pharmacy_saas/features/inventory/inventory.dart';
 import 'package:pharmacy_saas/features/ledger/ledger.dart';
 
 import '../../support/helpers.dart';
@@ -24,12 +27,52 @@ class FakeSecureStore implements SecureStore {
   Future<void> delete(String key) async => _values.remove(key);
 }
 
+/// Failing stock repository for the D8 widget path: the sale must succeed
+/// and log an error, never fail the whole flow. [onHand] mirrors the
+/// real aggregate so tracked products are recognized as tracked.
+class _ThrowingStockRepository implements StockRepository {
+  _ThrowingStockRepository({this.onHand = const {}});
+
+  final Map<int, int> onHand;
+
+  @override
+  Future<StockMovement> recordMovement({
+    required int pharmacyId,
+    required int productId,
+    required StockMovementType type,
+    required int quantity,
+    required DateTime occurredAt,
+    int? profileId,
+    String? note,
+  }) async {
+    throw StateError('stock write failed');
+  }
+
+  @override
+  Stream<Map<int, int>> watchAllOnHand({required int pharmacyId}) =>
+      Stream.value(onHand);
+
+  @override
+  Future<Map<int, int>> allOnHand({required int pharmacyId}) async => onHand;
+
+  @override
+  Stream<int> watchOnHand({required int pharmacyId, required int productId}) =>
+      Stream.value(0);
+
+  @override
+  Future<List<StockMovement>> getMovements({
+    required int pharmacyId,
+    required int productId,
+  }) async => [];
+}
+
 /// Pumps the full app on a memory DB with one seeded pharmacy, an active
 /// profile and one seeded product.
 Future<ProviderContainer> pumpSalesApp(
   WidgetTester tester,
   AppDatabase db, {
   required int profileId,
+  List<Override> overrides = const [],
 }) async {
   final store = FakeSecureStore();
   await store.write('last_active_profile_id', '$profileId');
@@ -37,6 +80,7 @@ Future<ProviderContainer> pumpSalesApp(
     overrides: [
       appDatabaseProvider.overrideWithValue(db),
       secureStoreProvider.overrideWithValue(store),
+      ...overrides,
     ],
   );
   await tester.pumpWidget(
@@ -145,6 +189,149 @@ void main() {
       await tester.pump();
       expect(find.widgetWithText(ListTile, 'باراسيتامول 500'), findsOneWidget);
       expect(find.widgetWithText(ListTile, 'Panadol'), findsNothing);
+    });
+
+    testWidgets(
+        'tracked sale with auto-deduct ON posts one attributed stock_out',
+        (tester) async {
+      final productId = await seedProduct(db, pharmacyId);
+      await seedMovement(
+        db,
+        pharmacyId,
+        productId,
+        type: StockMovementType.initial,
+        quantity: 10,
+      );
+      final container = await pumpSalesApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pump();
+      await tester.tap(find.text('تأكيد البيع'));
+      await tester.pumpAndSettle();
+      expect(find.text('تم تسجيل البيع'), findsOneWidget);
+
+      final movements = await container
+          .read(stockRepositoryProvider)
+          .getMovements(pharmacyId: pharmacyId, productId: productId);
+      expect(movements, hasLength(2));
+      expect(movements.last.type, StockMovementType.stockOut);
+      expect(movements.last.quantity, -1);
+      expect(movements.last.profileId, profileId);
+    });
+
+    testWidgets('auto-deduct OFF posts no movement', (tester) async {
+      final productId = await seedProduct(db, pharmacyId);
+      await seedMovement(
+        db,
+        pharmacyId,
+        productId,
+        type: StockMovementType.initial,
+        quantity: 10,
+      );
+      await (db.update(db.pharmacies)..where((t) => t.id.equals(pharmacyId)))
+          .write(const PharmaciesCompanion(autoDeductStock: Value(false)));
+      final container = await pumpSalesApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pump();
+      await tester.tap(find.text('تأكيد البيع'));
+      await tester.pumpAndSettle();
+
+      final movements = await container
+          .read(stockRepositoryProvider)
+          .getMovements(pharmacyId: pharmacyId, productId: productId);
+      expect(movements, hasLength(1));
+      expect(movements.single.type, StockMovementType.initial);
+    });
+
+    testWidgets('untracked product with auto-deduct ON is never deducted (D6)',
+        (tester) async {
+      final productId = await seedProduct(db, pharmacyId);
+      final container = await pumpSalesApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pump();
+      await tester.tap(find.text('تأكيد البيع'));
+      await tester.pumpAndSettle();
+
+      final movements = await container
+          .read(stockRepositoryProvider)
+          .getMovements(pharmacyId: pharmacyId, productId: productId);
+      expect(movements, isEmpty);
+    });
+
+    testWidgets('two-line cart deducts only the tracked line (D9)', (
+      tester,
+    ) async {
+      final trackedId = await seedProduct(db, pharmacyId);
+      final untrackedId = await seedProduct(db, pharmacyId, name: 'Panadol');
+      await seedMovement(
+        db,
+        pharmacyId,
+        trackedId,
+        type: StockMovementType.initial,
+        quantity: 5,
+      );
+      final container = await pumpSalesApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pump();
+      await tester.tap(find.text('Panadol'));
+      await tester.pump();
+      await tester.tap(find.text('تأكيد البيع'));
+      await tester.pumpAndSettle();
+
+      final stock = container.read(stockRepositoryProvider);
+      final tracked = await stock.getMovements(
+        pharmacyId: pharmacyId,
+        productId: trackedId,
+      );
+      expect(tracked, hasLength(2));
+      expect(tracked.last.quantity, -1);
+      expect(
+        await stock.getMovements(pharmacyId: pharmacyId, productId: untrackedId),
+        isEmpty,
+      );
+    });
+
+    testWidgets(
+        'stock-write failure keeps the sale and appends an error-log entry',
+        (tester) async {
+      final productId = await seedProduct(db, pharmacyId);
+      await seedMovement(
+        db,
+        pharmacyId,
+        productId,
+        type: StockMovementType.initial,
+        quantity: 10,
+      );
+      final container = await pumpSalesApp(
+        tester,
+        db,
+        profileId: profileId,
+        overrides: [
+          stockRepositoryProvider.overrideWithValue(
+            _ThrowingStockRepository(onHand: {productId: 10}),
+          ),
+        ],
+      );
+
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pump();
+      await tester.tap(find.text('تأكيد البيع'));
+      await tester.pumpAndSettle();
+
+      // Sale succeeded and the failure surfaced only in the error log (D8).
+      expect(find.text('تم تسجيل البيع'), findsOneWidget);
+      final entries = await container
+          .read(ledgerRepositoryProvider)
+          .unsyncedEntries(pharmacyId: pharmacyId);
+      expect(entries, hasLength(1));
+      final logged = await container
+          .read(errorLogRepositoryProvider)
+          .unreportedEntries();
+      expect(logged, hasLength(1));
+      expect(logged.single.errorType, 'AutoDeductStock');
     });
   });
 }

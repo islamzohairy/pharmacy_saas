@@ -62,6 +62,26 @@ class DriftStockRepository implements StockRepository {
   }
 
   @override
+  Future<Map<int, int>> allOnHand({required int pharmacyId}) async {
+    // One-shot twin of watchAllOnHand: same query, same map-key semantics
+    // (absence = not tracked), no stream machinery — fake-async-safe for
+    // the sales confirm-time read (PLANS/13 §5.2).
+    final query = _db.selectOnly(_db.stockMovements)
+      ..addColumns([
+        _db.stockMovements.productId,
+        _db.stockMovements.quantity.sum(),
+      ])
+      ..where(_db.stockMovements.pharmacyId.equals(pharmacyId))
+      ..groupBy([_db.stockMovements.productId]);
+    final rows = await query.get();
+    return {
+      for (final row in rows)
+        row.read(_db.stockMovements.productId)!:
+            row.read(_db.stockMovements.quantity.sum()) ?? 0,
+    };
+  }
+
+  @override
   Stream<int> watchOnHand({
     required int pharmacyId,
     required int productId,

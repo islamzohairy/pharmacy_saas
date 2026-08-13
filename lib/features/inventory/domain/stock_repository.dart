@@ -33,6 +33,15 @@ abstract interface class StockRepository {
   /// callers default missing keys to zero.
   Stream<Map<int, int>> watchAllOnHand({required int pharmacyId});
 
+  /// One-shot snapshot of [watchAllOnHand] — the same aggregation and the
+  /// same map-key semantics (absence = not tracked), as a plain future.
+  ///
+  /// Streams from drift schedule zero-duration timers and can't complete
+  /// under a widget test's fake-async zone; the confirm-time reads in the
+  /// sales flow use this instead of `watchAllOnHand(...).first` (PLANS/13
+  /// §5.2 staff review item: fresh read at confirm, live stream not needed).
+  Future<Map<int, int>> allOnHand({required int pharmacyId});
+
   /// Live on-hand for a single product — the same aggregation rule as
   /// [watchAllOnHand], applied per product.
   ///

@@ -1409,6 +1409,25 @@ Suite 257/257, analyzer clean, release APK builds.
   PR-style description, Plans 12 AND 13, and the handoff notes).
   Plan 14 branches from main, not from the feature branch.
 
+## 2026-08-13 — Plan 14 confirmed decisions D14–D16 (recorded verbatim from PLANS/14 §3)
+- D14 — Signals apply only to tracked products. Untracked products never
+  signal — a product with no declared quantity cannot be "low."
+  Out-of-stock = tracked ∧ on-hand ≤ 0 (negative included — worse than
+  zero, never hidden). Low = tracked ∧ threshold set ∧ 0 < on-hand ≤
+  threshold. Threshold unset → out-of-stock signal only. Alternatives
+  considered: global threshold (rejected — one number produces noise
+  across heterogeneous products); out-of-stock-only MVP (rejected —
+  under-delivers §4.2 item 4's "low or out of stock").
+- D15 — Threshold is a nullable product column, editable at any time. It
+  is configuration, not a movement — editing it posts nothing to the
+  movement ledger. Integer ≥ 0, optional, Arabic-Indic input via the
+  shared `normalizeDigits` path. (Note: a threshold of 0 adds nothing
+  beyond the out-of-stock signal; helper copy should guide toward ≥ 1.)
+- D16 — The expense insight follows the dashboard range selector
+  (today/week/month) and hides entirely when the selected range has no
+  expenses — no empty-state noise, per the low-information-density
+  principle. Ties break deterministically (total, then category order).
+
 ## 2026-08-13 — Plan 14 Phase 0 verification gate: PASSED (V1–V5)
 PLANS/14 Phase 0 report (branch `feature/14-inventory-signals` off
 `a44eded`; no code changes in this entry):

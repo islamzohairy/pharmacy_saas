@@ -33,7 +33,8 @@ part 'app_database.g.dart';
 /// 2); version 7 adds the append-only stock movement ledger
 /// (`stock_movements`, PLANS/12 — local-only, never on the sync
 /// surface). The append-only ledger rule applies to the schema added in
-/// version 3.
+/// version 3. Version 8 adds `pharmacies.auto_deduct_stock` (PLANS/13 §5.1,
+/// default ON, local-only).
 @DriftDatabase(
   tables: [
     Pharmacies,
@@ -51,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -102,6 +103,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 7) {
         await m.createTable(stockMovements);
+      }
+      if (from < 8) {
+        await m.addColumn(pharmacies, pharmacies.autoDeductStock);
       }
     },
     beforeOpen: (details) async {

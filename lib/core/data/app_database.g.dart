@@ -84,6 +84,21 @@ class $PharmaciesTable extends Pharmacies
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _autoDeductStockMeta = const VerificationMeta(
+    'autoDeductStock',
+  );
+  @override
+  late final GeneratedColumn<bool> autoDeductStock = GeneratedColumn<bool>(
+    'auto_deduct_stock',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_deduct_stock" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -104,6 +119,7 @@ class $PharmaciesTable extends Pharmacies
     remoteUuid,
     taxRegistrationNumber,
     legalBusinessName,
+    autoDeductStock,
     createdAt,
   ];
   @override
@@ -161,6 +177,15 @@ class $PharmaciesTable extends Pharmacies
         ),
       );
     }
+    if (data.containsKey('auto_deduct_stock')) {
+      context.handle(
+        _autoDeductStockMeta,
+        autoDeductStock.isAcceptableOrUnknown(
+          data['auto_deduct_stock']!,
+          _autoDeductStockMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -200,6 +225,10 @@ class $PharmaciesTable extends Pharmacies
         DriftSqlType.string,
         data['${effectivePrefix}legal_business_name'],
       ),
+      autoDeductStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_deduct_stock'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -225,6 +254,11 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
   /// behind COMPLIANCE.md's confirmed-by-counsel gate.
   final String? taxRegistrationNumber;
   final String? legalBusinessName;
+
+  /// Whether a sale automatically posts a `stock_out` movement for
+  /// tracked products (PLANS/13 D6/D9, schema v8). Default ON for fresh
+  /// pharmacies; the Settings screen toggle is the only write path.
+  final bool autoDeductStock;
   final DateTime createdAt;
   const StoredPharmacy({
     required this.id,
@@ -233,6 +267,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     this.remoteUuid,
     this.taxRegistrationNumber,
     this.legalBusinessName,
+    required this.autoDeductStock,
     required this.createdAt,
   });
   @override
@@ -250,6 +285,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     if (!nullToAbsent || legalBusinessName != null) {
       map['legal_business_name'] = Variable<String>(legalBusinessName);
     }
+    map['auto_deduct_stock'] = Variable<bool>(autoDeductStock);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -268,6 +304,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       legalBusinessName: legalBusinessName == null && nullToAbsent
           ? const Value.absent()
           : Value(legalBusinessName),
+      autoDeductStock: Value(autoDeductStock),
       createdAt: Value(createdAt),
     );
   }
@@ -288,6 +325,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       legalBusinessName: serializer.fromJson<String?>(
         json['legalBusinessName'],
       ),
+      autoDeductStock: serializer.fromJson<bool>(json['autoDeductStock']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -303,6 +341,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
         taxRegistrationNumber,
       ),
       'legalBusinessName': serializer.toJson<String?>(legalBusinessName),
+      'autoDeductStock': serializer.toJson<bool>(autoDeductStock),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -314,6 +353,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     Value<String?> remoteUuid = const Value.absent(),
     Value<String?> taxRegistrationNumber = const Value.absent(),
     Value<String?> legalBusinessName = const Value.absent(),
+    bool? autoDeductStock,
     DateTime? createdAt,
   }) => StoredPharmacy(
     id: id ?? this.id,
@@ -326,6 +366,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     legalBusinessName: legalBusinessName.present
         ? legalBusinessName.value
         : this.legalBusinessName,
+    autoDeductStock: autoDeductStock ?? this.autoDeductStock,
     createdAt: createdAt ?? this.createdAt,
   );
   StoredPharmacy copyWithCompanion(PharmaciesCompanion data) {
@@ -342,6 +383,9 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
       legalBusinessName: data.legalBusinessName.present
           ? data.legalBusinessName.value
           : this.legalBusinessName,
+      autoDeductStock: data.autoDeductStock.present
+          ? data.autoDeductStock.value
+          : this.autoDeductStock,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -355,6 +399,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
           ..write('remoteUuid: $remoteUuid, ')
           ..write('taxRegistrationNumber: $taxRegistrationNumber, ')
           ..write('legalBusinessName: $legalBusinessName, ')
+          ..write('autoDeductStock: $autoDeductStock, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -368,6 +413,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
     remoteUuid,
     taxRegistrationNumber,
     legalBusinessName,
+    autoDeductStock,
     createdAt,
   );
   @override
@@ -380,6 +426,7 @@ class StoredPharmacy extends DataClass implements Insertable<StoredPharmacy> {
           other.remoteUuid == this.remoteUuid &&
           other.taxRegistrationNumber == this.taxRegistrationNumber &&
           other.legalBusinessName == this.legalBusinessName &&
+          other.autoDeductStock == this.autoDeductStock &&
           other.createdAt == this.createdAt);
 }
 
@@ -390,6 +437,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
   final Value<String?> remoteUuid;
   final Value<String?> taxRegistrationNumber;
   final Value<String?> legalBusinessName;
+  final Value<bool> autoDeductStock;
   final Value<DateTime> createdAt;
   const PharmaciesCompanion({
     this.id = const Value.absent(),
@@ -398,6 +446,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     this.remoteUuid = const Value.absent(),
     this.taxRegistrationNumber = const Value.absent(),
     this.legalBusinessName = const Value.absent(),
+    this.autoDeductStock = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   PharmaciesCompanion.insert({
@@ -407,6 +456,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     this.remoteUuid = const Value.absent(),
     this.taxRegistrationNumber = const Value.absent(),
     this.legalBusinessName = const Value.absent(),
+    this.autoDeductStock = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : name = Value(name),
        currency = Value(currency);
@@ -417,6 +467,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     Expression<String>? remoteUuid,
     Expression<String>? taxRegistrationNumber,
     Expression<String>? legalBusinessName,
+    Expression<bool>? autoDeductStock,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -427,6 +478,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
       if (taxRegistrationNumber != null)
         'tax_registration_number': taxRegistrationNumber,
       if (legalBusinessName != null) 'legal_business_name': legalBusinessName,
+      if (autoDeductStock != null) 'auto_deduct_stock': autoDeductStock,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -438,6 +490,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     Value<String?>? remoteUuid,
     Value<String?>? taxRegistrationNumber,
     Value<String?>? legalBusinessName,
+    Value<bool>? autoDeductStock,
     Value<DateTime>? createdAt,
   }) {
     return PharmaciesCompanion(
@@ -448,6 +501,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
       taxRegistrationNumber:
           taxRegistrationNumber ?? this.taxRegistrationNumber,
       legalBusinessName: legalBusinessName ?? this.legalBusinessName,
+      autoDeductStock: autoDeductStock ?? this.autoDeductStock,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -475,6 +529,9 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
     if (legalBusinessName.present) {
       map['legal_business_name'] = Variable<String>(legalBusinessName.value);
     }
+    if (autoDeductStock.present) {
+      map['auto_deduct_stock'] = Variable<bool>(autoDeductStock.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -490,6 +547,7 @@ class PharmaciesCompanion extends UpdateCompanion<StoredPharmacy> {
           ..write('remoteUuid: $remoteUuid, ')
           ..write('taxRegistrationNumber: $taxRegistrationNumber, ')
           ..write('legalBusinessName: $legalBusinessName, ')
+          ..write('autoDeductStock: $autoDeductStock, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -4141,6 +4199,7 @@ typedef $$PharmaciesTableCreateCompanionBuilder =
       Value<String?> remoteUuid,
       Value<String?> taxRegistrationNumber,
       Value<String?> legalBusinessName,
+      Value<bool> autoDeductStock,
       Value<DateTime> createdAt,
     });
 typedef $$PharmaciesTableUpdateCompanionBuilder =
@@ -4151,6 +4210,7 @@ typedef $$PharmaciesTableUpdateCompanionBuilder =
       Value<String?> remoteUuid,
       Value<String?> taxRegistrationNumber,
       Value<String?> legalBusinessName,
+      Value<bool> autoDeductStock,
       Value<DateTime> createdAt,
     });
 
@@ -4303,6 +4363,11 @@ class $$PharmaciesTableFilterComposer
 
   ColumnFilters<String> get legalBusinessName => $composableBuilder(
     column: $table.legalBusinessName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoDeductStock => $composableBuilder(
+    column: $table.autoDeductStock,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4501,6 +4566,11 @@ class $$PharmaciesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get autoDeductStock => $composableBuilder(
+    column: $table.autoDeductStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -4537,6 +4607,11 @@ class $$PharmaciesTableAnnotationComposer
 
   GeneratedColumn<String> get legalBusinessName => $composableBuilder(
     column: $table.legalBusinessName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get autoDeductStock => $composableBuilder(
+    column: $table.autoDeductStock,
     builder: (column) => column,
   );
 
@@ -4735,6 +4810,7 @@ class $$PharmaciesTableTableManager
                 Value<String?> remoteUuid = const Value.absent(),
                 Value<String?> taxRegistrationNumber = const Value.absent(),
                 Value<String?> legalBusinessName = const Value.absent(),
+                Value<bool> autoDeductStock = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => PharmaciesCompanion(
                 id: id,
@@ -4743,6 +4819,7 @@ class $$PharmaciesTableTableManager
                 remoteUuid: remoteUuid,
                 taxRegistrationNumber: taxRegistrationNumber,
                 legalBusinessName: legalBusinessName,
+                autoDeductStock: autoDeductStock,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -4753,6 +4830,7 @@ class $$PharmaciesTableTableManager
                 Value<String?> remoteUuid = const Value.absent(),
                 Value<String?> taxRegistrationNumber = const Value.absent(),
                 Value<String?> legalBusinessName = const Value.absent(),
+                Value<bool> autoDeductStock = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => PharmaciesCompanion.insert(
                 id: id,
@@ -4761,6 +4839,7 @@ class $$PharmaciesTableTableManager
                 remoteUuid: remoteUuid,
                 taxRegistrationNumber: taxRegistrationNumber,
                 legalBusinessName: legalBusinessName,
+                autoDeductStock: autoDeductStock,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0

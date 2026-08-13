@@ -25,5 +25,11 @@ class Pharmacies extends Table {
   TextColumn get taxRegistrationNumber => text().nullable()();
   TextColumn get legalBusinessName => text().nullable()();
 
+  /// Whether a sale automatically posts a `stock_out` movement for
+  /// tracked products (PLANS/13 D6/D9, schema v8). Default ON for fresh
+  /// pharmacies; the Settings screen toggle is the only write path.
+  BoolColumn get autoDeductStock =>
+      boolean().withDefault(const Constant(true))();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

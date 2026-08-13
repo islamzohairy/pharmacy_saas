@@ -724,6 +724,78 @@ abstract class AppLocalizations {
   /// **'المخزون'**
   String get onHandLabel;
 
+  /// Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون: إضافة / تصحيح'**
+  String get adjustStockAction;
+
+  /// Product-row action-sheet entry opening the product edit form
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل بيانات المنتج'**
+  String get editProductAction;
+
+  /// Adjustment-sheet header label for the current on-hand quantity
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون الحالي'**
+  String get currentOnHandLabel;
+
+  /// Adjustment-sheet mode segment: post a positive stock_in
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة كمية'**
+  String get addQuantity;
+
+  /// Adjustment-sheet mode segment: set the quantity to an exact target
+  ///
+  /// In ar, this message translates to:
+  /// **'تصحيح الكمية'**
+  String get correctQuantity;
+
+  /// Adjustment-sheet input label for the quantity field
+  ///
+  /// In ar, this message translates to:
+  /// **'الكمية'**
+  String get quantityLabel;
+
+  /// Add-mode live preview of the resulting on-hand quantity
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد الإضافة: {quantity}'**
+  String afterAddPreview(String quantity);
+
+  /// Correct-mode live preview of the signed delta and the new total
+  ///
+  /// In ar, this message translates to:
+  /// **'الفرق: {delta} · الجديد: {total}'**
+  String correctPreview(String delta, String total);
+
+  /// Correct-mode inline state when the target equals the current on-hand (commit disabled)
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد تغيير'**
+  String get noChange;
+
+  /// Optional free-text note field on the adjustment sheet
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة (اختياري)'**
+  String get noteOptional;
+
+  /// Adjustment-sheet commit button posting the stock movement
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث المخزون'**
+  String get updateStock;
+
+  /// Snackbar shown when the stock movement write fails
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل تحديث المخزون'**
+  String get stockUpdateFailed;
+
   /// Hint of the product search field in sales entry
   ///
   /// In ar, this message translates to:

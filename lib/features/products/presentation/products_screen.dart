@@ -6,6 +6,7 @@ import '../../../core/format/money.dart';
 import '../../../core/format/quantity.dart';
 import '../../../core/l10n/app_l10n.dart';
 import '../../../core/router/app_router.dart';
+import '../../inventory/inventory.dart';
 import '../domain/product.dart';
 import 'products_providers.dart';
 
@@ -68,6 +69,9 @@ class _ProductTile extends ConsumerWidget {
         ? TextStyle(color: Theme.of(context).colorScheme.error)
         : null;
     return ListTile(
+      // Tapping the row opens the stock/product action sheet — the
+      // chevron trailing cues it (staff review item; PLANS/13 §5.3).
+      onTap: () => _showActions(context, ref),
       title: Text(product.name),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,19 +95,69 @@ class _ProductTile extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            tooltip: l10n.editProduct,
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () =>
-                context.pushNamed(AppRoutes.productForm, extra: product),
-          ),
-          IconButton(
             tooltip: l10n.deactivateProduct,
             icon: const Icon(Icons.delete_outline),
             onPressed: () => _confirmDeactivate(context, ref),
           ),
+          // RTL-first app: the trailing edge is the left, where the
+          // reading-direction chevron points left.
+          const Icon(Icons.chevron_left),
         ],
       ),
     );
+  }
+
+  /// Product-row action sheet (PLANS/13 §5.3): stock adjustment, product
+  /// edit, cancel. Replaces the old direct tap-to-edit.
+  Future<void> _showActions(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final action = await showModalBottomSheet<_ProductAction>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              dense: true,
+              title: Text(
+                product.name,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.inventory_2_outlined),
+              title: Text(l10n.adjustStockAction),
+              onTap: () =>
+                  Navigator.of(context).pop(_ProductAction.adjustStock),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l10n.editProductAction),
+              onTap: () =>
+                  Navigator.of(context).pop(_ProductAction.editDetails),
+            ),
+            ListTile(
+              title: Text(l10n.cancel),
+              onTap: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted) return;
+    switch (action) {
+      case _ProductAction.adjustStock:
+        await StockAdjustmentSheet.show(
+          context,
+          productId: product.id,
+          productName: product.name,
+          currentOnHand: onHand,
+        );
+      case _ProductAction.editDetails:
+        await context.pushNamed(AppRoutes.productForm, extra: product);
+      case null:
+        break;
+    }
   }
 
   Future<void> _confirmDeactivate(BuildContext context, WidgetRef ref) async {
@@ -130,6 +184,9 @@ class _ProductTile extends ConsumerWidget {
     }
   }
 }
+
+/// Choice from the product-row action sheet (PLANS/13 §5.3).
+enum _ProductAction { adjustStock, editDetails }
 
 class _ProductsEmpty extends StatelessWidget {
   const _ProductsEmpty({required this.onAdd});

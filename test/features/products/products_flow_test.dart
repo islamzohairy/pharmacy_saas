@@ -233,11 +233,15 @@ void main() {
       expect(find.text('بروفين'), findsOneWidget);
     });
 
-    testWidgets('edit opens the form pre-filled', (tester) async {
+    testWidgets('edit opens the form pre-filled via the row action sheet', (
+      tester,
+    ) async {
       await seedProduct(db, pharmacyId);
       await pumpProductsApp(tester, db, profileId: profileId);
 
-      await tester.tap(find.byTooltip('تعديل منتج'));
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تعديل بيانات المنتج'));
       await tester.pumpAndSettle();
 
       expect(find.text('تعديل منتج'), findsOneWidget);
@@ -421,7 +425,9 @@ void main() {
       await seedMovement(db, pharmacyId, productId);
       await pumpProductsApp(tester, db, profileId: profileId);
 
-      await tester.tap(find.byTooltip('تعديل منتج'));
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تعديل بيانات المنتج'));
       await tester.pumpAndSettle();
 
       expect(find.text('تعديل منتج'), findsOneWidget);

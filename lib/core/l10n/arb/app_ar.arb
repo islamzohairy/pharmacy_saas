@@ -435,6 +435,67 @@
   "@onHandLabel": {
     "description": "Product-list row label for the live on-hand quantity"
   },
+  "adjustStockAction": "المخزون: إضافة / تصحيح",
+  "@adjustStockAction": {
+    "description": "Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)"
+  },
+  "editProductAction": "تعديل بيانات المنتج",
+  "@editProductAction": {
+    "description": "Product-row action-sheet entry opening the product edit form"
+  },
+  "currentOnHandLabel": "المخزون الحالي",
+  "@currentOnHandLabel": {
+    "description": "Adjustment-sheet header label for the current on-hand quantity"
+  },
+  "addQuantity": "إضافة كمية",
+  "@addQuantity": {
+    "description": "Adjustment-sheet mode segment: post a positive stock_in"
+  },
+  "correctQuantity": "تصحيح الكمية",
+  "@correctQuantity": {
+    "description": "Adjustment-sheet mode segment: set the quantity to an exact target"
+  },
+  "quantityLabel": "الكمية",
+  "@quantityLabel": {
+    "description": "Adjustment-sheet input label for the quantity field"
+  },
+  "afterAddPreview": "بعد الإضافة: {quantity}",
+  "@afterAddPreview": {
+    "description": "Add-mode live preview of the resulting on-hand quantity",
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "correctPreview": "الفرق: {delta} · الجديد: {total}",
+  "@correctPreview": {
+    "description": "Correct-mode live preview of the signed delta and the new total",
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "noChange": "لا يوجد تغيير",
+  "@noChange": {
+    "description": "Correct-mode inline state when the target equals the current on-hand (commit disabled)"
+  },
+  "noteOptional": "ملاحظة (اختياري)",
+  "@noteOptional": {
+    "description": "Optional free-text note field on the adjustment sheet"
+  },
+  "updateStock": "تحديث المخزون",
+  "@updateStock": {
+    "description": "Adjustment-sheet commit button posting the stock movement"
+  },
+  "stockUpdateFailed": "فشل تحديث المخزون",
+  "@stockUpdateFailed": {
+    "description": "Snackbar shown when the stock movement write fails"
+  },
   "searchProducts": "ابحث عن منتج…",
   "@searchProducts": {
     "description": "Hint of the product search field in sales entry"

@@ -336,6 +336,46 @@ class AppLocalizationsAr extends AppLocalizations {
   String get onHandLabel => 'المخزون';
 
   @override
+  String get adjustStockAction => 'المخزون: إضافة / تصحيح';
+
+  @override
+  String get editProductAction => 'تعديل بيانات المنتج';
+
+  @override
+  String get currentOnHandLabel => 'المخزون الحالي';
+
+  @override
+  String get addQuantity => 'إضافة كمية';
+
+  @override
+  String get correctQuantity => 'تصحيح الكمية';
+
+  @override
+  String get quantityLabel => 'الكمية';
+
+  @override
+  String afterAddPreview(String quantity) {
+    return 'بعد الإضافة: $quantity';
+  }
+
+  @override
+  String correctPreview(String delta, String total) {
+    return 'الفرق: $delta · الجديد: $total';
+  }
+
+  @override
+  String get noChange => 'لا يوجد تغيير';
+
+  @override
+  String get noteOptional => 'ملاحظة (اختياري)';
+
+  @override
+  String get updateStock => 'تحديث المخزون';
+
+  @override
+  String get stockUpdateFailed => 'فشل تحديث المخزون';
+
+  @override
   String get searchProducts => 'ابحث عن منتج…';
 
   @override

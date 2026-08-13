@@ -1339,3 +1339,40 @@ Watch-items from staff engineer (non-blocking, implemented in this plan):
   represents the event, and doubling feed rows per sale violates the
   low-information-density principle. The movement ledger remains the full
   audit record.
+
+## 2026-08-13 — Plan 13 emulator runtime pass (device leg): v7→v8 + live exercise PASSED
+Data source: emulator-5556, pharmacy 14 "PharmacyTest" — the SAME device
+that carried Plan 12's device-leg rehearsal data (Aspirin initial 100 +
+untracked A/Paracetamol; remote ledger ph14 = 3 entries). Release APK
+installed with `adb install -r` (data preserved, no run-as).
+Before/after: dashboard balances identical (sales ١٠٠٫٠٠ / net ٤٠٫٠٠),
+Aspirin on-hand ١٠٠ intact post-upgrade — v7→v8 upgrade preserved every
+pre-existing row (matches the fixture-leg counts in `auto_deduct_
+migration_test.dart`).
+Live exercise (uiautomator dumps + remote psql):
+1. Tracked sale Aspirin×1 (auto-deduct ON) → on-hand ١٠٠→٩٩. PASS
+2. Untracked sale A×1 (ON) → on-hand stays —, no movement (D6). PASS
+3. Toggle OFF in settings → Aspirin sale → on-hand stays ٩٩ (D8 flag
+   read fresh inside confirm; Settings change applies to next sale). PASS
+   Toggle restored to ON afterwards (checked=true via dump).
+4. Manual add +5 on Aspirin → ٩٩→١٠٤, preview showed "بعد الإضافة: ١٠٤".
+   PASS
+5. Correct Aspirin → ١٢٠ (delta +16), preview "الفرق: ١٦ · الجديد: ١٢٠".
+   PASS
+6. Activity feed: "إضافة مخزون: Aspirin +٥" and "تصحيح مخزون: Aspirin +١٦"
+   rendered attributed with product names and signed quantities, merged
+   newest-first with the six sale rows; NO auto `stock_out` rows (D10)
+   and no `initial` rows. PASS
+7. Remote psql: pharmacy 14 ledger intact; the three new sales remained
+   pending best-effort sync (scheduler backoff) — same observed behavior
+   class as Plan 09; not part of Plan 13 scope (local-only features).
+Suite 257/257, analyzer clean, release APK builds.
+
+## 2026-08-13 — lesson: drift watch streams never complete under widget-test fake-async
+Diagnosed while writing the auto-deduct hook test (Plan 13 step 5): a
+`watch()`-based repository read inside a widget test's fake-async zone
+hangs `pumpAndSettle` forever — drift schedules zero-duration timers the
+fake clock never fires. Pattern going forward: confirm-time reads that
+must return a value inside a widget test use a ONE-SHOT drift
+`get()`-based repository method (`allOnHand`), never `stream.first`;
+`watch*` streams stay provider-only.

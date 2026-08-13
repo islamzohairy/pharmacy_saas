@@ -341,3 +341,36 @@ fixture (test/core/data/stock_movements_migration_test.dart) and on-
 device against REAL pilot data (emulator-5556 acceptance install, release
 build `install -r`, data intact, chip "آخر نسخة: 13/8/2026 10:14"). 224
 unit/widget tests green, analyzer clean, release APK builds.
+
+Plan 13 (sale auto-deduction + manual adjustment) is complete —
+schemaVersion 8, local-only (zero changes under `supabase/` or
+`core/data/sync/`): additive drift migration adds
+`pharmacies.auto_deduct_stock` (INTEGER, default 1; default ON, persisted
+per pharmacy, fresh-read at sale-confirm time so a Settings change applies
+to the very next sale). Settings screen gained the المخزون section toggle
+"خصم المخزون تلقائيًا عند البيع". Sales confirm now runs
+`recordSaleWithAutoDeduct` (in `lib/features/sales/domain/`): sale ledger
+write FIRST, then one `stock_out` movement (−qty) per line ONLY for
+tracked products with auto-deduct ON (D6); a stock-write failure never
+blocks/reverts the sale — logged via the Plan 09 error path (D8/D9).
+`StockRepository.allOnHand` is a one-shot snapshot for confirm-time reads
+(see fake-async lesson below). Products rows open an action sheet
+("المخزون: إضافة / تصحيح" vs "تعديل بيانات المنتج", chevron cue);
+`stock_adjustment_sheet.dart` has add/correct segments with live Arabic
+previews (add posts `stock_in` +qty≥1; correct posts `adjustment` with
+delta = target − current, target ≥ 0, absent on-hand = 0; zero-delta
+rejected). Activity feed now merges ledger entries + manual movements
+(`activity_feed.dart` `mergeActivityFeed`, cap 100 combined by recency,
+D10 — auto `stock_out` and `initial` excluded; sealed `ActivityRow`
+base with `LedgerActivityRow`/`MovementActivityRow`; providers
+combineLatest3 over ledger `watchEntries` + stock `watchMovements` +
+products `watchAll`). Fake-async lesson: drift `watch()` streams never
+complete under widget-test fake-async — confirm-time reads use one-shot
+`get()`-based repository methods, never `stream.first`. Migration
+rehearsed TWICE: v7→v8 fixture (`auto_deduct_migration_test.dart`) and
+on-device against real pilot data (emulator-5556, release `install -r`,
+all Plan 12 data intact; live-exercised: tracked sale deducts, untracked
+no-op, toggle off stops deduction, add/correct work, feed shows
+attributed signed-quantity movement rows). 257 tests green, analyzer
+clean, release APK builds. Pending remote sync of the 3 test sales from
+the runtime pass (best-effort backoff; Plan 09 scope).

@@ -88,15 +88,15 @@ All new code is pure Dart + drift. No platform channels, plugins, or Android API
 
 ## 6. Implementation Steps (ordered)
 
-1. Phase 0 report → PR + dated `DECISIONS.md` entry; apply stop conditions; record V2's transaction finding and the chosen D8 path.
-2. Record D6–D10 in `DECISIONS.md`.
-3. v8 migration + **fixture rehearsal before any feature code** (v7 fixture must include `stock_movements` rows of all four types, quarantine rows, full ledger variety → migrate → assert column default and every pre-existing row intact).
-4. Settings column + provider + toggle UI + tests.
-5. Auto-deduct hook + unit tests (the full matrix) + sales-flow widget tests.
-6. Action sheet + adjustment sheet + widget tests.
-7. Activity-feed merge + tests.
-8. Emulator runtime migration pass (preserve app data; verify pre-existing on-hand intact; then live exercise: tracked sale deducts, untracked sale doesn't, toggle off stops deduction, manual add/correct work).
-9. Closure: `FEATURES.md` shipped entry with test counts + runtime evidence, `PROJECT_MEMORY.md`, `DECISIONS.md` rehearsal records; full suite + analyzer + CI green.
+1. Phase 0 report → PR + dated `DECISIONS.md` entry; apply stop conditions; record V2's transaction finding and the chosen D8 path. ✅ (commit 0446f66)
+2. Record D6–D10 in `DECISIONS.md`. ✅ (commit 0446f66)
+3. v8 migration + **fixture rehearsal before any feature code** (v7 fixture must include `stock_movements` rows of all four types, quarantine rows, full ledger variety → migrate → assert column default and every pre-existing row intact). ✅ (commit bacf355)
+4. Settings column + provider + toggle UI + tests. ✅ (commit 3fe345d)
+5. Auto-deduct hook + unit tests (the full matrix) + sales-flow widget tests. ✅ (commit 007f9ce)
+6. Action sheet + adjustment sheet + widget tests. ✅ (commit e3978fe)
+7. Activity-feed merge + tests. ✅ (commit 58e6c1e)
+8. Emulator runtime migration pass (preserve app data; verify pre-existing on-hand intact; then live exercise: tracked sale deducts, untracked sale doesn't, toggle off stops deduction, manual add/correct work). ✅ (2026-08-13, emulator-5556 release build; evidence in `DECISIONS.md`)
+9. Closure: `FEATURES.md` shipped entry with test counts + runtime evidence, `PROJECT_MEMORY.md`, `DECISIONS.md` rehearsal records; full suite + analyzer + CI green. ✅ (suite 257/257, analyzer clean; commits 58e6c1e + docs)
 
 ## 7. Testing Strategy
 

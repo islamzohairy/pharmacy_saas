@@ -315,3 +315,29 @@ trap.
 - No e-invoicing/ETA implementation — gated behind `COMPLIANCE.md`
   confirmation, not a normal backlog item.
 - No iOS build — Android only this round.
+
+Plan 12 (inventory foundation) is complete — schemaVersion 7, local-only:
+append-only `stock_movements` drift table (table + `StockMovementType`
+enum in `lib/core/data/tables/`; types initial/stock_in/stock_out/
+adjustment; quantity is a signed delta, negative subtracts; `profile_id`
+attribution + nullable `note`; `occurred_at` non-null; NO sync surface —
+nothing inventory-related leaves the device, no remote migration, the
+standing V6 negative-grep covers `stock_movements` in `supabase/` and
+`lib/core/data/sync/`). New `inventory` feature (domain: StockMovement,
+StockRepository interface, pure `reduceOnHand` (unclamped SUM — negative
+stock allowed by D3, error-color display); data: DriftStockRepository
+(grouped SUM over the movement ledger, `watchAllOnHand`; `watchOnHand`,
+`getMovements`, `recordMovement`); presentation: `stockRepositoryProvider`
++ `allOnHandProvider`; barrel `inventory.dart`). Product form captures
+OPTIONAL initial stock on creation only (hidden when editing; empty→null,
+≥0, `normalizeDigits` Arabic-Indic normalization; posts one `initial`
+movement with active-profile attribution). Product list shows live
+`المخزون: <formatQuantity>` per row (`productsWithOnHandProvider` =
+combineLatest2 over `watchActive` + `watchAllOnHand`) with theme error
+color when negative. `formatQuantity` (ar_EG) in `core/format/quantity.dart`;
+`normalizeDigits` extracted to `core/format/money.dart` (behavior-
+preserving — money tests untouched). Migration rehearsed TWICE: v6→v7
+fixture (test/core/data/stock_movements_migration_test.dart) and on-
+device against REAL pilot data (emulator-5556 acceptance install, release
+build `install -r`, data intact, chip "آخر نسخة: 13/8/2026 10:14"). 224
+unit/widget tests green, analyzer clean, release APK builds.

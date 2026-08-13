@@ -1095,3 +1095,121 @@ LESSON: verification criteria must be derived from the ACTUAL
 schema/column semantics and the device's ACTUAL registered tenant — not
 carried forward from an earlier memo. Same family as the
 manifest-permission lesson: check reality, not the assumption.
+
+## 2026-08-13 — Plan 12 Phase 0 verification report + baseline (staff-engineer approved 2026-08-13)
+DECISION: Phase 0 (PLANS/12 §4) concluded all six checks PASS; no stop
+conditions triggered (schemaVersion == 6, no `double` in money/quantity
+paths); staff sign-off recorded. Implementation proceeds per plan §6,
+branch `feature/12-inventory-foundation`.
+- V1 — schemaVersion == 6 (`sync_quarantine` from Plan 11-H Phase 2
+  shipped), v7 is the next slot — PASS (`app_database.dart:50`).
+- V2 — table registration pattern: core-owned tables in
+  `lib/core/data/tables/`, drift list + onCreate + onUpgrade ladder in
+  `app_database.dart:34–98` — PASS; the v6 rehearsal test's DROP-TABLE +
+  `PRAGMA user_version` rollback is the fixture template to mirror.
+- V3 — product form: create-vs-edit is `widget.product != null`;
+  `parseEgpToMinor` (core/format/money.dart) is pure int; the only
+  `double` in lib/ is a layout width. Digit normalization is INLINE in
+  `parseEgpToMinor` — extractable into a shared helper (Step 4) — PASS
+  with that note recorded.
+- V4 — product list: `activeProductsProvider` StreamProvider +
+  `combineLatest2` join (dashboard precedent) avoids N+1 — PASS.
+- V5 — barrels: `products.dart`/`ledger.dart`/identity barrels confirmed;
+  new `inventory.dart` barrel follows the same shape — PASS.
+- V6 — sync layer early negative check: zero references to
+  products/suppliers/customers in `lib/core/data/sync/` — PASS;
+  post-implementation grep re-run at closure.
+BASELINE (empirical, supersedes the written "181 at scheduler-fix
+checkpoint" and confirms the plan's "199" claim): full suite =
+**199/199 tests green**, `flutter analyze` clean, on main
+@542a0e4. The 181 record was stale by the quarantine/migration tests
+added after the scheduler fix. Every later count is measured, not
+carried from a memo — the 11-H "verify reality" lesson, applied.
+FINDINGS RECORDED (per staff review): the gen-l10n failure mode is
+runtime-only (analyzer can't catch a missed run — Step 9 makes it
+explicit); the emulator runtime pass depends on rebuilding the release
+APK with `.env.local` defines (its acceptance build is not reusable
+with app-data-preserving install); `normalizeDigits` extraction must be
+behavior-preserving (zero money-test edits allowed, else STOP).
+
+## 2026-08-13 — Plan 12 decisions D1–D5 (recorded verbatim from PLANS/12 §3)
+D1 — Stock model: append-only `stock_movements` ledger; on-hand = live
+aggregate. Movements are never updated or deleted; a correction is a new
+offsetting movement (same rule as the financial ledger).
+D2 — Activity feed: stock movements merge into the activity history in
+Plan 13, not Plan 12. Plan 12's only movement type is `initial` (one per
+product, low signal); Plan 13 is where movement volume begins. The pilot
+build ships after Plan 14, so no user-visible gap exists.
+D3 — Negative stock: allowed, displayed gracefully. On-hand may go
+negative (selling before a restock is logged). Never clamp, never block a
+sale — the recording loop is Tier-1 behavior and must not depend on
+inventory state. Negative on-hand is displayed in a distinct visual state
+with correct Arabic negative formatting (numeric form `-٢` chosen at
+implementation for consistency with other numeric displays, per staff
+review). Rationale consistent with the existing never-clamp precedent
+(supplier overpayment shows as credit, `رصيد دائن`).
+D4 — Units: plain integer units (no minor units, no fractions).
+Fractional stock is a future evidence-gated decision.
+D5 — Placement: `stock_movements` drift table lives in
+`lib/core/data/tables/` (multiple features will read/write it — products
+now, sales in Plan 13 — per the 2026-08-02 cross-feature-tables
+precedent); domain/data/presentation live in a new `inventory` feature
+consumed through its barrel.
+
+## 2026-08-13 — Plan 12 migration rehearsal, FIXTURE leg: v6→v7 PASSED
+REHEARSAL (AGENTS.md standing rule, second execution of the standard;
+template kept consistent with the v5→v6 run): fixture DB seeded as a real
+v6 install — 1 pharmacy, 1 profile, 1 product, 1 supplier, 1 customer, 6
+ledger entries (all five types; expense with `rent` + `ownerDraw`
+categories; 3 synced + 3 unsynced), 1 quarantine row — then the v7-only
+table dropped and `user_version` rewound to 6; reopen ran the REAL
+`onUpgrade(6 → 7)`. BEFORE: 6 ledger entries / 3 unsynced / 1
+quarantine / 5 identity+catalog rows. AFTER: `user_version == 7`;
+`stock_movements` exists and EMPTY; every pre-existing row intact (all
+types/categories/amounts/synced flags byte-identical; unsynced count
+still 3; quarantine row intact). Data source: fixture (real pilot data
+rehearsal applies at the first post-pilot migration). Test:
+`test/core/data/stock_movements_migration_test.dart`.
+
+## 2026-08-13 — Plan 12 migration rehearsal, DEVICE leg (real pilot data): v6→v7 PASSED
+REHEARSAL completed on the real acceptance install per the AGENTS.md
+standing rule (fixture leg above + this device leg = the standard). Target:
+Medium_Phone AVD (emulator-5556), the 11-H acceptance device — release
+install (versionName 1.0.0), tenant 25 (DiagPharma), not debuggable.
+Sequence: (1) before-state captured (UI hierarchy: dashboard sums ٥٫٠٠ /
+١٥٫٠٠ / ١٠٫٠٠ for صافي/مبيعات/تكلفة on this-month view); (2) new release
+APK (Plan 12 build, `--dart-define-from-file=.env.local`) installed with
+`adb install -r` over the v6 install (data-preserving; signature matched);
+(3) launch → `user_version` migrated 6→7 silently, dashboard loads with all
+prior data intact (this-month view reproduces identical sums; the "today"
+view showing zeros is the period filter, not data loss — confirmed by
+switching periods); (4) sync: chip "آخر نسخة: 13/8/2026 10:14" on the new
+build — the old installed build could never push (pre-INTERNET-fix, its
+chip showed the failure banner); remote count for tenant 25 unchanged at 12
+entries (nothing new to push — inventory movements are local-only by
+design); (5) feature check: product "Aspirin" created with initial stock
+100 → appears in list with "المخزون: ١٠٠" live; pre-existing product shows
+"المخزون: ٠". Evidence: uiautomator dumps + logcat + remote psql counts.
+Data source: REAL pilot device data. No rollback needed (no delete/update
+path exists; failure mode would have been DB-open fatal screen, absent).
+
+## 2026-08-13 — Pilot backend pause/delete incident + resume (user-confirmed)
+FINDING: `vhzvvveikzmuzxzrgbsr.supabase.co` returned NXDOMAIN from host,
+Google DNS, and the emulator (anon key JWT `ref` matched the URL — not a
+typo). Consistent with Supabase free-tier pause→delete after ~7 days of
+inactivity; last verified activity 2026-08-05 14:53. The device's backup
+failure banner was the symptom. The user resumed the project from the
+Supabase dashboard (option 1 per the project's stop-and-ask rule). POST-
+RESUME: DNS resolves (Cloudflare), REST + anon key auth healthy (RLS
+denies anon table access as designed — 42501 on direct select is expected),
+direct DB host `db.<ref>.supabase.co` is IPv6-only (no route from this
+host) → owner-privilege psql now runs via the IPv4 session pooler
+(`aws-0-eu-west-1.pooler.supabase.com`, user `postgres.<ref>`;
+DATABASE_PASSWORD from `.env.local`, region discovered by probing). Schema
+verified post-resume: migration 0003 applied (FK count on ledger_entries =
+1), `expense_categories` present. DEPLOY GATE: `rls_isolation_test.sql`
+re-run GREEN (all 12 checks, self-cleaning, zero residue). NOTE: tenant 25
+now holds 12 remote entries
+(9 documented at the 11-H gate + 3 pushed by the 14:53 acceptance push).
+LESSON: a paused/deleted backend degrades silently into a stale "آخر نسخة"
+chip + failure banner; the gate suite is the restore-time health check.

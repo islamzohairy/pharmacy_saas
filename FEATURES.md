@@ -169,9 +169,25 @@
   until the INTERNET manifest fix (first successful release-mode sync
   14:53) — see DECISIONS.md 2026-08-05.
 
+- 12_INVENTORY_FOUNDATION_PLAN — inventory foundation: append-only
+  `stock_movements` drift table (schemaVersion 7; `initial` /
+  `stock_in` / `stock_out` / `adjustment` types, signed-delta quantities,
+  profile attribution, nullable note; local-only — nothing leaves the
+  device), `inventory` feature (StockRepository, live on-hand via grouped
+  SUM over the movement ledger), optional initial-stock capture on
+  product creation (one `initial` movement, Arabic-Indic digit
+  normalization, hidden on edit), live on-hand + negative-stock error
+  color on the product list. Migration rehearsed twice: v6→v7 fixture
+  (2026-08-13, first checkpoint) and on-device against real pilot data
+  (emulator-5556 acceptance install, release build — data intact,
+  first successful push observed on the new build). Deploy gate re-run
+  green on the resumed backend (RLS isolation test, self-cleaning).
+  224 tests green, analyzer clean. See DECISIONS.md 2026-08-13.
+
 ## In progress
-None — all P0 plans (01–09), plan 10, and plan 11 are complete. Next work
-is gated on pilot feedback and the P1 confirmations in the roadmap below.
+None — all P0 plans (01–09), plan 10, plan 11, and plan 12 are complete.
+Next work is gated on pilot feedback and the P1 confirmations in the
+roadmap below.
 
 ## Roadmap — P0 (build order; each plan states its own dependencies)
 | # | Plan | Confirmed problem it answers |
@@ -187,6 +203,7 @@ is gated on pilot feedback and the P1 confirmations in the roadmap below.
 | 09 | `PLANS/09_CRASH_VISIBILITY_PLAN.md` | crash visibility for the pilot (post-review) |
 | 10 | `PLANS/10_EXPENSES_ACTIVITY_AND_SETTINGS_PLAN.md` | where money goes beyond draws; activity visibility; ETA prep |
 | 11 | `PLANS/11_PILOT_HARDENING_AND_OBSERVABILITY_PLAN.md` | pilot hardening: DB-open safety, backup staleness visibility |
+| 12 | `PLANS/12_INVENTORY_FOUNDATION_PLAN.md` | inventory: on-hand visibility, initial stock capture |
 
 ## Roadmap — P1 (not started, not yet planned in detail)
 - Expiry alerting logic (data field already ships in P0 — see

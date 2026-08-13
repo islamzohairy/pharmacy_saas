@@ -6,6 +6,7 @@ import 'package:pharmacy_saas/app.dart';
 import 'package:pharmacy_saas/core/data/app_database.dart';
 import 'package:pharmacy_saas/core/data/database_providers.dart';
 import 'package:pharmacy_saas/core/data/secure_store.dart';
+import 'package:pharmacy_saas/core/data/tables/stock_movement_type.dart';
 import 'package:pharmacy_saas/core/router/app_router.dart';
 
 import '../../support/helpers.dart';
@@ -79,6 +80,62 @@ void main() {
 
       expect(find.text('باراسيتامول 500'), findsOneWidget);
       expect(find.text('٢٥٫٥٠ ج.م'), findsOneWidget);
+    });
+
+    testWidgets('shows the live on-hand per row, 0 when no movements exist',
+        (tester) async {
+      await seedProduct(db, pharmacyId, name: 'بانادول');
+      final stocked = await seedProduct(db, pharmacyId, name: 'بروفين');
+      await seedMovement(db, pharmacyId, stocked, quantity: 15);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      // Stocked product shows its aggregate; the movement-less product
+      // shows 0.
+      expect(find.text('المخزون: ١٥'), findsOneWidget);
+      expect(find.text('المخزون: ٠'), findsOneWidget);
+      expect(find.text('بانادول'), findsOneWidget);
+      expect(find.text('بروفين'), findsOneWidget);
+    });
+
+    testWidgets('negative on-hand renders in the distinct error color (D3)',
+        (tester) async {
+      final product = await seedProduct(db, pharmacyId, name: 'بروفين');
+      await seedMovement(db, pharmacyId, product, quantity: 5);
+      await seedMovement(
+        db,
+        pharmacyId,
+        product,
+        type: StockMovementType.stockOut,
+        quantity: -9,
+      );
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      final onHandText = find.text('المخزون: ؜-٤');
+      expect(onHandText, findsOneWidget);
+      final textWidget = tester.widget<Text>(onHandText);
+      expect(textWidget.style?.color, isNotNull);
+      // Distinct visual state = the theme error color (never clamped,
+      // never a warning dialog — the signal belongs to Plan 14).
+      final context = tester.element(onHandText);
+      expect(
+        textWidget.style?.color,
+        Theme.of(context).colorScheme.error,
+      );
+    });
+
+    testWidgets('on-hand updates live when a movement is appended', (
+      tester,
+    ) async {
+      final product = await seedProduct(db, pharmacyId, name: 'بروفين');
+      await seedMovement(db, pharmacyId, product, quantity: 3);
+      await pumpProductsApp(tester, db, profileId: profileId);
+      expect(find.text('المخزون: ٣'), findsOneWidget);
+
+      await seedMovement(db, pharmacyId, product, quantity: 7);
+      await tester.pumpAndSettle();
+
+      expect(find.text('المخزون: ١٠'), findsOneWidget);
+      expect(find.text('المخزون: ٣'), findsNothing);
     });
 
     testWidgets('creates a product through the form and returns to the list', (
@@ -174,6 +231,183 @@ void main() {
             .text,
         '25.50',
       );
+    });
+  });
+
+  group('ProductForm initial stock', () {
+    testWidgets('omitting the field creates the product with no movements', (
+      tester,
+    ) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'اسم المنتج'),
+        'بانادول',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر الشراء'),
+        '20',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر البيع'),
+        '25.00',
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('بانادول'), findsOneWidget);
+      expect(await db.select(db.stockMovements).get(), isEmpty);
+    });
+
+    testWidgets('a positive value posts exactly one initial movement',
+        (tester) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'اسم المنتج'),
+        'بانادول',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر الشراء'),
+        '20',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر البيع'),
+        '25.00',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'المخزون الابتدائي'),
+        '50',
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      final product = await (db.select(db.products)
+            ..where((t) => t.name.equals('بانادول')))
+          .getSingle();
+      final movements = await db.select(db.stockMovements).get();
+      expect(movements, hasLength(1));
+      expect(movements.single.productId, product.id);
+      expect(movements.single.type, StockMovementType.initial);
+      expect(movements.single.quantity, 50);
+      // Attributed to the active profile (plan-04 precedent).
+      expect(movements.single.profileId, profileId);
+    });
+
+    testWidgets('Arabic-Indic digits are accepted via the shared path', (
+      tester,
+    ) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'اسم المنتج'),
+        'بانادول',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر الشراء'),
+        '٢٠',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر البيع'),
+        '٢٥',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'المخزون الابتدائي'),
+        '٥٠',
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      final movements = await db.select(db.stockMovements).get();
+      expect(movements, hasLength(1));
+      expect(movements.single.quantity, 50);
+    });
+
+    testWidgets('a zero value posts no movement (on-hand defaults to 0)', (
+      tester,
+    ) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'اسم المنتج'),
+        'بانادول',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر الشراء'),
+        '20',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر البيع'),
+        '25.00',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'المخزون الابتدائي'),
+        '0',
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      expect(await db.select(db.stockMovements).get(), isEmpty);
+    });
+
+    testWidgets('rejects negative and non-numeric values', (tester) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      final field = find.widgetWithText(TextFormField, 'المخزون الابتدائي');
+
+      await tester.enterText(field, '-5');
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+      expect(find.text('أدخل عددًا صحيحًا (مثال: 25)'), findsOneWidget);
+
+      await tester.enterText(field, 'كثير');
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+      expect(find.text('أدخل عددًا صحيحًا (مثال: 25)'), findsOneWidget);
+
+      // Still on the form — nothing was saved.
+      expect(find.text('إضافة منتج'), findsOneWidget);
+      expect(await db.select(db.stockMovements).get(), isEmpty);
+      expect(await db.select(db.products).get(), isEmpty);
+    });
+
+    testWidgets('edit shows no initial-stock field and posts no movement', (
+      tester,
+    ) async {
+      final productId = await seedProduct(db, pharmacyId);
+      await seedMovement(db, pharmacyId, productId);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byTooltip('تعديل منتج'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('تعديل منتج'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextFormField, 'المخزون الابتدائي'),
+        findsNothing,
+      );
+
+      // Save an edit without touching stock — history is unchanged.
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+      final movements = await db.select(db.stockMovements).get();
+      expect(movements, hasLength(1));
+      expect(movements.single.quantity, 10);
     });
   });
 }

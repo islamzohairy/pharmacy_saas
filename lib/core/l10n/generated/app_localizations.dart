@@ -682,6 +682,30 @@ abstract class AppLocalizations {
   /// **'إزالة التاريخ'**
   String get clearExpiry;
 
+  /// Label of the optional initial-stock input on product creation (PLANS/12)
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون الابتدائي'**
+  String get initialStockLabel;
+
+  /// Helper text under the initial-stock input, only shown on product creation
+  ///
+  /// In ar, this message translates to:
+  /// **'اختياري — عدد الوحدات المتوفرة عند الإنشاء'**
+  String get initialStockOptional;
+
+  /// Validation error when initial stock is not a whole number or is negative
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عددًا صحيحًا (مثال: 25)'**
+  String get initialStockInvalid;
+
+  /// Product-list row label for the live on-hand quantity
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون'**
+  String get onHandLabel;
+
   /// Hint of the product search field in sales entry
   ///
   /// In ar, this message translates to:

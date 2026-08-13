@@ -313,6 +313,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clearExpiry => 'إزالة التاريخ';
 
   @override
+  String get initialStockLabel => 'المخزون الابتدائي';
+
+  @override
+  String get initialStockOptional =>
+      'اختياري — عدد الوحدات المتوفرة عند الإنشاء';
+
+  @override
+  String get initialStockInvalid => 'أدخل عددًا صحيحًا (مثال: 25)';
+
+  @override
+  String get onHandLabel => 'المخزون';
+
+  @override
   String get searchProducts => 'ابحث عن منتج…';
 
   @override

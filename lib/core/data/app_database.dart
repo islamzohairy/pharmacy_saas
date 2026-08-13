@@ -13,6 +13,7 @@ import 'tables/error_log_table.dart';
 import 'tables/ledger_entries_table.dart';
 import 'tables/pharmacies_table.dart';
 import 'tables/products_table.dart';
+import 'tables/stock_movements_table.dart';
 import 'tables/suppliers_table.dart';
 import 'tables/sync_quarantine_table.dart';
 import 'tables/user_profiles_table.dart';
@@ -29,7 +30,9 @@ part 'app_database.g.dart';
 /// renames `cashDraw` → `expense` with a `category` column and adds
 /// compliance-prep fields to `pharmacies` (PLANS/10); version 6 adds the
 /// sync-failure quarantine (`sync_quarantine_entries`, PLANS/11-H Phase
-/// 2). The append-only ledger rule applies to the schema added in
+/// 2); version 7 adds the append-only stock movement ledger
+/// (`stock_movements`, PLANS/12 — local-only, never on the sync
+/// surface). The append-only ledger rule applies to the schema added in
 /// version 3.
 @DriftDatabase(
   tables: [
@@ -41,13 +44,14 @@ part 'app_database.g.dart';
     LedgerEntries,
     ErrorLogEntries,
     SyncQuarantineEntries,
+    StockMovements,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -60,6 +64,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createTable(ledgerEntries);
       await m.createTable(errorLogEntries);
       await m.createTable(syncQuarantineEntries);
+      await m.createTable(stockMovements);
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -94,6 +99,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await m.createTable(syncQuarantineEntries);
+      }
+      if (from < 7) {
+        await m.createTable(stockMovements);
       }
     },
     beforeOpen: (details) async {

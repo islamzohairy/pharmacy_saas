@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/money.dart';
+import '../../../core/format/quantity.dart';
 import '../../../core/l10n/app_l10n.dart';
 import '../../../core/router/app_router.dart';
 import '../domain/product.dart';
@@ -11,14 +12,15 @@ import 'products_providers.dart';
 /// Product catalog (plan 05): live list of active products with
 /// create/edit/soft-deactivate. Products are never hard-deleted — a
 /// deactivated product hides from this list while its ledger history
-/// stays valid.
+/// stays valid. Each row also shows the live on-hand quantity
+/// (PLANS/12 §5.4), joined from the stock-movement aggregate.
 class ProductsScreen extends ConsumerWidget {
   const ProductsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final productsAsync = ref.watch(activeProductsProvider);
+    final productsAsync = ref.watch(productsWithOnHandProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.productsTitle)),
@@ -30,7 +32,7 @@ class ProductsScreen extends ConsumerWidget {
       body: productsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _ProductsError(
-          onRetry: () => ref.invalidate(activeProductsProvider),
+          onRetry: () => ref.invalidate(productsWithOnHandProvider),
         ),
         data: (products) => products.isEmpty
             ? _ProductsEmpty(
@@ -38,8 +40,10 @@ class ProductsScreen extends ConsumerWidget {
               )
             : ListView.builder(
                 itemCount: products.length,
-                itemBuilder: (context, index) =>
-                    _ProductTile(product: products[index]),
+                itemBuilder: (context, index) {
+                  final (product, onHand) = products[index];
+                  return _ProductTile(product: product, onHand: onHand);
+                },
               ),
       ),
     );
@@ -47,16 +51,34 @@ class ProductsScreen extends ConsumerWidget {
 }
 
 class _ProductTile extends ConsumerWidget {
-  const _ProductTile({required this.product});
+  const _ProductTile({required this.product, required this.onHand});
 
   final Product product;
+
+  /// Live on-hand quantity for this product (0 when no movements exist).
+  final int onHand;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final onHandStyle = onHand < 0
+        ? TextStyle(color: Theme.of(context).colorScheme.error)
+        : null;
     return ListTile(
       title: Text(product.name),
-      subtitle: Text(formatEgp(product.sellMinor)),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(formatEgp(product.sellMinor)),
+          // Negative on-hand renders in a distinct visual state with
+          // locale-correct digits — never clamped, no warning dialog
+          // (D3; the signal treatment belongs to Plan 14).
+          Text(
+            '${l10n.onHandLabel}: ${formatQuantity(onHand)}',
+            style: onHandStyle,
+          ),
+        ],
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

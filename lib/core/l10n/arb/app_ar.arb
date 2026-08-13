@@ -407,6 +407,22 @@
   "@clearExpiry": {
     "description": "Tooltip to remove the chosen expiry date"
   },
+  "initialStockLabel": "المخزون الابتدائي",
+  "@initialStockLabel": {
+    "description": "Label of the optional initial-stock input on product creation (PLANS/12)"
+  },
+  "initialStockOptional": "اختياري — عدد الوحدات المتوفرة عند الإنشاء",
+  "@initialStockOptional": {
+    "description": "Helper text under the initial-stock input, only shown on product creation"
+  },
+  "initialStockInvalid": "أدخل عددًا صحيحًا (مثال: 25)",
+  "@initialStockInvalid": {
+    "description": "Validation error when initial stock is not a whole number or is negative"
+  },
+  "onHandLabel": "المخزون",
+  "@onHandLabel": {
+    "description": "Product-list row label for the live on-hand quantity"
+  },
   "searchProducts": "ابحث عن منتج…",
   "@searchProducts": {
     "description": "Hint of the product search field in sales entry"

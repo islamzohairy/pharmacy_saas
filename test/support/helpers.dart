@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pharmacy_saas/core/data/app_database.dart';
 import 'package:pharmacy_saas/core/data/tables/expense_category.dart';
 import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
+import 'package:pharmacy_saas/core/data/tables/stock_movement_type.dart';
 
 /// In-memory drift database — no SQLCipher needed in tests.
 Future<AppDatabase> createMemoryDb() async {
@@ -169,6 +170,30 @@ Future<int> seedLedgerEntry(
           profileId: Value(profileId),
           category: Value(category),
           occurredAt: occurredAt ?? DateTime.now(),
+        ),
+      );
+}
+
+/// Seeds one stock movement row and returns its id (PLANS/12).
+Future<int> seedMovement(
+  AppDatabase db,
+  int pharmacyId,
+  int productId, {
+  StockMovementType type = StockMovementType.initial,
+  int quantity = 10,
+  int? profileId,
+  DateTime? occurredAt,
+}) {
+  return db
+      .into(db.stockMovements)
+      .insert(
+        StockMovementsCompanion.insert(
+          pharmacyId: pharmacyId,
+          productId: productId,
+          type: type,
+          quantity: quantity,
+          occurredAt: occurredAt ?? DateTime.now(),
+          profileId: Value(profileId),
         ),
       );
 }

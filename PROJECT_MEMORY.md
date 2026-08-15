@@ -13,9 +13,13 @@ ONLY there, never in the app UI). Launcher label "NoNota"; in-app title
 "نونوتا"; onboarding shop-name copy says "المحل". Evidence honesty rule:
 brand broad, evidence story stays "proven with pharmacies first" (n=1).
 STANDING NAMING RULE: internal schema/Dart naming (`pharmacies`,
-`pharmacy_id`, `Pharmacy`, `pharmacyId`, package/applicationId) is a
-retained legacy label for the generic tenant concept — never rename it
-opportunistically (DECISIONS.md 2026-08-15); fixture data like 'صيدلية
+`pharmacy_id`, `Pharmacy`, `pharmacyId`, Android namespace/Dart package
+name `pharmacy_saas`) is a retained legacy label for the generic tenant
+concept — never rename it opportunistically (DECISIONS.md 2026-08-15).
+The Android **applicationId** is the one exception: it is
+`com.skypiecode.nonota` since 2026-08-15 (deliberate release-identity
+change; Play identity permanent after first upload — DECISIONS.md
+2026-08-15, tag v0.2.0-pilot). Fixture data like 'صيدلية
 النور' is simulated user-entered tenant data, never rewritten in copy passes.
 
 ## Product

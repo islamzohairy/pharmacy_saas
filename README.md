@@ -1,4 +1,10 @@
-# Pharmacy Profit Control Platform — Project Workspace
+# NoNota (نونوتا) — Project Workspace
+
+Brand: **NoNota (نونوتا)** — بديل الدفتر لصاحب المحل الصغير. Horizontal
+small-retail product; pharmacies are the first pilot vertical. Locked brand
+record and Play-listing strings live in `product/BRAND_AND_ASO.md`. Internal
+schema naming (`pharmacies`/`pharmacy_id`) is a retained legacy tenant label,
+not a product statement.
 
 This folder is a project under `ai-engineering-os/PROJECTS/`, built from
 `_TEMPLATE`. If you haven't read the top-level `ai-engineering-os/README.md`

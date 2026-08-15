@@ -5,7 +5,7 @@
          builds could never resolve DNS or open sockets. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="pharmacy_saas"
+        android:label="NoNota"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

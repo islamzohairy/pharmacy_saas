@@ -138,3 +138,27 @@ Customer profiles/refill reminders, WhatsApp order intake, multi-branch manageme
 ---
 
 *Prepared against repo commit state through Plan 11-H (2026-08-05). Revision 3 records confirmed engineering decisions from the Staff Engineer's sizing memo. Source docs: `product/pharmacy_saas_product_specification-2.md` (Rev. 3), `product/PRODUCT_DIRECTION_FINAL.md`, `FEATURES.md`, `PROJECT_MEMORY.md`, `DECISIONS.md`, `ARCHITECTURE.md`, `SECURITY.md`, `COMPLIANCE.md`, `RELEASES.md`, `REVIEW_PACKAGE.md`, the 41-decision document, and the Staff Engineer's Revision 2 response memo.*
+
+---
+
+# Revision 4 — Horizontal positioning & brand (NoNota)
+
+**Date:** 2026-08-15. **Decision:** the product is a horizontal small-retail
+product — بديل الدفتر لصاحب المحل الصغير — branded **NoNota (نونوتا)**.
+Pharmacies are the FIRST PILOT VERTICAL (the confirmed persona and
+go-to-market wedge), not the product definition.
+
+**What it supersedes:** both prior names — "Pharmacy Profit Control
+Platform" and "Smart Pharmacy Operating System". Locked brand record,
+verbatim, in `product/BRAND_AND_ASO.md` (the future Play-listing source;
+ASO strings live only there, never in the app UI).
+
+**Scope unchanged:** no features added or removed. The rebrand touched
+in-app display names, user-facing copy (4 Arabic strings), and
+authoritative docs only — zero schema, zero sync, zero feature logic.
+Internal schema/Dart naming (`pharmacies`/`pharmacy_id`/`Pharmacy`) is
+retained as a legacy label for the generic tenant concept and must not be
+renamed opportunistically (DECISIONS.md 2026-08-15).
+
+**Honesty rule:** brand is broad, evidence story stays "proven with
+pharmacies first" (n=1; pilot still ahead) — do not over-claim breadth.

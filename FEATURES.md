@@ -1,4 +1,8 @@
-# Features — Pharmacy Profit Control Platform
+# Features — NoNota (نونوتا)
+
+Horizontal small-retail bookkeeping product (بديل الدفتر لصاحب المحل
+الصغير); pharmacies are the first pilot vertical. Locked brand record:
+`product/BRAND_AND_ASO.md`.
 
 ## Shipped
 - 01_PROJECT_FOUNDATION_PLAN — project foundation (Android-only

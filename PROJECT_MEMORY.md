@@ -1,7 +1,22 @@
-# Project Memory — Pharmacy Profit Control Platform
+# Project Memory — NoNota (نونوتا)
 
 Durable facts a fresh agent session should know on arrival. Edit in place
 when a fact changes.
+
+## Brand (locked 2026-08-15)
+Brand: **NoNota (نونوتا)** — بديل الدفتر لصاحب المحل الصغير. Horizontal
+small-retail product; pharmacies are the FIRST PILOT VERTICAL, not the
+product definition. Supersedes both prior names ("Pharmacy Profit Control
+Platform", "Smart Pharmacy Operating System"). Locked brand record verbatim
+in `product/BRAND_AND_ASO.md` (future Play-listing source; ASO strings live
+ONLY there, never in the app UI). Launcher label "NoNota"; in-app title
+"نونوتا"; onboarding shop-name copy says "المحل". Evidence honesty rule:
+brand broad, evidence story stays "proven with pharmacies first" (n=1).
+STANDING NAMING RULE: internal schema/Dart naming (`pharmacies`,
+`pharmacy_id`, `Pharmacy`, `pharmacyId`, package/applicationId) is a
+retained legacy label for the generic tenant concept — never rename it
+opportunistically (DECISIONS.md 2026-08-15); fixture data like 'صيدلية
+النور' is simulated user-entered tenant data, never rewritten in copy passes.
 
 ## Product
 Mobile-first business-management app for independent pharmacy owners in

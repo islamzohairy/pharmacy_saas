@@ -1624,3 +1624,20 @@ APK without env defines silently never syncs.
 - Docs: SUPPORT_AND_ROLLBACK.md §6 release-build configuration checklist
   (6 items), SECURITY.md signing note, RELEASES.md skeleton + checklist
   line corrected (defines now mandatory), pre-brand titles updated.
+
+## 2026-08-15 — CI validated (release-infra pass, follow-up)
+- First CI runs surfaced TWO issues, both fixed in `chore/release-infrastructure`:
+  1. `flutter pub get` failed on CI's latest-stable Flutter 3.47.0/Dart 3.13
+     (resolution error) while passing locally on 3.44.8/Dart 3.12.2 — CI is
+     now PINNED to `flutter-version: 3.44.8` (matches the developer
+     toolchain; the gate must test the exact release toolchain). setup-java
+     bumped v3→v5 (deprecation).
+  2. Repo secrets `SUPABASE_URL` / `SUPABASE_ANON_KEY` are NOT set on the
+     repo — the new hard-fail step fired exactly as designed, proving the
+     silently-unconfigured-build guard works. Owner action: add both repo
+     secrets (values live in the gitignored `.env.local`; never paste into
+     chat/Markdown), then re-run; the final release-APK CI step runs only
+     after that. Until then the CI run is red BY DESIGN.
+- CI state now: pub get + analyze + full suite (290/290) PASS on the pinned
+  toolchain; release-APK build step pending secrets. GitHub Actions is
+  enabled on this repo (was never used before this pass).

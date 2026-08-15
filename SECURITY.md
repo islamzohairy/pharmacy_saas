@@ -1,4 +1,4 @@
-# Security — Pharmacy Profit Control Platform
+# Security — NoNota (نونوتا)
 
 ## Actual threat model
 This app holds a small business's complete financial history: sales,
@@ -47,6 +47,14 @@ proposition depends on it being trustworthy and available.
   verification live only in the gitignored `.env.local` and are passed
   per-run via `--dart-define`, never committed (`test_live/` is outside
   `test/` so CI can never run it without credentials).
+- **Release signing (2026-08-15):** NO keystore exists yet — the ceremony
+  is the product owner's task (generate, back up twice, record fingerprint
+  and locations in `RELEASES.md`; runbook in `SUPPORT_AND_ROLLBACK.md`
+  §3, gate in §6). A local gitignored `android/key.properties` may exist
+  pointing at the not-yet-generated keystore; builds fall back to debug
+  signing until BOTH exist (half-done ceremony must not break validation
+  builds). CI never holds signing secrets — release builds there are
+  debug-fallback validation builds by design.
 
 ## Explicitly accepted risks
 - No certificate pinning — no sensitive payment traffic in this app yet.

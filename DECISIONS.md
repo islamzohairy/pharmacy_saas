@@ -1641,3 +1641,20 @@ APK without env defines silently never syncs.
 - CI state now: pub get + analyze + full suite (290/290) PASS on the pinned
   toolchain; release-APK build step pending secrets. GitHub Actions is
   enabled on this repo (was never used before this pass).
+
+## 2026-08-15 — release infrastructure merged; CI fully green on main
+- `chore/release-infrastructure` merged → main as merge commit 4747918
+  (no squash; includes owner commits 2230856 "empty commit to rerun" and
+  cfedb13 "edit ci env" — the latter adds `environment: pilot` to the
+  gate job; 2230856 is whitespace-only noise in lib/main.dart, zero
+  behavioral impact, left as-is rather than reverting post-merge).
+- Owner set repo secrets `SUPABASE_URL` + `SUPABASE_ANON_KEY`; CI run
+  31878634116 on main HEAD 4747918 is fully green: analyze, 290/290,
+  "Reconstruct .env.local" hard-fail step PASSES, release APK built with
+  defines in CI. The silently-unconfigured-build gate is now proven live
+  in both directions (red when secrets missing, green when present).
+- Keystore ceremony COMPLETE: nonota-upload-key.jks exists at
+  `<workspace>/PROJECTS/secure/android/noNota/` (outside the repo, next
+  to the Signing Record + pass file — never to be committed or read into
+  agent context). Gated pilot phase next: signed build, smoke, tag
+  v0.1.0-pilot, RELEASES row.

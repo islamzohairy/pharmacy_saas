@@ -4,6 +4,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.io.File
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -28,20 +29,31 @@ android {
     }
 
     // Release signing (PLANS/08, SUPPORT_AND_ROLLBACK.md §3): reads
-    // android/key.properties when it exists. key.properties and the
-    // keystore are gitignored and never committed; without them the
-    // release buildType falls back to debug signing so CI and local dev
-    // stay secret-free.
+    // android/key.properties when it exists AND the keystore file it
+    // points at exists. key.properties and the keystore are gitignored
+    // and never committed; without a COMPLETE ceremony the release
+    // buildType falls back to debug signing so CI, local dev, and the
+    // emulator device-pass workflow stay unblocked — a half-done
+    // ceremony (key.properties present but the keystore not yet
+    // generated) must not break validation builds. Only the
+    // checklist-gated pilot build path requires the real keystore
+    // (SUPPORT_AND_ROLLBACK.md §6).
     val keystorePropertiesFile = rootProject.file("key.properties")
     val keystoreProperties = Properties()
+    var keystoreStoreFile: File? = null
     if (keystorePropertiesFile.exists()) {
         keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+        val storePath = keystoreProperties["storeFile"] as? String
+        if (storePath != null) {
+            val candidate = file(storePath)
+            if (candidate.exists()) keystoreStoreFile = candidate
+        }
     }
 
     signingConfigs {
         create("release") {
-            if (keystorePropertiesFile.exists()) {
-                storeFile = file(keystoreProperties["storeFile"] as String)
+            if (keystoreStoreFile != null) {
+                storeFile = keystoreStoreFile
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
@@ -51,7 +63,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
+            signingConfig = if (keystoreStoreFile != null) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")

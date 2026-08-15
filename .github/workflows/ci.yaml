@@ -31,6 +31,11 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # PINNED to the developer toolchain (local flutter --version) —
+          # 'latest stable' drifted ahead (3.47.0/Dart 3.13 vs 3.44.8/Dart
+          # 3.12.2) and pub get failed at resolution on the newer SDK; the
+          # gate must test the exact toolchain the release is built with.
+          flutter-version: 3.44.8
           cache: true
       - run: flutter pub get
       - run: flutter analyze

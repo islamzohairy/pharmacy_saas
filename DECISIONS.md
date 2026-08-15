@@ -1593,3 +1593,7 @@ docs commit) on top of main @ 64c95a4. Out-of-band base-gate fix preceding
 it: D16 insight widget tests were week-relative (Saturday flake) — fixed
 test-only on main (see the 2026-08-15 test-fix entry above). Pending: Staff
 Engineer sign-off on the string diff, then merge.
+
+MERGED 2026-08-15 (staff-engineer sign-off given): `chore/brand-nonota` →
+main as merge commit 2488e72; new main HEAD 2488e72. Gate re-verified on
+merged main: analyzer clean, 290/290 (measured).

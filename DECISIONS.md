@@ -1742,7 +1742,7 @@ straight from a path a run may have touched.
 - Branch chore/application-id-nonota — DO NOT MERGE without owner
   sign-off (gate: analyzer clean + full suite + CI green on branch).
 - MERGED 2026-08-15 (owner sign-off): merge commit `d59c454` on main;
-  main HEAD after merge + doc update = `a72a1e9`. Tag v0.2.0-pilot
+  main HEAD after merge + doc update = `8779ba8`. Tag v0.2.0-pilot
   pushed, stays on build commit 664e87b (tag-the-exact-build-commit
   rule). CI on merged main: run 31883735331 fully green under the new
   identity. Pre-Play engineering surface CLOSED — feature freeze

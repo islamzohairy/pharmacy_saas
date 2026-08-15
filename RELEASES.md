@@ -28,7 +28,7 @@ APK handed out must be taggable, testable, and replaceable. Read
 | Tag | versionCode | Built from (commit) | What shipped | APK | Rollback target |
 |---|---|---|---|---|---|
 | — | — | — | (no releases yet — plan 11 sets up the discipline before the first pilot install) | — | — |
-| v0.1.0-pilot | 1 | 4747918 | First pilot install — keystore-signed (CN=Islam Zohairy, Skypiecode; SHA-256 222d5e2a…78), label NoNota, defines baked in, smoke-passed on emulator (shop+PilotPharm product+sale 15.00 EGP, backup chip 13:38→13:41). Tag on the exact build commit; pubspec stays 1.0.0+1 (custom pilot label, see DECISIONS.md) | app-release-v0.1.0-pilot.apk (archived ../releases/, 74.8MB, sha256 0fe5fe83…d2) | none (first install) |
+| v0.1.0-pilot | 1 | 02570d7 | First pilot install — keystore-signed (CN=Islam Zohairy, Skypiecode; SHA-256 222d5e2a…78), label NoNota, defines baked in, smoke-passed on emulator (shop+PilotPharm product+sale 15.00 EGP, backup chip 13:38→13:41). Tag on the exact build commit; pubspec stays 1.0.0+1 (custom pilot label, see DECISIONS.md) | app-release-v0.1.0-pilot.apk (archived ../releases/, 74.8MB, sha256 9b7ed9b8…96) | none (first install) |
 
 ## Rollback procedure (quick reference)
 

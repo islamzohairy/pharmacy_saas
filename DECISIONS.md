@@ -1688,3 +1688,19 @@ APK without env defines silently never syncs.
   real-cert-signed); the fat 74.8MB APK was re-installed and launch-
   verified afterwards (topResumedActivity + apksigner DN) — the archived
   artifact is the fat APK.
+
+## 2026-08-15 — CORRECTION to the v0.1.0-pilot entry above
+The APK was rebuilt from final main (02570d7) because the first build's
+output path was overwritten by a `flutter run` reinstall during the smoke
+test (the flutter-run artifact was the arm64-only 26.8MB build; the fat
+74.8MB APK is the deliverable). Supersedes the earlier numbers in the
+v0.1.0-pilot entry: archived artifact = ../releases/app-release-v0.1.0-pilot.apk
+(74,833,650 bytes, sha256 9b7ed9b8…96); tag v0.1.0-pilot moved
+4747918 → 02570d7 (the exact build commit; tag was corrected before
+anyone consumed it, forced-update on a minutes-old ref only). The smoke
+test itself ran on the flutter-run arm64 build (same code, same
+real-cert signing, same defines) — the fat APK was then installed and
+launch-verified on the same emulator (topResumedActivity + apksigner DN).
+Lesson: `flutter run` overwrites build/app/outputs/... — always rebuild +
+re-verify the deliverable AFTER any device-run session, never archive
+straight from a path a run may have touched.

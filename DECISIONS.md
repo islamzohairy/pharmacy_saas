@@ -1658,3 +1658,33 @@ APK without env defines silently never syncs.
   to the Signing Record + pass file — never to be committed or read into
   agent context). Gated pilot phase next: signed build, smoke, tag
   v0.1.0-pilot, RELEASES row.
+
+## 2026-08-15 — PILOT BUILD SHIPPED: v0.1.0-pilot (first keystore-signed release)
+- Keystore ceremony completed by the owner: nonota-upload-key.jks at
+  `<workspace>/PROJECTS/secure/android/noNota/` (outside repo; Signing
+  Record + owner password manager — never in repo, never read into agent
+  context). key.properties (gitignored) now points at the keystore by
+  ABSOLUTE path — the previous `../secure/...` resolved relative to the
+  app module (android/secure), missing the actual location, which would
+  have silently kept the debug fallback active (a live near-miss caught
+  before signing; checklist §6 item 3 exists exactly for this).
+- Gated phase executed (checklist §6): (1) INTERNET in main manifest —
+  pre-existing; (2) defines baked via .env.local — verified; (3) SIGNED
+  with real cert — apksigner: CN=Islam Zohairy, OU=Skypiecode, Portsaid
+  EG, SHA-256 222d5e2a093f3b42d74073abae3d2fcb702a164ce86b8d6bbf4bf1cd2ed57839
+  (NOT debug); (4) built via ci.yaml gate — CI green on main (run
+  31878634116); (5) POST-BUILD SMOKE PASSED on emulator-5554: fresh
+  install → shop "PilotPharm" + owner "Tester" → product Paracetamol
+  (cost 10, price 15, stock 20→203 typed via adb IME quirk, harmless) →
+  sale 15.00 EGP → backup chip advanced 13:38 → 13:41 (real Supabase
+  push confirmed); (6) TAG CUT: v0.1.0-pilot on 4747918 (exact build
+  commit), APK archived ../releases/app-release-v0.1.0-pilot.apk (74.8MB,
+  sha256 0fe5fe83d3b420e5a6bb4f3e2914811e87950fbcee7f82e37dffa8769ab461d2).
+- Version note: pubspec stays 1.0.0+1 (versionName 1.0.0, versionCode 1);
+  v0.1.0-pilot is a custom pilot label per the release work item, recorded
+  in RELEASES.md. Rollback target: none (first install); subsequent
+  releases follow RELEASES.md conventions (v<versionName>-<yyyymmdd>).
+- Emulator smoke used the flutter-run-installed arm64 build (also
+  real-cert-signed); the fat 74.8MB APK was re-installed and launch-
+  verified afterwards (topResumedActivity + apksigner DN) — the archived
+  artifact is the fat APK.

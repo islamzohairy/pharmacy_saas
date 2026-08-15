@@ -1704,3 +1704,40 @@ launch-verified on the same emulator (topResumedActivity + apksigner DN).
 Lesson: `flutter run` overwrites build/app/outputs/... — always rebuild +
 re-verify the deliverable AFTER any device-run session, never archive
 straight from a path a run may have touched.
+
+## 2026-08-15 — Android applicationId: com.skypiecode.pharmacy_saas → com.skypiecode.nonota (supersedes 2026-08-02 entry)
+- (a) DECISION + RATIONALE: the Play applicationId is PERMANENT after
+  first upload; the old id encoded a vertical (pharmacy) and a business
+  model, while the product is horizontally positioned and branded
+  NoNota. This was the last low-cost moment to fix it (Staff Engineer
+  decision recorded in the work item). Changed ONLY `applicationId` in
+  `android/app/build.gradle.kts` (line 22); namespace, MainActivity
+  package, Dart source packages, pubspec name untouched (applicationId
+  ≠ namespace is valid; AGP resolves `.MainActivity` against the
+  namespace — verified in the merged manifest, launcher works).
+- (b) STEP-0 GATE: owner CONFIRMED (2026-08-15) the v0.1.0-pilot APK
+  (com.skypiecode.pharmacy_saas) was NOT installed on the real pilot
+  device and no data was entered — change proceeded. The pilot has not
+  started; her future data lives under the new identity from day one.
+- (c) NAMING-CONVENTION RULE CONTINUES: namespace, Dart package name,
+  schema naming (`pharmacies`/`pharmacy_id`/`Pharmacy`), and all
+  `package:pharmacy_saas/...` imports remain retained legacy labels —
+  applicationId is the ONE deliberate exception, per (a).
+- VERIFICATION: aapt2 → package name='com.skypiecode.nonota'
+  versionCode 1 versionName 1.0.0 + application-label:'NoNota';
+  apksigner → real pilot cert (CN=Islam Zohairy, Skypiecode). Smoke on
+  wiped emulator: coexistence with old-identity app proven (both
+  installed side-by-side, then emulator wiped) → fresh install under
+  new id → shop NoNotaPilot/Tester2 + product Panadol + sale 153.00 EGP
+  → backup chip advanced to 14:42 (real Supabase push — device-token
+  registration works end-to-end under the new identity; no backend
+  changes, RLS keyed by pharmacy-uuid + device-token as before).
+- TAG: v0.2.0-pilot on the exact build commit 664e87b; APK archived
+  ../releases/app-release-v0.2.0-pilot.apk (sha256
+  8ce0f9deac936d30ea054309f09751f8405b2ce7db0aa2e649a673663542c8fc).
+  The v0.1.0-pilot tag and its RELEASES row remain as historical record
+  (old identity) — NOT moved, re-pointed, or deleted. Rollback from
+  v0.2.0-pilot = uninstall new app + install v0.1.0-pilot (different
+  applicationId — cannot install over).
+- Branch chore/application-id-nonota — DO NOT MERGE without owner
+  sign-off (gate: analyzer clean + full suite + CI green on branch).

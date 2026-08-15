@@ -27,7 +27,7 @@ APK handed out must be taggable, testable, and replaceable. Read
 
 | Tag | versionCode | Built from (commit) | What shipped | APK | Rollback target |
 |---|---|---|---|---|---|
-| — | — | — | (no releases yet — plan 11 sets up the discipline before the first pilot install) | — | — |
+| v0.2.0-pilot | 1 | 664e87b | Second pilot install — **applicationId changed to `com.skypiecode.nonota`** (release identity only; namespace/source packages untouched). Keystore-signed (CN=Islam Zohairy, Skypiecode; SHA-256 222d5e2a…78), label NoNota, defines baked in; fresh-install smoke passed on a wiped emulator (shop NoNotaPilot + product Panadol + sale 153.00 EGP, backup chip → 14:42 — device-token registration works end-to-end under the new identity). Coexistence with old-identity app verified, then emulator wiped. pubspec stays 1.0.0+1 (pilot label series, see DECISIONS.md) | app-release-v0.2.0-pilot.apk (archived ../releases/, 74.8MB, sha256 8ce0f9de…c8) | v0.1.0-pilot (same signing key, but NOT installable over — different applicationId; old-identity app must be uninstalled first) |
 | v0.1.0-pilot | 1 | 02570d7 | First pilot install — keystore-signed (CN=Islam Zohairy, Skypiecode; SHA-256 222d5e2a…78), label NoNota, defines baked in, smoke-passed on emulator (shop+PilotPharm product+sale 15.00 EGP, backup chip 13:38→13:41). Tag on the exact build commit; pubspec stays 1.0.0+1 (custom pilot label, see DECISIONS.md) | app-release-v0.1.0-pilot.apk (archived ../releases/, 74.8MB, sha256 9b7ed9b8…96) | none (first install) |
 
 ## Rollback procedure (quick reference)

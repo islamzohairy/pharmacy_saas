@@ -1562,3 +1562,34 @@ change — forbidden by the test-only constraint.
 RULE this introduces (standing): dashboard range fixtures must be relative to
 `rangeOf(...)`-derived boundaries (or weekday-agnostic), never fixed `now − N days`
 offsets, because the week starts on Saturday. 290/290 measured on the fixed build.
+
+## 2026-08-15 — Brand: NoNota (نونوتا); horizontal positioning; legacy naming rule
+
+DECISION (product-owner + staff-engineer approved, work item `.HINTS/brand.md`):
+(a) POSITIONING: the product is horizontal small-retail — بديل الدفتر لصاحب
+المحل الصغير. Pharmacies are the FIRST PILOT VERTICAL (confirmed persona,
+go-to-market wedge), NOT the product definition. Evidence honesty rule: brand
+is broad, but the story stays "proven with pharmacies first" (n=1, pilot
+ahead) — never over-claim breadth.
+(b) NAME: NoNota (نونوتا) supersedes BOTH prior names ("Pharmacy Profit
+Control Platform" and "Smart Pharmacy Operating System"). Locked brand
+record lives verbatim in `product/BRAND_AND_ASO.md` — the future Play-listing
+source; ASO strings live ONLY there, never in the app UI. Launcher label is
+"NoNota" (Latin brand mark); in-app title is "نونوتا" (Arabic context);
+onboarding shop-name labels now say "المحل" not "الصيدلية" (4 user-facing
+strings changed, tests updated). Scope unchanged: zero schema, zero sync,
+zero feature logic — display names + copy + docs only.
+(c) NAMING-CONVENTION RULE (standing): internal schema/Dart naming keeps the
+legacy tenant labels — `pharmacies` table, `pharmacy_id` FKs, `Pharmacy`
+entity, `pharmacyId` variables, `applicationId` com.skypiecode.pharmacy_saas,
+package name pharmacy_saas. These are a retained legacy label for the generic
+tenant concept. Future agents must NEVER rename them opportunistically;
+renaming requires a new DECISIONS entry first. Fixture data (e.g. 'صيدلية
+النور' in tests) is simulated user-entered tenant data — also never rewritten
+in copy passes.
+
+IMPLEMENTED as `chore/brand-nonota` (2 commits: 6d419b3 in-app surface,
+docs commit) on top of main @ 64c95a4. Out-of-band base-gate fix preceding
+it: D16 insight widget tests were week-relative (Saturday flake) — fixed
+test-only on main (see the 2026-08-15 test-fix entry above). Pending: Staff
+Engineer sign-off on the string diff, then merge.

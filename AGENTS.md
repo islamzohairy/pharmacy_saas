@@ -1,4 +1,10 @@
-# Pharmacy Profit Control Platform — Project Rules
+# NoNota (نونوتا) — Project Rules
+
+Brand: **NoNota (نونوتا)** — بديل الدفتر لصاحب المحل الصغير (horizontal
+small-retail product; pharmacies are the first pilot vertical — see
+`product/BRAND_AND_ASO.md`). Internal schema/Dart naming (`pharmacies`,
+`pharmacy_id`, `Pharmacy`) is a **retained legacy label** for the generic
+tenant concept — never rename it opportunistically (DECISIONS.md 2026-08-15).
 
 Global rules (`CORE_SYSTEM/`) are already loaded automatically via
 `instructions` in `~/.config/opencode/opencode.json` — don't duplicate them
@@ -8,12 +14,12 @@ is read manually per `AGENT_BEHAVIOR.md` step 5 — the "Where to look
 first" list below exists so that manual step doesn't miss anything.
 
 ## What this app is
-A mobile-first business-management app for independent pharmacy owners in
-Egypt. P0 answers four confirmed problems: where the money goes, supplier
-debt, cash draws mixed with income, and customer debt. Android-only for
-now, Arabic-primary/RTL, local-first with best-effort backup sync to a
-Supabase backend. Single-owner, single-device pilot — no employee accounts
-yet.
+A mobile-first small-retail bookkeeping app — first vertical: independent
+pharmacy owners in Egypt (the pilot). P0 answers four confirmed problems:
+where the money goes, supplier debt, cash draws mixed with income, and
+customer debt. Android-only for now, Arabic-primary/RTL, local-first with
+best-effort backup sync to a Supabase backend. Single-owner, single-device
+pilot — no employee accounts yet.
 
 ## Constraints specific to this app
 - No backend authentication in P0 — identity is a local device profile

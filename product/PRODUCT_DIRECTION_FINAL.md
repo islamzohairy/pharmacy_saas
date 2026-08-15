@@ -72,3 +72,21 @@ There's also a real gap this surfaces: **general business expenses (rent, utilit
 - What specific expense categories belong in MVP beyond Owner Draw (rent, utilities, supplies, other — some reasonable starter set)? Small product detail, not a strategic decision — pick a short starter list and let owners add free-text notes rather than trying to enumerate every category up front.
 
 Everything else from the prior open-questions list is now resolved by this document.
+
+---
+
+## 5. Positioning Revision — Horizontal Product, Brand NoNota (2026-08-15)
+
+Supersedes the pharmacy-only framing of this document's earlier revisions.
+
+- **Product model:** horizontal small-retail product — بديل الدفتر لصاحب
+  المحل الصغير. Pharmacies are the FIRST PILOT VERTICAL (the confirmed
+  persona and the go-to-market wedge), not the product definition.
+- **Name resolution:** NoNota (نونوتا) supersedes both prior names
+  ("Pharmacy Profit Control Platform", "Smart Pharmacy Operating System").
+  Locked brand record verbatim in `product/BRAND_AND_ASO.md` (Play-listing
+  source; ASO strings live only there, never in the app UI).
+- **Honesty rule:** the brand is broad, but the evidence story stays
+  "proven with pharmacies first" — n=1 real interview, pilot still ahead.
+  Do not over-claim breadth from a pharmacy-first pilot.
+- **Scope:** unchanged — no features added or removed by the rebrand.

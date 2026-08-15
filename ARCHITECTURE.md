@@ -1,4 +1,11 @@
-# Architecture — Pharmacy Profit Control Platform
+# Architecture — NoNota (نونوتا)
+
+Brand: **NoNota (نونوتا)** — بديل الدفتر لصاحب المحل الصغير (a horizontal
+small-retail bookkeeping product; pharmacies are the first pilot vertical —
+see `product/BRAND_AND_ASO.md`). Internal schema/Dart naming (`pharmacies`
+table, `pharmacy_id`, `Pharmacy`) is a **retained legacy label** for the
+generic tenant concept — never rename it opportunistically (DECISIONS.md
+2026-08-15).
 
 Full rationale for every decision below: `ENGINEERING/ENGINEERING_STRATEGY.md`.
 This file states the *current* decision only — read that one for *why*, and

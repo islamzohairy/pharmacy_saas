@@ -395,9 +395,12 @@ three Step-8 test sales were confirmed synced to tenant 14 (ids 4–6,
 `--dart-define-from-file=.env.local` — the runtime-pass APK had lacked
 the backend defines, which is the scheduler's documented
 unconfigured-backend no-op; RELEASE BUILDS MUST ALWAYS CARRY `.env.local`
-defines (else sync silently never runs). Documented
-`.github/workflows/ci.yaml` does not exist in the repo — pilot release
-gate relies on local gates; restoring CI on main is a follow-up.
+defines (else sync silently never runs). Restored 2026-08-15
+(`chore/release-infrastructure`, then merged): `.github/workflows/ci.yaml`
+is back on main — analyze + full suite + release APK built with
+`.env.local` reconstructed from repo secrets (`SUPABASE_URL`/
+`SUPABASE_ANON_KEY`), hard-failing when either secret is missing so a
+silently unconfigured build cannot pass the gate.
 
 Plan 14 (signals & insights — final §4.2 increment) is complete —
 schemaVersion 9, local-only (zero changes under `supabase/` or

@@ -1,4 +1,4 @@
-# Releases — Pharmacy Profit Control Platform
+# Releases — NoNota (نونوتا)
 
 Version-tag → artifact → rollback mapping for the closed pilot (PLANS/11
 §4.4 / §8). The pilot owner's real financial records are at stake — every
@@ -28,6 +28,7 @@ APK handed out must be taggable, testable, and replaceable. Read
 | Tag | versionCode | Built from (commit) | What shipped | APK | Rollback target |
 |---|---|---|---|---|---|
 | — | — | — | (no releases yet — plan 11 sets up the discipline before the first pilot install) | — | — |
+| v0.1.0-pilot (TBD) | TBD | TBD | First pilot install — signed per `SUPPORT_AND_ROLLBACK.md` §6; **skeleton — fill in at cut time** (blocked on keystore ceremony) | app-release-v0.1.0-pilot.apk | none (first install) |
 
 ## Rollback procedure (quick reference)
 
@@ -43,7 +44,8 @@ APK handed out must be taggable, testable, and replaceable. Read
 ## Release checklist (per release)
 
 - [ ] `flutter analyze` clean; full suite green (all tests, not just new)
-- [ ] Release APK builds (`flutter build apk --release`)
+- [ ] Release APK builds with env defines baked in
+      (`flutter build apk --release --dart-define-from-file=.env.local`)
 - [ ] Release-mode runtime pass on the emulator: fresh install, full P0
       flow, exact dashboard figures
 - [ ] Local migration rehearsed against a copy of real data (if any)

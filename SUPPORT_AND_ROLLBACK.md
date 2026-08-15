@@ -1,4 +1,4 @@
-# Support, Rollback and Release Signing — Pharmacy Profit Control Platform
+# Support, Rollback and Release Signing — NoNota (نونوتا)
 
 Pilot-readiness runbook (PLANS/08 steps 4-6). The pilot is a real pharmacy
 owner's real financial records — this file exists so a mid-pilot problem is
@@ -183,3 +183,31 @@ backup is old — check connectivity):
 - All in-app copy is Arabic/RTL; support conversations happen over
   WhatsApp/phone per §1.
 
+
+## 6. Release-build configuration checklist (pilot gate, 2026-08-15)
+
+Every APK that reaches the pilot device must clear ALL of these — any
+failure is a release blocker, not a "fix in the field" item:
+
+- [ ] **(1) INTERNET permission in the MAIN manifest**
+      (`android/app/src/main/AndroidManifest.xml`) — the stock template
+      ships it only in debug/profile; without it in main, release sync
+      silently never runs (Plan 11 lesson, 2026-08-05).
+- [ ] **(2) Env defines baked in** — built with
+      `flutter build apk --release --dart-define-from-file=.env.local`
+      and both `SUPABASE_URL` + `SUPABASE_ANON_KEY` present in
+      `.env.local`. A build without them compiles fine but sync silently
+      never runs (Plan 13 lesson, 2026-08-13). CI enforces this by
+      reconstructing `.env.local` from repo secrets and hard-failing.
+- [ ] **(3) Signed with the pilot keystore, not the debug fallback** —
+      `apksigner verify --print-certs` shows the real upload cert, not
+      "CN=Android Debug" (keystore ceremony: §3 above; no keystore exists
+      yet — owner task).
+- [ ] **(4) Built via ci.yaml** — the workflow runs analyze + full suite +
+      release APK with the env-define hard-fail on every push/PR, so a
+      silently unconfigured build cannot pass the gate.
+- [ ] **(5) Post-build smoke on a fresh install** — create shop + product +
+      record a sale → the backup chip advances to "آخر نسخة: <time>".
+- [ ] **(6) Version tag cut + RELEASES.md entry recorded** — tag
+      `v<version>-<yyyymmdd>` on the exact build commit; APK archived by
+      tag (`RELEASES.md` conventions).

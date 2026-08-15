@@ -1597,3 +1597,47 @@ Engineer sign-off on the string diff, then merge.
 MERGED 2026-08-15 (staff-engineer sign-off given): `chore/brand-nonota` →
 main as merge commit 2488e72; new main HEAD 2488e72. Gate re-verified on
 merged main: analyzer clean, 290/290 (measured).
+
+## 2026-08-15 — release infrastructure pass (pilot release gate, part 1)
+WHY: first pilot install needs a buildable gate; Plan 13 proved a release
+APK without env defines silently never syncs.
+- ci.yaml restored/upgraded on main (analyze + full suite + release APK
+  reconstructed from repo secrets with bash `:?` HARD-FAIL guards) —
+  a silently unconfigured build cannot pass the gate. Plan 13-era
+  PROJECT_MEMORY claim that ci.yaml "does not exist" was stale (the file
+  existed with Plan 08 content since 6ce4b52); corrected in place.
+- Signing hardened: build.gradle.kts now falls back to debug signing
+  unless BOTH android/key.properties AND its keystore file exist.
+  DISCOVERED: a half-done ceremony (key.properties exists, keystore file
+  not yet generated) previously hard-failed `validateSigningRelease` on
+  EVERY release build, breaking the emulator device-pass workflow the
+  work item required to stay unblocked — proceeded under the discovery
+  rule (required to satisfy the existing DoD), config-only, zero
+  feature/schema/sync changes. Debug fallback remains the CI path; the
+  checklist-gated pilot build is the only path that needs the real
+  keystore (SUPPORT_AND_ROLLBACK.md §6).
+- Keystore ceremony confirmed still pending (owner task): local
+  android/key.properties exists pointing at a not-yet-generated
+  `../secure/android/noNota/nonota-upload-key.jks`; no keystore file
+  anywhere; CI never holds signing secrets. No tag cut, no RELEASES row
+  filled — v0.1.0-pilot skeleton row added pending the ceremony.
+- Docs: SUPPORT_AND_ROLLBACK.md §6 release-build configuration checklist
+  (6 items), SECURITY.md signing note, RELEASES.md skeleton + checklist
+  line corrected (defines now mandatory), pre-brand titles updated.
+
+## 2026-08-15 — CI validated (release-infra pass, follow-up)
+- First CI runs surfaced TWO issues, both fixed in `chore/release-infrastructure`:
+  1. `flutter pub get` failed on CI's latest-stable Flutter 3.47.0/Dart 3.13
+     (resolution error) while passing locally on 3.44.8/Dart 3.12.2 — CI is
+     now PINNED to `flutter-version: 3.44.8` (matches the developer
+     toolchain; the gate must test the exact release toolchain). setup-java
+     bumped v3→v5 (deprecation).
+  2. Repo secrets `SUPABASE_URL` / `SUPABASE_ANON_KEY` are NOT set on the
+     repo — the new hard-fail step fired exactly as designed, proving the
+     silently-unconfigured-build guard works. Owner action: add both repo
+     secrets (values live in the gitignored `.env.local`; never paste into
+     chat/Markdown), then re-run; the final release-APK CI step runs only
+     after that. Until then the CI run is red BY DESIGN.
+- CI state now: pub get + analyze + full suite (290/290) PASS on the pinned
+  toolchain; release-APK build step pending secrets. GitHub Actions is
+  enabled on this repo (was never used before this pass).

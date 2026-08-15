@@ -19,6 +19,11 @@ class Products extends Table {
   IntColumn get costMinor => integer()();
   IntColumn get sellMinor => integer()();
   DateTimeColumn get expiryDate => dateTime().nullable()();
+  /// Low-stock signal threshold (PLANS/14, schema v9). Nullable and
+  /// optional: unset means "out-of-stock signal only" (D14/D15). This is
+  /// configuration, not a stock movement — editing it never posts to
+  /// `stock_movements`.
+  IntColumn get lowStockThreshold => integer().nullable()();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

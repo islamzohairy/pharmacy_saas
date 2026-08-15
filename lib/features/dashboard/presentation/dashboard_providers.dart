@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/streams/combine_latest.dart';
 import '../../identity/identity.dart';
+import '../../inventory/inventory.dart';
 import '../../ledger/ledger.dart';
 import '../../products/products.dart';
 import '../domain/dashboard_range.dart';
+import '../domain/top_expense.dart';
 
 /// A single snapshot of everything the dashboard renders, freshly derived
 /// from the ledger — never cached anywhere (PLANS/07 "do not cache").
@@ -15,6 +17,8 @@ class DashboardData {
     required this.expensesMinor,
     required this.owedToSuppliersMinor,
     required this.owedByCustomersMinor,
+    this.attentionCount = 0,
+    this.topExpense,
     this.isEmpty = false,
   });
 
@@ -27,6 +31,8 @@ class DashboardData {
       expensesMinor = 0,
       owedToSuppliersMinor = 0,
       owedByCustomersMinor = 0,
+      attentionCount = 0,
+      topExpense = null,
       isEmpty = true;
 
   /// Profit figures are scoped to the selected range.
@@ -42,6 +48,14 @@ class DashboardData {
   /// calculators take no range).
   final int owedToSuppliersMinor;
   final int owedByCustomersMinor;
+
+  /// Tracked active products currently low or out of stock (PLANS/14
+  /// §5.4) — the products hub tile's attention count. Hidden at zero.
+  final int attentionCount;
+
+  /// Highest-expense-category insight for the selected range (D16), or
+  /// null when the range has no expenses — then the line hides.
+  final TopExpense? topExpense;
 
   int get netMinor => salesMinor - costMinor - expensesMinor;
 
@@ -76,14 +90,27 @@ final dashboardProvider = StreamProvider.autoDispose<DashboardData>((ref) {
   if (pharmacyId == null) return Stream.value(const DashboardData.empty());
   final repository = ref.watch(ledgerRepositoryProvider);
   final range = ref.watch(dashboardRangeProvider);
-  return combineLatest2(
+  return combineLatest3(
     // All-time entries for the range-scoped profit, the all-time debt
     // totals and the empty-state check — served by the (pharmacy_id,
     // occurred_at) index's tenant prefix.
     repository.watchEntries(pharmacyId: pharmacyId),
     ref.watch(productRepositoryProvider).watchAll(pharmacyId: pharmacyId),
+    // Active products joined with live on-hand — the attention count
+    // derives from the same signal function the product list badges use,
+    // so the two can never disagree (PLANS/14 §8). Built at repository
+    // level here (active-only; deactivated products never signal).
+    combineLatest2(
+      ref.watch(productRepositoryProvider).watchActive(pharmacyId: pharmacyId),
+      ref.watch(stockRepositoryProvider).watchAllOnHand(pharmacyId: pharmacyId),
+    ).map((tuple) {
+      final (productRows, onHandMap) = tuple;
+      return [
+        for (final product in productRows) (product, onHandMap[product.id]),
+      ];
+    }),
   ).map((parts) {
-    final (allEntries, products) = parts;
+    final (allEntries, products, productSignals) = parts;
     if (allEntries.isEmpty) return const DashboardData.empty();
     final (from, to) = rangeOf(range, DateTime.now());
     final rangeEntries = allEntries
@@ -104,6 +131,17 @@ final dashboardProvider = StreamProvider.autoDispose<DashboardData>((ref) {
       expensesMinor: profit.expensesMinor,
       owedToSuppliersMinor: calculateTotalOwedToSuppliers(entries: allEntries),
       owedByCustomersMinor: calculateTotalOwedByCustomers(entries: allEntries),
+      attentionCount: productSignals
+          .where(
+            (row) =>
+                stockSignal(
+                  onHand: row.$2,
+                  threshold: row.$1.lowStockThreshold,
+                ) !=
+                StockSignal.none,
+          )
+          .length,
+      topExpense: topExpenseInRange(rangeEntries, from: from, to: to),
     );
   });
 });

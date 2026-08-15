@@ -72,7 +72,7 @@ class _ProductTile extends ConsumerWidget {
       // Tapping the row opens the stock/product action sheet — the
       // chevron trailing cues it (staff review item; PLANS/13 §5.3).
       onTap: () => _showActions(context, ref),
-      title: Text(product.name),
+      title: _title(context),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -109,6 +109,53 @@ class _ProductTile extends ConsumerWidget {
 
   /// Product-row action sheet (PLANS/13 §5.3): stock adjustment, product
   /// edit, cancel. Replaces the old direct tap-to-edit.
+  /// Name row with the stock-signal badge (PLANS/14 §5.3): the badge
+  /// anchors on the title row so it never displaces the on-hand stock
+  /// line or the row's tap affordance (staff UX watch-item). The signal
+  /// is derived here — pure domain function [stockSignal], one source of
+  /// truth shared with the dashboard attention count (D14).
+  Widget _title(BuildContext context) {
+    final signal = stockSignal(
+      onHand: onHand,
+      threshold: product.lowStockThreshold,
+    );
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Flexible(
+          child: Text(product.name, overflow: TextOverflow.ellipsis),
+        ),
+        if (signal != StockSignal.none) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: switch (signal) {
+                StockSignal.outOfStock => theme.colorScheme.errorContainer,
+                StockSignal.low => theme.colorScheme.tertiaryContainer,
+                StockSignal.none => null,
+              },
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              signal == StockSignal.outOfStock
+                  ? context.l10n.outOfStockBadge
+                  : context.l10n.lowStockBadge,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: switch (signal) {
+                  StockSignal.outOfStock =>
+                    theme.colorScheme.onErrorContainer,
+                  StockSignal.low => theme.colorScheme.onTertiaryContainer,
+                  StockSignal.none => null,
+                },
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   Future<void> _showActions(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final action = await showModalBottomSheet<_ProductAction>(

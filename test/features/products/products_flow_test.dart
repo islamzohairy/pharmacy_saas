@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +34,11 @@ Future<ProviderContainer> pumpProductsApp(
   AppDatabase db, {
   required int profileId,
 }) async {
+  // Phone-sized surface so the full product form (now with the low-stock
+  // threshold field, PLANS/14) fits without lazy-build surprises.
+  tester.view.physicalSize = const Size(1080, 2340);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
   final store = FakeSecureStore();
   await store.write('last_active_profile_id', '$profileId');
   final container = ProviderContainer(
@@ -187,6 +193,11 @@ void main() {
         find.widgetWithText(TextFormField, 'سعر البيع'),
         '25.00',
       );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
 
@@ -200,6 +211,11 @@ void main() {
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
 
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
       expect(find.text('أدخل اسم المنتج'), findsOneWidget);
@@ -208,6 +224,11 @@ void main() {
       await tester.enterText(
         find.widgetWithText(TextFormField, 'سعر البيع'),
         '0',
+      );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
@@ -287,6 +308,11 @@ void main() {
         find.widgetWithText(TextFormField, 'سعر البيع'),
         '25.00',
       );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
 
@@ -316,6 +342,11 @@ void main() {
       await tester.enterText(
         find.widgetWithText(TextFormField, 'المخزون الابتدائي'),
         '50',
+      );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
@@ -356,6 +387,11 @@ void main() {
         find.widgetWithText(TextFormField, 'المخزون الابتدائي'),
         '٥٠',
       );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
 
@@ -388,6 +424,11 @@ void main() {
         find.widgetWithText(TextFormField, 'المخزون الابتدائي'),
         '0',
       );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
 
@@ -403,11 +444,21 @@ void main() {
       final field = find.widgetWithText(TextFormField, 'المخزون الابتدائي');
 
       await tester.enterText(field, '-5');
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
       expect(find.text('أدخل عددًا صحيحًا (مثال: 25)'), findsOneWidget);
 
       await tester.enterText(field, 'كثير');
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
       expect(find.text('أدخل عددًا صحيحًا (مثال: 25)'), findsOneWidget);
@@ -437,11 +488,309 @@ void main() {
       );
 
       // Save an edit without touching stock — history is unchanged.
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('حفظ'));
       await tester.pumpAndSettle();
       final movements = await db.select(db.stockMovements).get();
       expect(movements, hasLength(1));
       expect(movements.single.quantity, 10);
+    });
+  });
+
+  group('ProductForm low-stock threshold', () {
+    testWidgets('field is optional — omission creates the product with no '
+        'threshold (out-of-stock signal only)', (tester) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'اسم المنتج'),
+        'بانادول',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر الشراء'),
+        '20',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر البيع'),
+        '25.00',
+      );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      final product = await (db.select(db.products)
+            ..where((t) => t.name.equals('بانادول')))
+          .getSingle();
+      expect(product.lowStockThreshold, isNull);
+      // And no movement was posted either.
+      expect(await db.select(db.stockMovements).get(), isEmpty);
+    });
+
+    testWidgets('a positive value is stored on create', (tester) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'اسم المنتج'),
+        'بانادول',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر الشراء'),
+        '20',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر البيع'),
+        '25.00',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'حد تنبيه المخزون'),
+        '8',
+      );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      final product = await (db.select(db.products)
+            ..where((t) => t.name.equals('بانادول')))
+          .getSingle();
+      expect(product.lowStockThreshold, 8);
+      // Configuration only — no movement accompanies it (D15).
+      expect(await db.select(db.stockMovements).get(), isEmpty);
+    });
+
+    testWidgets('Arabic-Indic digits are accepted via the shared path', (
+      tester,
+    ) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'اسم المنتج'),
+        'بانادول',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر الشراء'),
+        '٢٠',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'سعر البيع'),
+        '٢٥',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'حد تنبيه المخزون'),
+        '١٢',
+      );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      final product = await (db.select(db.products)
+            ..where((t) => t.name.equals('بانادول')))
+          .getSingle();
+      expect(product.lowStockThreshold, 12);
+      expect(await db.select(db.stockMovements).get(), isEmpty);
+    });
+
+    testWidgets('rejects negative and non-numeric values', (tester) async {
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      final field = find.widgetWithText(TextFormField, 'حد تنبيه المخزون');
+
+      await tester.enterText(field, '-5');
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+      expect(find.text('أدخل عددًا صحيحًا (مثال: 25)'), findsOneWidget);
+
+      await tester.enterText(field, 'كثير');
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+      expect(find.text('أدخل عددًا صحيحًا (مثال: 25)'), findsOneWidget);
+
+      // Still on the form — nothing was saved.
+      expect(find.text('إضافة منتج'), findsOneWidget);
+      expect(await db.select(db.products).get(), isEmpty);
+    });
+
+    testWidgets('edit shows the threshold field pre-filled and changing it '
+        'posts no movement', (tester) async {
+      final productId = await seedProduct(db, pharmacyId);
+      await seedMovement(db, pharmacyId, productId);
+      await (db.update(db.products)..where((t) => t.id.equals(productId)))
+          .write(const ProductsCompanion(lowStockThreshold: Value(6)));
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تعديل بيانات المنتج'));
+      await tester.pumpAndSettle();
+
+      // Unlike initial stock (creation-only), the threshold is editable
+      // on edit — its value pre-fills.
+      final field = find.widgetWithText(TextFormField, 'حد تنبيه المخزون');
+      expect(field, findsOneWidget);
+      expect(
+        tester.widget<TextFormField>(field).controller!.text,
+        '6',
+      );
+
+      await tester.enterText(field, '9');
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      final product = await (db.select(db.products)
+            ..where((t) => t.id.equals(productId)))
+          .getSingle();
+      expect(product.lowStockThreshold, 9);
+      // Configuration edit — history is untouched (D15).
+      final movements = await db.select(db.stockMovements).get();
+      expect(movements, hasLength(1));
+      expect(movements.single.quantity, 10);
+    });
+
+    testWidgets('clearing the threshold on edit restores out-of-stock-only', (
+      tester,
+    ) async {
+      final productId = await seedProduct(db, pharmacyId);
+      await (db.update(db.products)..where((t) => t.id.equals(productId)))
+          .write(const ProductsCompanion(lowStockThreshold: Value(6)));
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.text('باراسيتامول 500'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تعديل بيانات المنتج'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'حد تنبيه المخزون'),
+        '',
+      );
+      await tester.scrollUntilVisible(
+        find.text('حفظ'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      final product = await (db.select(db.products)
+            ..where((t) => t.id.equals(productId)))
+          .getSingle();
+      expect(product.lowStockThreshold, isNull);
+    });
+  });
+
+  group('Product-list signal badges', () {
+    Future<int> seedTracked(
+      AppDatabase db,
+      int pharmacyId,
+      int quantity, {
+      int? threshold,
+    }) async {
+      final productId = await seedProduct(db, pharmacyId, name: 'بروفين');
+      await seedMovement(db, pharmacyId, productId, quantity: quantity);
+      if (threshold != null) {
+        await (db.update(db.products)..where((t) => t.id.equals(productId)))
+            .write(const ProductsCompanion(lowStockThreshold: Value(3)));
+      }
+      return productId;
+    }
+
+    testWidgets('tracked product at zero shows the out-of-stock badge', (
+      tester,
+    ) async {
+      await seedTracked(db, pharmacyId, 0);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('نفد المخزون'), findsOneWidget);
+      expect(find.text('مخزون منخفض'), findsNothing);
+      // The stock line co-exists with the badge (no displacement).
+      expect(find.text('المخزون: ٠'), findsOneWidget);
+    });
+
+    testWidgets('negative on-hand keeps the out-of-stock badge (never '
+        'hidden, D3 lineage)', (tester) async {
+      await seedTracked(db, pharmacyId, -4);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('نفد المخزون'), findsOneWidget);
+    });
+
+    testWidgets('tracked product at or below its threshold shows the '
+        'low-stock badge', (tester) async {
+      await seedTracked(db, pharmacyId, 3, threshold: 3);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('مخزون منخفض'), findsOneWidget);
+      expect(find.text('نفد المخزون'), findsNothing);
+    });
+
+    testWidgets('threshold unset with small stock shows no badge '
+        '(out-of-stock signal only — D14)', (tester) async {
+      await seedTracked(db, pharmacyId, 1);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('مخزون منخفض'), findsNothing);
+      expect(find.text('نفد المخزون'), findsNothing);
+    });
+
+    testWidgets('untracked product never shows a badge', (tester) async {
+      await seedProduct(db, pharmacyId, name: 'بانادول');
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      expect(find.text('مخزون منخفض'), findsNothing);
+      expect(find.text('نفد المخزون'), findsNothing);
+      expect(find.text('المخزون: —'), findsOneWidget);
+    });
+
+    testWidgets('the badge coexists with the row tap — tapping still opens '
+        'the action sheet', (tester) async {
+      await seedTracked(db, pharmacyId, 0);
+      await pumpProductsApp(tester, db, profileId: profileId);
+
+      await tester.tap(find.text('بروفين'));
+      await tester.pumpAndSettle();
+      expect(find.text('المخزون: إضافة / تصحيح'), findsOneWidget);
     });
   });
 }

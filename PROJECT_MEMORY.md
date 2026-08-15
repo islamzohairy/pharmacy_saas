@@ -383,3 +383,30 @@ unconfigured-backend no-op; RELEASE BUILDS MUST ALWAYS CARRY `.env.local`
 defines (else sync silently never runs). Documented
 `.github/workflows/ci.yaml` does not exist in the repo — pilot release
 gate relies on local gates; restoring CI on main is a follow-up.
+
+Plan 14 (signals & insights — final §4.2 increment) is complete —
+schemaVersion 9, local-only (zero changes under `supabase/` or
+`core/data/sync/`): additive drift migration adds nullable
+`products.low_stock_threshold` (INTEGER; threshold is configuration,
+never a movement — D15); pure `stockSignal()` in
+`lib/features/inventory/domain/stock_signal.dart` is the single
+derivation source (D14: tracked-only, out-of-stock = on-hand ≤ 0 incl.
+negative, low = threshold set ∧ 0 < on-hand ≤ threshold, unset → the
+out-of-stock signal only; untracked never signals); product form
+create+edit carries the threshold field (Arabic-Indic via the shared
+`normalizeDigits` path); product-list title row shows نفد المخزون /
+مخزون منخفض badges (errorContainer/tertiaryContainer); dashboard adds
+the products hub tile's live attention count (nullable param on
+`_NavTile`, hidden at zero, D14-counted, drops on resolve) and the
+أعلى مصروف expense-insight line (`topExpenseInRange` pure fn + shared
+`expenseCategoryLabels.dart` helper — D16: follows the range selector,
+hides on an empty range). Migration rehearsed twice: v8→v9 fixture
+(`low_stock_threshold_migration_test.dart`, 2026-08-13) and on-device
+against real pilot data (emulator-5556, release APK built WITH
+`.env.local` defines, `install -r` same-signing — all products/on-hand
+intact, thresholds NULL, then live-exercised: sell-to-zero badge,
+threshold-above-on-hand badge, insight hidden→shown إيجار ١٠٬٠٠٠ (١٠٠٪),
+attention count ٢ == list badges). 290 tests green (257 + 33: +1
+migration, +8 signal, +6 threshold, +6 badges, +12 dashboard), analyzer
+clean, release APK builds. The `.env.local`-defines rule from Plan 13
+holds: every release build must carry them.

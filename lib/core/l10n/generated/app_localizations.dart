@@ -724,6 +724,36 @@ abstract class AppLocalizations {
   /// **'المخزون'**
   String get onHandLabel;
 
+  /// Label of the optional low-stock threshold input on the product form (PLANS/14, D15)
+  ///
+  /// In ar, this message translates to:
+  /// **'حد تنبيه المخزون'**
+  String get lowStockThresholdLabel;
+
+  /// Helper text under the low-stock threshold input, shown in both create and edit; guides toward >= 1 since 0 adds nothing beyond out-of-stock (D15)
+  ///
+  /// In ar, this message translates to:
+  /// **'اختياري — يُنبّه عندما يصل المخزون إلى هذا الحد فأقل (من الأفضل 1 فأكثر)'**
+  String get lowStockThresholdHelper;
+
+  /// Validation error when the threshold is not a whole number or is negative
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عددًا صحيحًا (مثال: 25)'**
+  String get lowStockThresholdInvalid;
+
+  /// Product-list badge for a tracked product at or below its low-stock threshold (PLANS/14, D14)
+  ///
+  /// In ar, this message translates to:
+  /// **'مخزون منخفض'**
+  String get lowStockBadge;
+
+  /// Product-list badge for a tracked product with zero or negative on-hand (PLANS/14, D14)
+  ///
+  /// In ar, this message translates to:
+  /// **'نفد المخزون'**
+  String get outOfStockBadge;
+
   /// Product-row action-sheet entry opening the stock adjustment sheet (distinct from editing the product itself)
   ///
   /// In ar, this message translates to:
@@ -1065,6 +1095,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تكلفة البضاعة'**
   String get dashboardCost;
+
+  /// Dashboard insight line label: the expense category with the largest total in the selected range (PLANS/14, D16)
+  ///
+  /// In ar, this message translates to:
+  /// **'أعلى مصروف'**
+  String get topExpenseLabel;
+
+  /// Tooltip/semantics for the dashboard products-tile attention count (PLANS/14 §5.4)
+  ///
+  /// In ar, this message translates to:
+  /// **'منتجات تحتاج انتباهًا'**
+  String get attentionCountTooltip;
 
   /// Dashboard section header: all-time supplier/customer debt balances
   ///

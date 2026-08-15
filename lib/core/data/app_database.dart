@@ -34,7 +34,9 @@ part 'app_database.g.dart';
 /// (`stock_movements`, PLANS/12 — local-only, never on the sync
 /// surface). The append-only ledger rule applies to the schema added in
 /// version 3. Version 8 adds `pharmacies.auto_deduct_stock` (PLANS/13 §5.1,
-/// default ON, local-only).
+/// default ON, local-only). Version 9 adds
+/// `products.low_stock_threshold` (PLANS/14 §5.1 — nullable;
+/// configuration, never a movement).
 @DriftDatabase(
   tables: [
     Pharmacies,
@@ -52,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +108,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 8) {
         await m.addColumn(pharmacies, pharmacies.autoDeductStock);
+      }
+      if (from < 9) {
+        await m.addColumn(products, products.lowStockThreshold);
       }
     },
     beforeOpen: (details) async {

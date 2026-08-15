@@ -1009,6 +1009,17 @@ class $ProductsTable extends Products
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _lowStockThresholdMeta = const VerificationMeta(
+    'lowStockThreshold',
+  );
+  @override
+  late final GeneratedColumn<int> lowStockThreshold = GeneratedColumn<int>(
+    'low_stock_threshold',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -1044,6 +1055,7 @@ class $ProductsTable extends Products
     costMinor,
     sellMinor,
     expiryDate,
+    lowStockThreshold,
     isActive,
     createdAt,
   ];
@@ -1100,6 +1112,15 @@ class $ProductsTable extends Products
         expiryDate.isAcceptableOrUnknown(data['expiry_date']!, _expiryDateMeta),
       );
     }
+    if (data.containsKey('low_stock_threshold')) {
+      context.handle(
+        _lowStockThresholdMeta,
+        lowStockThreshold.isAcceptableOrUnknown(
+          data['low_stock_threshold']!,
+          _lowStockThresholdMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_active')) {
       context.handle(
         _isActiveMeta,
@@ -1145,6 +1166,10 @@ class $ProductsTable extends Products
         DriftSqlType.dateTime,
         data['${effectivePrefix}expiry_date'],
       ),
+      lowStockThreshold: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}low_stock_threshold'],
+      ),
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -1169,6 +1194,12 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
   final int costMinor;
   final int sellMinor;
   final DateTime? expiryDate;
+
+  /// Low-stock signal threshold (PLANS/14, schema v9). Nullable and
+  /// optional: unset means "out-of-stock signal only" (D14/D15). This is
+  /// configuration, not a stock movement — editing it never posts to
+  /// `stock_movements`.
+  final int? lowStockThreshold;
   final bool isActive;
   final DateTime createdAt;
   const StoredProduct({
@@ -1178,6 +1209,7 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
     required this.costMinor,
     required this.sellMinor,
     this.expiryDate,
+    this.lowStockThreshold,
     required this.isActive,
     required this.createdAt,
   });
@@ -1191,6 +1223,9 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
     map['sell_minor'] = Variable<int>(sellMinor);
     if (!nullToAbsent || expiryDate != null) {
       map['expiry_date'] = Variable<DateTime>(expiryDate);
+    }
+    if (!nullToAbsent || lowStockThreshold != null) {
+      map['low_stock_threshold'] = Variable<int>(lowStockThreshold);
     }
     map['is_active'] = Variable<bool>(isActive);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -1207,6 +1242,9 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
       expiryDate: expiryDate == null && nullToAbsent
           ? const Value.absent()
           : Value(expiryDate),
+      lowStockThreshold: lowStockThreshold == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lowStockThreshold),
       isActive: Value(isActive),
       createdAt: Value(createdAt),
     );
@@ -1224,6 +1262,7 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
       costMinor: serializer.fromJson<int>(json['costMinor']),
       sellMinor: serializer.fromJson<int>(json['sellMinor']),
       expiryDate: serializer.fromJson<DateTime?>(json['expiryDate']),
+      lowStockThreshold: serializer.fromJson<int?>(json['lowStockThreshold']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -1238,6 +1277,7 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
       'costMinor': serializer.toJson<int>(costMinor),
       'sellMinor': serializer.toJson<int>(sellMinor),
       'expiryDate': serializer.toJson<DateTime?>(expiryDate),
+      'lowStockThreshold': serializer.toJson<int?>(lowStockThreshold),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -1250,6 +1290,7 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
     int? costMinor,
     int? sellMinor,
     Value<DateTime?> expiryDate = const Value.absent(),
+    Value<int?> lowStockThreshold = const Value.absent(),
     bool? isActive,
     DateTime? createdAt,
   }) => StoredProduct(
@@ -1259,6 +1300,9 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
     costMinor: costMinor ?? this.costMinor,
     sellMinor: sellMinor ?? this.sellMinor,
     expiryDate: expiryDate.present ? expiryDate.value : this.expiryDate,
+    lowStockThreshold: lowStockThreshold.present
+        ? lowStockThreshold.value
+        : this.lowStockThreshold,
     isActive: isActive ?? this.isActive,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -1274,6 +1318,9 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
       expiryDate: data.expiryDate.present
           ? data.expiryDate.value
           : this.expiryDate,
+      lowStockThreshold: data.lowStockThreshold.present
+          ? data.lowStockThreshold.value
+          : this.lowStockThreshold,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1288,6 +1335,7 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
           ..write('costMinor: $costMinor, ')
           ..write('sellMinor: $sellMinor, ')
           ..write('expiryDate: $expiryDate, ')
+          ..write('lowStockThreshold: $lowStockThreshold, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1302,6 +1350,7 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
     costMinor,
     sellMinor,
     expiryDate,
+    lowStockThreshold,
     isActive,
     createdAt,
   );
@@ -1315,6 +1364,7 @@ class StoredProduct extends DataClass implements Insertable<StoredProduct> {
           other.costMinor == this.costMinor &&
           other.sellMinor == this.sellMinor &&
           other.expiryDate == this.expiryDate &&
+          other.lowStockThreshold == this.lowStockThreshold &&
           other.isActive == this.isActive &&
           other.createdAt == this.createdAt);
 }
@@ -1326,6 +1376,7 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
   final Value<int> costMinor;
   final Value<int> sellMinor;
   final Value<DateTime?> expiryDate;
+  final Value<int?> lowStockThreshold;
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
   const ProductsCompanion({
@@ -1335,6 +1386,7 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
     this.costMinor = const Value.absent(),
     this.sellMinor = const Value.absent(),
     this.expiryDate = const Value.absent(),
+    this.lowStockThreshold = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
@@ -1345,6 +1397,7 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
     required int costMinor,
     required int sellMinor,
     this.expiryDate = const Value.absent(),
+    this.lowStockThreshold = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : pharmacyId = Value(pharmacyId),
@@ -1358,6 +1411,7 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
     Expression<int>? costMinor,
     Expression<int>? sellMinor,
     Expression<DateTime>? expiryDate,
+    Expression<int>? lowStockThreshold,
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
   }) {
@@ -1368,6 +1422,7 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
       if (costMinor != null) 'cost_minor': costMinor,
       if (sellMinor != null) 'sell_minor': sellMinor,
       if (expiryDate != null) 'expiry_date': expiryDate,
+      if (lowStockThreshold != null) 'low_stock_threshold': lowStockThreshold,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -1380,6 +1435,7 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
     Value<int>? costMinor,
     Value<int>? sellMinor,
     Value<DateTime?>? expiryDate,
+    Value<int?>? lowStockThreshold,
     Value<bool>? isActive,
     Value<DateTime>? createdAt,
   }) {
@@ -1390,6 +1446,7 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
       costMinor: costMinor ?? this.costMinor,
       sellMinor: sellMinor ?? this.sellMinor,
       expiryDate: expiryDate ?? this.expiryDate,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -1416,6 +1473,9 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
     if (expiryDate.present) {
       map['expiry_date'] = Variable<DateTime>(expiryDate.value);
     }
+    if (lowStockThreshold.present) {
+      map['low_stock_threshold'] = Variable<int>(lowStockThreshold.value);
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
@@ -1434,6 +1494,7 @@ class ProductsCompanion extends UpdateCompanion<StoredProduct> {
           ..write('costMinor: $costMinor, ')
           ..write('sellMinor: $sellMinor, ')
           ..write('expiryDate: $expiryDate, ')
+          ..write('lowStockThreshold: $lowStockThreshold, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -5548,6 +5609,7 @@ typedef $$ProductsTableCreateCompanionBuilder =
       required int costMinor,
       required int sellMinor,
       Value<DateTime?> expiryDate,
+      Value<int?> lowStockThreshold,
       Value<bool> isActive,
       Value<DateTime> createdAt,
     });
@@ -5559,6 +5621,7 @@ typedef $$ProductsTableUpdateCompanionBuilder =
       Value<int> costMinor,
       Value<int> sellMinor,
       Value<DateTime?> expiryDate,
+      Value<int?> lowStockThreshold,
       Value<bool> isActive,
       Value<DateTime> createdAt,
     });
@@ -5652,6 +5715,11 @@ class $$ProductsTableFilterComposer
 
   ColumnFilters<DateTime> get expiryDate => $composableBuilder(
     column: $table.expiryDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lowStockThreshold => $composableBuilder(
+    column: $table.lowStockThreshold,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5773,6 +5841,11 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get lowStockThreshold => $composableBuilder(
+    column: $table.lowStockThreshold,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -5830,6 +5903,11 @@ class $$ProductsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get expiryDate => $composableBuilder(
     column: $table.expiryDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lowStockThreshold => $composableBuilder(
+    column: $table.lowStockThreshold,
     builder: (column) => column,
   );
 
@@ -5951,6 +6029,7 @@ class $$ProductsTableTableManager
                 Value<int> costMinor = const Value.absent(),
                 Value<int> sellMinor = const Value.absent(),
                 Value<DateTime?> expiryDate = const Value.absent(),
+                Value<int?> lowStockThreshold = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => ProductsCompanion(
@@ -5960,6 +6039,7 @@ class $$ProductsTableTableManager
                 costMinor: costMinor,
                 sellMinor: sellMinor,
                 expiryDate: expiryDate,
+                lowStockThreshold: lowStockThreshold,
                 isActive: isActive,
                 createdAt: createdAt,
               ),
@@ -5971,6 +6051,7 @@ class $$ProductsTableTableManager
                 required int costMinor,
                 required int sellMinor,
                 Value<DateTime?> expiryDate = const Value.absent(),
+                Value<int?> lowStockThreshold = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => ProductsCompanion.insert(
@@ -5980,6 +6061,7 @@ class $$ProductsTableTableManager
                 costMinor: costMinor,
                 sellMinor: sellMinor,
                 expiryDate: expiryDate,
+                lowStockThreshold: lowStockThreshold,
                 isActive: isActive,
                 createdAt: createdAt,
               ),

@@ -1409,6 +1409,52 @@ Suite 257/257, analyzer clean, release APK builds.
   PR-style description, Plans 12 AND 13, and the handoff notes).
   Plan 14 branches from main, not from the feature branch.
 
+## 2026-08-13 — Plan 14 confirmed decisions D14–D16 (recorded verbatim from PLANS/14 §3)
+- D14 — Signals apply only to tracked products. Untracked products never
+  signal — a product with no declared quantity cannot be "low."
+  Out-of-stock = tracked ∧ on-hand ≤ 0 (negative included — worse than
+  zero, never hidden). Low = tracked ∧ threshold set ∧ 0 < on-hand ≤
+  threshold. Threshold unset → out-of-stock signal only. Alternatives
+  considered: global threshold (rejected — one number produces noise
+  across heterogeneous products); out-of-stock-only MVP (rejected —
+  under-delivers §4.2 item 4's "low or out of stock").
+- D15 — Threshold is a nullable product column, editable at any time. It
+  is configuration, not a movement — editing it posts nothing to the
+  movement ledger. Integer ≥ 0, optional, Arabic-Indic input via the
+  shared `normalizeDigits` path. (Note: a threshold of 0 adds nothing
+  beyond the out-of-stock signal; helper copy should guide toward ≥ 1.)
+- D16 — The expense insight follows the dashboard range selector
+  (today/week/month) and hides entirely when the selected range has no
+  expenses — no empty-state noise, per the low-information-density
+  principle. Ties break deterministically (total, then category order).
+
+## 2026-08-13 — Plan 14 Phase 0 verification gate: PASSED (V1–V5)
+PLANS/14 Phase 0 report (branch `feature/14-inventory-signals` off
+`a44eded`; no code changes in this entry):
+- V1 `schemaVersion` == 8 on main (`app_database.dart:55`); v9 is the
+  next slot. PASS
+- V2 dashboard structure: `DashboardRangeSelector` at
+  `dashboard_screen.dart:83`; profit card 85–120; the expense-insight
+  slot fits between the profit card and the balances card (line 122).
+  Products hub tile = `_NavTile` (155–159), shared by all six nav tiles
+  with a chevron trailing — attention count implemented as a
+  nullable-count parameter on `_NavTile` (other five tiles pass null;
+  hidden-at-zero falls out for free). PASS
+- V3 product tile post-Plan-13: `products_screen.dart:71–107` — `ListTile`,
+  subtitle = price + on-hand line (untracked → "—"), trailing = delete +
+  chevron, row-tap → action sheet. Badge anchor chosen: the TITLE row
+  (name + chip), leaving the stock subtitle line and the tap affordance
+  untouched; RTL collision risk flagged for the runtime pass. PASS
+- V4 form/table precedent: `product_form_screen.dart` `_parseStock`
+  normalizeDigits path (90–95) reused for threshold parsing; initial
+  stock's movement-posting path (158–166) NOT reused — threshold is
+  config (D15). Column-add precedent = v5/v8 `addColumn` steps. PASS
+- V5 baseline RE-MEASURED: `flutter test` → 257/257, exact match with
+  the Plan 13 closeout (225 + 32). No stop conditions hit.
+- Note: `PLANS/14_INVENTORY_SIGNALS_AND_INSIGHTS_PLAN.md` itself was
+  untracked on main (present in the working tree, never committed);
+  committed with this entry.
+
 ## 2026-08-13 — lesson: drift watch streams never complete under widget-test fake-async
 Diagnosed while writing the auto-deduct hook test (Plan 13 step 5): a
 `watch()`-based repository read inside a widget test's fake-async zone
@@ -1417,3 +1463,75 @@ fake clock never fires. Pattern going forward: confirm-time reads that
 must return a value inside a widget test use a ONE-SHOT drift
 `get()`-based repository method (`allOnHand`), never `stream.first`;
 `watch*` streams stay provider-only.
+
+## 2026-08-13 — Plan 14 completion: schema v9 + signals & insights CLOSED (close-out package)
+All six implementation steps landed on `feature/14-inventory-signals`
+(off `a44eded`, main). Per-commit gates held throughout: `flutter analyze`
+clean, full suite green, `unmountAndFlushDriftTimers` in widget-tearDown.
+Merge/acceptance pending the Freemium MVP verification pass.
+
+### Migration rehearsal record (AGENTS.md standing rule §8 — TWO legs)
+- FIXTURE leg PASSED at migration commit `c50faf2`: new
+  `test/core/data/low_stock_threshold_migration_test.dart` rehearses
+  v8→v9 on a seeded copy (products/stock_movements/ledger rows intact;
+  `low_stock_threshold` NULL for every pre-existing row; write +
+  durability across reopen). Before/after counts: seeded rows exact-match,
+  schemaVersion 8 → 9. Suite at that commit: 258/258 (= 257 +
+  this one fixture test).
+- The three older ladder rehearsal tests now reopen at HEAD (v9) and had
+  to DROP `low_stock_threshold` in their rollback fixtures —
+  `sync_quarantine` (v5→v6), `stock_movements` (v6→v7),
+  `auto_deduct` (v7→v8) — heads bumped to schemaVersion 9. Same pattern
+  the v8 column established; no test count change (0).
+- DEVICE leg = Step 8 runtime pass (below): migration ran on REAL pilot
+  data on emulator-5556 (release APK, same signing, `install -r`).
+
+### Step 8 device-leg PASS — four signals verified on the v9 release APK
+Pre-migration (v8 APK, tenant 14, read via uiautomator dumps — this
+model cannot read screenshots): home dashboard figures صافي الربح ٩٠٫٠٠,
+المبيعات ٢١٢٫٠٠, تكلفة ١٢٢٫٠٠, المصروفات ٠٫٠٠, balances zero;
+products screen — A tracked ٩٥, Aspirin tracked ١٢٠, Paracetamol
+untracked (—), no badges (structurally impossible on v8). Built
+`app-release.apk` (74.8MB) WITH `--dart-define-from-file=.env.local` and
+`adb install -r` — Streamed Install Success (same signing as the
+Plan-13 APK → data preserved, not wiped). Post-migration dumps byte-
+identical: same three products, same on-hand, no badges (all thresholds
+NULL, no signal leak).
+- Signal 1 (out-of-stock): sold A 95→٠ via the sales screen (stepper 94
+  taps to qty 95, الإجمالي ١٩٠٫٠٠ ج.م, confirmed). Products screen now
+  shows "A / نفد المخزون / ٢٫٠٠ ج.م / المخزون: ٠". Untracked
+  Paracetamol shows NO badge at — (D14: untracked never signals). Dashboard
+  profit updated consistently: ٢٧٩ = ٩٠ + (١٩٠−١).
+- Signal 2 (low): edited Aspirin via the product form, typed 150 into the
+  low-stock field (helper "اختياري — يُنبّه عندما يصل المخزون إلى هذا الحد فأقل"),
+  saved. List now shows "Aspirin / مخزون منخفض / ... / المخزون: ١٢٠"
+  (150 > 120). A keeps نفد المخزون. List badge count = 2.
+- Signal 3 (insight): dashboard had NO أعلى مصروف line while المصروفات
+  was ٠٫٠٠ (D16 empty-range hide, observed pre-expense). Recorded an
+  expense إيجار ١٠٬٠٠٠٫٠٠ ج.م (category picker → إيجار; amount field
+  10000; تسجيل المصروف; list shows "إيجار / ١٠٬٠٠٠٫٠٠ ج.م"). Dashboard now
+  renders "أعلى مصروف: إيجار / ١٠٬٠٠٠٫٠٠ ج.م (١٠٠٪)", المصروفات
+  ١٠٬٠٠٠٫٠٠, صافي الربح −٩٬٧٢١ (90 + 189 − 10000). Switching to هذا
+  الأسبوع keeps the same insight (single expense is in-range; range
+  recompute itself is locked by the widget suite).
+- Signal 4 (count==list): products hub tile content-desc reads
+  "المنتجات / ٢" equal to the 2 list badges (A نفد المخزون + Aspirin
+  مخزون منخفض); count remained ٢ on the week range too.
+- Backup chip updated on device to "آخر نسخة: 13/8/2026 15:36" — sync
+  still active on the configured build.
+
+### Test-count reconciliation (per step, traceable)
+```
+257  baseline (re-measured at Plan 14 start — matches Plan 13 closeout)
++1   migration rehearsal test (low_stock_threshold)   → 258  (c50faf2)
++8   signal derivation, D14 matrix (stock_signal_test) → 266  (71a39a6)
++6   threshold field, create+edit widget tests          → 272  (3c99977)
++6   product-list badges widget tests                   → 278  (d39018d)
++12  dashboard (8 TopExpense domain + 4 widget)        → 290  (1f7618e)
+```
+Total added: 33 (1+8+6+6+12); 257 + 33 = 290, matching both measured
+suite runs (badge commit 278/278; dashboard commit 290/290). The
+attention-count DROP assertion (resolve out-of-stock → healthy → count
+2→1) was added to `dashboard_flow_test.dart` after closure review — it
+extends the existing count test in place (live-state transition),
+no count change (still 290).

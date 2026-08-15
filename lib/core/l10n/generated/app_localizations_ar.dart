@@ -336,6 +336,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get onHandLabel => 'المخزون';
 
   @override
+  String get lowStockThresholdLabel => 'حد تنبيه المخزون';
+
+  @override
+  String get lowStockThresholdHelper =>
+      'اختياري — يُنبّه عندما يصل المخزون إلى هذا الحد فأقل (من الأفضل 1 فأكثر)';
+
+  @override
+  String get lowStockThresholdInvalid => 'أدخل عددًا صحيحًا (مثال: 25)';
+
+  @override
+  String get lowStockBadge => 'مخزون منخفض';
+
+  @override
+  String get outOfStockBadge => 'نفد المخزون';
+
+  @override
   String get adjustStockAction => 'المخزون: إضافة / تصحيح';
 
   @override
@@ -513,6 +529,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dashboardCost => 'تكلفة البضاعة';
+
+  @override
+  String get topExpenseLabel => 'أعلى مصروف';
+
+  @override
+  String get attentionCountTooltip => 'منتجات تحتاج انتباهًا';
 
   @override
   String get dashboardCurrentBalances => 'الأرصدة الحالية';

@@ -7,7 +7,9 @@ import 'package:pharmacy_saas/app.dart';
 import 'package:pharmacy_saas/core/data/app_database.dart';
 import 'package:pharmacy_saas/core/data/database_providers.dart';
 import 'package:pharmacy_saas/core/data/secure_store.dart';
+import 'package:pharmacy_saas/core/data/tables/expense_category.dart';
 import 'package:pharmacy_saas/core/data/tables/ledger_entry_type.dart';
+import 'package:pharmacy_saas/core/data/tables/stock_movement_type.dart';
 import 'package:pharmacy_saas/core/router/app_router.dart';
 import 'package:pharmacy_saas/features/dashboard/domain/dashboard_range.dart';
 
@@ -44,6 +46,11 @@ Future<ProviderContainer> pumpDashboardApp(
   AppDatabase db, {
   required int profileId,
 }) async {
+  // Phone-sized surface so the whole dashboard — including the Plan 14
+  // insight line and the nav hub — fits without lazy-build surprises.
+  tester.view.physicalSize = const Size(1080, 2340);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
   final store = FakeSecureStore();
   await store.write('last_active_profile_id', '$profileId');
   final container = ProviderContainer(
@@ -573,5 +580,194 @@ void main() {
         await unmountAndFlushDriftTimers(tester);
       },
     );
+  });
+
+  group('Plan 14 signals on the dashboard', () {
+    Future<int> seedTrackedProduct(
+      AppDatabase db,
+      int pharmacyId, {
+      required int quantity,
+      int? threshold,
+    }) async {
+      final productId = await seedProduct(db, pharmacyId);
+      await seedMovement(db, pharmacyId, productId, quantity: quantity);
+      if (threshold != null) {
+        await (db.update(db.products)..where((t) => t.id.equals(productId)))
+            .write(const ProductsCompanion(lowStockThreshold: Value(4)));
+      }
+      return productId;
+    }
+
+    testWidgets('the products tile attention count tracks low and '
+        'out-of-stock products and never the untracked or healthy ones', (
+      tester,
+    ) async {
+      // One sale so the dashboard renders figures (not the empty state).
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.sale,
+        amountMinor: 2550,
+      );
+      final lowProduct = await seedTrackedProduct(
+        db,
+        pharmacyId,
+        quantity: 2,
+        threshold: 4,
+      );
+      // A healthy product never counts.
+      await seedTrackedProduct(db, pharmacyId, quantity: 50, threshold: 4);
+      // An untracked product never signals (D14).
+      await seedProduct(db, pharmacyId, name: 'بانادول');
+
+      await pumpDashboardApp(tester, db, profileId: profileId);
+
+      final productsTile = find.widgetWithText(ListTile, 'المنتجات');
+      expect(
+        find.descendant(of: productsTile, matching: find.text('١')),
+        findsOneWidget,
+      );
+
+      // Sell the low product down to zero — the signal becomes
+      // out-of-stock, still counted (D14: zero and negative included).
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.sale,
+        amountMinor: 500,
+      );
+      await seedMovement(
+        db,
+        pharmacyId,
+        lowProduct,
+        type: StockMovementType.stockOut,
+        quantity: -2,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: productsTile, matching: find.text('١')),
+        findsOneWidget,
+      );
+
+      // Now track the previously-untracked product below its threshold —
+      // the count must rise to two.
+      final untracked = await (db.select(db.products)
+            ..where((t) => t.name.equals('بانادول')))
+          .getSingle();
+      await seedMovement(db, pharmacyId, untracked.id, quantity: 3);
+      await (db.update(db.products)..where((t) => t.id.equals(untracked.id)))
+          .write(const ProductsCompanion(lowStockThreshold: Value(4)));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: productsTile, matching: find.text('٢')),
+        findsOneWidget,
+      );
+      expect(find.text('٣'), findsNothing);
+
+      // Resolve the out-of-stock product back to healthy — the count must
+      // drop again: it reflects live state, not badge history.
+      await seedMovement(db, pharmacyId, lowProduct, quantity: 12);
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: productsTile, matching: find.text('١')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: productsTile, matching: find.text('٢')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the attention count is hidden when nothing needs attention', (
+      tester,
+    ) async {
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.sale,
+        amountMinor: 2550,
+      );
+      await seedTrackedProduct(db, pharmacyId, quantity: 50, threshold: 4);
+
+      await pumpDashboardApp(tester, db, profileId: profileId);
+
+      final productsTile = find.widgetWithText(ListTile, 'المنتجات');
+      expect(find.text('١'), findsNothing);
+      expect(
+        find.descendant(of: productsTile, matching: find.text('١')),
+        findsNothing,
+      );
+      expect(find.text('٢'), findsNothing);
+    });
+
+    testWidgets('the expense insight shows the top category for the range '
+        'and follows the range switch', (tester) async {
+      // Today: rent 3.00 wins over supplies 2.00. Three days ago: rent
+      // 50.00 — so the week range still tops rent but with 96% share.
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.expense,
+        amountMinor: 300,
+        category: ExpenseCategory.rent,
+      );
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.expense,
+        amountMinor: 200,
+        category: ExpenseCategory.supplies,
+      );
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.expense,
+        amountMinor: 5000,
+        category: ExpenseCategory.rent,
+        occurredAt: DateTime.now().subtract(const Duration(days: 3)),
+      );
+
+      await pumpDashboardApp(tester, db, profileId: profileId);
+
+      // Today's insight: rent, 3.00, 60% of the range's expenses.
+      final todayInsight = find.textContaining('أعلى مصروف: إيجار');
+      expect(todayInsight, findsOneWidget);
+      expect(find.text('٣٫٠٠ ج.م (٦٠٪)'), findsOneWidget);
+
+      await tester.tap(find.text('هذا الأسبوع'));
+      await tester.pumpAndSettle();
+
+      // Same line, recomputed: rent 53.00 of 55.00 → 96%.
+      expect(todayInsight, findsOneWidget);
+      expect(find.text('٥٣٫٠٠ ج.م (٩٦٪)'), findsOneWidget);
+    });
+
+    testWidgets('the expense insight hides entirely when the range has no '
+        'expenses (D16 — no empty-state noise)', (tester) async {
+      // Only a sale today; the only expense is three days old.
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.sale,
+        amountMinor: 2550,
+      );
+      await seedLedgerEntry(
+        db,
+        pharmacyId,
+        type: LedgerEntryType.expense,
+        amountMinor: 5000,
+        category: ExpenseCategory.rent,
+        occurredAt: DateTime.now().subtract(const Duration(days: 3)),
+      );
+
+      await pumpDashboardApp(tester, db, profileId: profileId);
+
+      expect(find.textContaining('أعلى مصروف'), findsNothing);
+
+      await tester.tap(find.text('هذا الأسبوع'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('أعلى مصروف: إيجار'), findsOneWidget);
+    });
   });
 }

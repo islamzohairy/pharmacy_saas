@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/money.dart';
 import '../../../core/l10n/app_l10n.dart';
+import '../../../core/l10n/expense_category_labels.dart';
 import '../../identity/identity.dart';
 import '../../ledger/ledger.dart';
 import 'expenses_providers.dart';
@@ -148,15 +149,8 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     );
   }
 
-  String _categoryLabel(AppLocalizations l10n, ExpenseCategory category) {
-    return switch (category) {
-      ExpenseCategory.ownerDraw => l10n.expenseCategoryOwnerDraw,
-      ExpenseCategory.rent => l10n.expenseCategoryRent,
-      ExpenseCategory.utilities => l10n.expenseCategoryUtilities,
-      ExpenseCategory.supplies => l10n.expenseCategorySupplies,
-      ExpenseCategory.other => l10n.expenseCategoryOther,
-    };
-  }
+  String _categoryLabel(AppLocalizations l10n, ExpenseCategory category) =>
+      expenseCategoryLabel(l10n, category);
 }
 
 /// The recent-expenses section: newest first, each row showing category,

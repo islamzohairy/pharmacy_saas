@@ -33,6 +33,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late final TextEditingController _costController;
   late final TextEditingController _sellController;
   late final TextEditingController _initialStockController;
+  late final TextEditingController _thresholdController;
   DateTime? _expiryDate;
   bool _saving = false;
 
@@ -53,6 +54,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     // product never touches stock — a fresh movement on edit would
     // double-count the catalog's opening balance.
     _initialStockController = TextEditingController();
+    // The low-stock threshold is configuration (D15): shown and editable
+    // in BOTH create and edit — unlike initial stock, changing it never
+    // posts anything to the movement ledger.
+    _thresholdController = TextEditingController(
+      text: product?.lowStockThreshold?.toString() ?? '',
+    );
     _expiryDate = product?.expiryDate;
   }
 
@@ -62,6 +69,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _costController.dispose();
     _sellController.dispose();
     _initialStockController.dispose();
+    _thresholdController.dispose();
     super.dispose();
   }
 
@@ -104,6 +112,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     return null;
   }
 
+  /// Parses the optional low-stock threshold: empty → `null` (clearing
+  /// the threshold, out-of-stock signal only), otherwise a non-negative
+  /// integer through the shared [normalizeDigits] path — no second digit
+  /// convention (D15).
+  int? _parseThreshold(String input) {
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) return null;
+    return int.tryParse(normalizeDigits(trimmed));
+  }
+
+  String? _thresholdValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final parsed = _parseThreshold(value);
+    if (parsed == null || parsed < 0) {
+      return context.l10n.lowStockThresholdInvalid;
+    }
+    return null;
+  }
+
   Future<void> _pickExpiryDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -140,6 +167,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           costMinor: costMinor,
           sellMinor: sellMinor,
           expiryDate: _expiryDate,
+          lowStockThreshold: _parseThreshold(_thresholdController.text),
           isActive: product.isActive,
           createdAt: product.createdAt,
         ),
@@ -151,6 +179,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         costMinor: costMinor,
         sellMinor: sellMinor,
         expiryDate: _expiryDate,
+        lowStockThreshold: _parseThreshold(_thresholdController.text),
       );
       // Optional initial stock → exactly one `initial` movement on
       // creation, attributed to the active profile. Empty or zero posts
@@ -229,6 +258,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
               const SizedBox(height: 16),
             ],
+            TextFormField(
+              controller: _thresholdController,
+              decoration: InputDecoration(
+                labelText: l10n.lowStockThresholdLabel,
+                helperText: l10n.lowStockThresholdHelper,
+              ),
+              keyboardType: TextInputType.number,
+              validator: _thresholdValidator,
+            ),
+            const SizedBox(height: 16),
             InputDecorator(
               isEmpty: _expiryDate == null,
               decoration: InputDecoration(

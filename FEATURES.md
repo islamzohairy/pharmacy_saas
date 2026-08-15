@@ -207,8 +207,30 @@
   analyzer clean. See DECISIONS.md 2026-08-13 (D6–D10, device-leg pass,
   fake-async lesson, acceptance reconciliation + sync confirmation).
 
+- 14_INVENTORY_SIGNALS_AND_INSIGHTS_PLAN — signals & insights (schemaVersion
+  9, local-only — zero changes under `supabase/` or `core/data/sync/`):
+  nullable `products.low_stock_threshold` column (additive migration,
+  rehearsed twice — v8→v9 fixture 2026-08-13 and on-device 2026-08-13-15:36
+  on emulator-5556 with real pilot data intact, all thresholds NULL),
+  pure `stockSignal()` derivation (D14: tracked-only, out-of-stock = ≤ 0,
+  low = threshold set ∧ 0 < on-hand ≤ threshold), threshold field on the
+  product form create+edit (D15: config, never a movement), title-row
+  signal badges on the product list (نفد المخزون errorContainer /
+  مخزون منخفض tertiaryContainer, untracked → none), and two dashboard
+  additions alongside the range selector — the products hub tile's live
+  attention count (D14 signals, drops when an item resolves healthy; the
+  other five tiles pass null) and the أعلى مصروف expense insight line
+  (D16: top category + share, follows today/week/month, hides on an empty
+  range). Device-runtime-passed on the release APK: sold A to zero →
+  نفد المخزون, threshold 150 > 120 on Aspirin → مخزون منخفض, insight
+  hidden at ٠٫٠٠ then shown إيجار ١٠٬٠٠٠ (١٠٠٪), attention count ٢ == the
+  two list badges. 290 tests green (257 baseline + 33: +1 migration, +8
+  signal, +6 threshold, +6 badges, +12 dashboard), analyzer clean,
+  release APK builds (74.8MB with `.env.local` defines). See DECISIONS.md
+  2026-08-13 (D14–D16, Phase 0 gate, rehearsal record + Step 8 device leg).
+
 ## In progress
-None — all P0 plans (01–09), plans 10–13 are complete.
+None — all P0 plans (01–09), plans 10–14 are complete.
 Next work is gated on pilot feedback and the P1 confirmations in the
 roadmap below.
 
@@ -228,6 +250,7 @@ roadmap below.
 | 11 | `PLANS/11_PILOT_HARDENING_AND_OBSERVABILITY_PLAN.md` | pilot hardening: DB-open safety, backup staleness visibility |
 | 12 | `PLANS/12_INVENTORY_FOUNDATION_PLAN.md` | inventory: on-hand visibility, initial stock capture |
 | 13 | `PLANS/13_INVENTORY_DEDUCTION_AND_ADJUSTMENT_PLAN.md` | sale auto-deduction, manual stock adjustment, movements in activity feed |
+| 14 | `PLANS/14_INVENTORY_SIGNALS_AND_INSIGHTS_PLAN.md` | low/out-of-stock signals, expense insight (final §4.2 increment) |
 
 ## Roadmap — P1 (not started, not yet planned in detail)
 - Expiry alerting logic (data field already ships in P0 — see

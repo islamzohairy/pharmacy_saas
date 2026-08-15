@@ -17,7 +17,7 @@ import 'core/widgets/database_fatal_error_screen.dart';
 import 'features/identity/data/identity_repository_impl.dart';
 
 /// The app runs inside a guarded zone so that async/zone errors that
-/// escape Flutter's framework handlers still reach the local error log
+/// escape Flutter's framework handlers still reach the local error log 
 /// (PLANS/09 layer 1 — see [installErrorLogCapture]).
 void main() {
   // Zone errors keep flowing to MCP's monitor (as bootstrapFlutter's default
@@ -35,6 +35,7 @@ Future<void> _startup() async {
   // `ar` locale) — the localization delegates also load these, but this
   // covers any non-widget use.
   await initializeDateFormatting('ar');
+
 
   await SupabaseBootstrap.initializeIfConfigured();
 

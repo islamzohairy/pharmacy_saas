@@ -1535,3 +1535,30 @@ attention-count DROP assertion (resolve out-of-stock → healthy → count
 2→1) was added to `dashboard_flow_test.dart` after closure review — it
 extends the existing count test in place (live-state transition),
 no count change (still 290).
+
+## 2026-08-15 — Out-of-band test fix: D16 insight fixtures were week-relative (Saturday flake)
+
+CONTEXT: at the brand-pass base gate (post-Plan-14 merge b6a1548, tree byte-identical
+to verified 35bfaf1), two Plan 14 dashboard widget tests failed — only on Saturdays.
+Root cause: the tests seeded their in-week expense at `now − 3 days`, but the week
+starts on Saturday (`_startOfWeek`, dashboard_range.dart), so on a Saturday the week
+contains only today and the fixture falls in the previous week. Pre-existing latent
+flake, invisible to the 2026-08-13 close-out (Thursday); NOT a merge regression
+(verified: empty diff between 35bfaf1 and b6a1548), NOT a production-code defect
+(the insight logic is correct for the real calendar).
+
+DECISION (staff-engineer directed, Option 1): dedicated test-only robustness commit,
+landed on main BEFORE the brand branch is cut, so the brand pass stands on a
+deterministic green gate. Fix: fixtures seed at yesterday-midnight via a new
+`inWeekNotToday(now)` helper (strictly in-week, outside today, on every day except
+Saturday); on Saturday the in-week-not-today scenario is unrepresentable (week ==
+today), so the tests assert the degenerate case (recompute no-op / insight stays
+hidden) instead of hardcoding a weekday-dependent expectation. Assertions otherwise
+unchanged and still hardcoded (٣٫٠٠ ج.م (٦٠٪) / ٥٣٫٠٠ ج.م (٩٦٪)) — nothing weakened.
+Clock injection (rangeOf already takes `now`) was rejected: the widget path calls
+`DateTime.now()` at the provider, so injection would have required a production
+change — forbidden by the test-only constraint.
+
+RULE this introduces (standing): dashboard range fixtures must be relative to
+`rangeOf(...)`-derived boundaries (or weekday-agnostic), never fixed `now − N days`
+offsets, because the week starts on Saturday. 290/290 measured on the fixed build.

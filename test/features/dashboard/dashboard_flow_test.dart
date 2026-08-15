@@ -39,6 +39,24 @@ Future<void> waitPastProviderSecond(WidgetTester tester) async {
   );
 }
 
+/// The D16 insight tests need an expense inside the current week but not
+/// on "today", so the week range differs from the today range. A fixed
+/// `now − 3 days` fixture breaks on the week-start day — `_startOfWeek`
+/// (dashboard_range.dart) starts the week on Saturday, so on a Saturday
+/// the week contains only today and the fixture lands in the previous
+/// week. Seeding at yesterday-midnight keeps the fixture strictly
+/// in-week (and outside today) on every day EXCEPT Saturday, where the
+/// scenario is unrepresentable: the callers then assert the degenerate
+/// Saturday case (week == today) instead of the recompute case.
+///
+/// Returns null when no in-week, not-today moment exists (Saturday).
+DateTime? inWeekNotToday(DateTime now) {
+  final yesterday = now.subtract(const Duration(days: 1));
+  final weekStart = rangeOf(DashboardRange.week, now).$1;
+  if (yesterday.isBefore(weekStart)) return null;
+  return DateTime(yesterday.year, yesterday.month, yesterday.day);
+}
+
 /// Pumps the full app on a memory DB with one seeded pharmacy and an
 /// active profile, starting on the dashboard — the plan 07 default route.
 Future<ProviderContainer> pumpDashboardApp(
@@ -702,8 +720,9 @@ void main() {
 
     testWidgets('the expense insight shows the top category for the range '
         'and follows the range switch', (tester) async {
-      // Today: rent 3.00 wins over supplies 2.00. Three days ago: rent
-      // 50.00 — so the week range still tops rent but with 96% share.
+      // Today: rent 3.00 wins over supplies 2.00. Yesterday (in-week on
+      // every day except Saturday): rent 50.00 — so the week range still
+      // tops rent but with 96% share.
       await seedLedgerEntry(
         db,
         pharmacyId,
@@ -718,14 +737,17 @@ void main() {
         amountMinor: 200,
         category: ExpenseCategory.supplies,
       );
-      await seedLedgerEntry(
-        db,
-        pharmacyId,
-        type: LedgerEntryType.expense,
-        amountMinor: 5000,
-        category: ExpenseCategory.rent,
-        occurredAt: DateTime.now().subtract(const Duration(days: 3)),
-      );
+      final older = inWeekNotToday(DateTime.now());
+      if (older != null) {
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.expense,
+          amountMinor: 5000,
+          category: ExpenseCategory.rent,
+          occurredAt: older,
+        );
+      }
 
       await pumpDashboardApp(tester, db, profileId: profileId);
 
@@ -737,28 +759,38 @@ void main() {
       await tester.tap(find.text('هذا الأسبوع'));
       await tester.pumpAndSettle();
 
-      // Same line, recomputed: rent 53.00 of 55.00 → 96%.
+      // Same line, recomputed: rent 53.00 of 55.00 → 96%. On Saturday the
+      // week IS today, so the recompute is a no-op and today's values
+      // persist — both cases are asserted.
       expect(todayInsight, findsOneWidget);
-      expect(find.text('٥٣٫٠٠ ج.م (٩٦٪)'), findsOneWidget);
+      if (older != null) {
+        expect(find.text('٥٣٫٠٠ ج.م (٩٦٪)'), findsOneWidget);
+      } else {
+        expect(find.text('٣٫٠٠ ج.م (٦٠٪)'), findsOneWidget);
+      }
     });
 
     testWidgets('the expense insight hides entirely when the range has no '
         'expenses (D16 — no empty-state noise)', (tester) async {
-      // Only a sale today; the only expense is three days old.
+      // Only a sale today; the only expense is yesterday (in-week on
+      // every day except Saturday).
       await seedLedgerEntry(
         db,
         pharmacyId,
         type: LedgerEntryType.sale,
         amountMinor: 2550,
       );
-      await seedLedgerEntry(
-        db,
-        pharmacyId,
-        type: LedgerEntryType.expense,
-        amountMinor: 5000,
-        category: ExpenseCategory.rent,
-        occurredAt: DateTime.now().subtract(const Duration(days: 3)),
-      );
+      final older = inWeekNotToday(DateTime.now());
+      if (older != null) {
+        await seedLedgerEntry(
+          db,
+          pharmacyId,
+          type: LedgerEntryType.expense,
+          amountMinor: 5000,
+          category: ExpenseCategory.rent,
+          occurredAt: older,
+        );
+      }
 
       await pumpDashboardApp(tester, db, profileId: profileId);
 
@@ -767,7 +799,13 @@ void main() {
       await tester.tap(find.text('هذا الأسبوع'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('أعلى مصروف: إيجار'), findsOneWidget);
+      // On every day except Saturday the in-week expense makes the week
+      // insight appear; on Saturday the week IS today, so it stays hidden.
+      if (older != null) {
+        expect(find.textContaining('أعلى مصروف: إيجار'), findsOneWidget);
+      } else {
+        expect(find.textContaining('أعلى مصروف'), findsNothing);
+      }
     });
   });
 }

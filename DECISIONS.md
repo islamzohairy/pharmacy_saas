@@ -1742,8 +1742,12 @@ straight from a path a run may have touched.
 - Branch chore/application-id-nonota — DO NOT MERGE without owner
   sign-off (gate: analyzer clean + full suite + CI green on branch).
 - MERGED 2026-08-15 (owner sign-off): merge commit `d59c454` on main;
-  merge commit `d59c454`; main HEAD at close-out = the last commit of the applicationId close-out doc series (merge `d59c454`; tag `v0.2.0-pilot` on build commit `664e87b`). Tag v0.2.0-pilot
-  pushed, stays on build commit 664e87b (tag-the-exact-build-commit
-  rule). CI on merged main: run 31883735331 fully green under the new
-  identity. Pre-Play engineering surface CLOSED — feature freeze
-  absolute until pilot evidence exists.
+  main HEAD at close-out = the last commit of the applicationId
+  close-out doc series (see git log; tag `v0.2.0-pilot` pushed, stays
+  on build commit `664e87b` — tag-the-exact-build-commit rule). CI on
+  merged main: run `31884273257` fully green (analyze, test 290/290,
+  env reconstruct hard-fail step, release APK build with defines — all
+  success) under the new identity. [Correction: the run ID in the first
+  draft of this entry was wrong; this is the verified one.]
+  Pre-Play engineering surface CLOSED — feature freeze absolute until
+  pilot evidence exists.

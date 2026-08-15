@@ -36,7 +36,7 @@ void main() {
     );
 
     expect(find.text('مرحباً بك'), findsOneWidget);
-    expect(find.text('اسم الصيدلية'), findsOneWidget);
+    expect(find.text('اسم المحل'), findsOneWidget);
 
     final directionality = tester.widget<Directionality>(
       find.byType(Directionality).first,

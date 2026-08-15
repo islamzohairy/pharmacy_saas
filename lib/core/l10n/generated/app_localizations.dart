@@ -97,7 +97,7 @@ abstract class AppLocalizations {
   /// Application title shown in the app bar and launcher context
   ///
   /// In ar, this message translates to:
-  /// **'إدارة الصيدلية'**
+  /// **'نونوتا'**
   String get appTitle;
 
   /// Title of the onboarding/profile placeholder screen
@@ -247,13 +247,13 @@ abstract class AppLocalizations {
   /// Label for the pharmacy name input during onboarding
   ///
   /// In ar, this message translates to:
-  /// **'اسم الصيدلية'**
+  /// **'اسم المحل'**
   String get pharmacyNameLabel;
 
   /// Validation error when pharmacy name is empty
   ///
   /// In ar, this message translates to:
-  /// **'أدخل اسم الصيدلية'**
+  /// **'أدخل اسم المحل'**
   String get pharmacyNameRequired;
 
   /// Label for the owner display name input during onboarding
@@ -385,7 +385,7 @@ abstract class AppLocalizations {
   /// Title of the forgot-PIN reset dialog
   ///
   /// In ar, this message translates to:
-  /// **'إعادة بدء الصيدلية'**
+  /// **'إعادة بدء المحل'**
   String get forgotPinTitle;
 
   /// Explains the wipe-based PIN reset and its limitation, in-app

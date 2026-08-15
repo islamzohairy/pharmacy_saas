@@ -1,6 +1,6 @@
 {
   "@@locale": "ar",
-  "appTitle": "إدارة الصيدلية",
+  "appTitle": "نونوتا",
   "@appTitle": {
     "description": "Application title shown in the app bar and launcher context"
   },
@@ -105,11 +105,11 @@
   "@screenUnderConstruction": {
     "description": "Placeholder body text shown on stub screens"
   },
-  "pharmacyNameLabel": "اسم الصيدلية",
+  "pharmacyNameLabel": "اسم المحل",
   "@pharmacyNameLabel": {
     "description": "Label for the pharmacy name input during onboarding"
   },
-  "pharmacyNameRequired": "أدخل اسم الصيدلية",
+  "pharmacyNameRequired": "أدخل اسم المحل",
   "@pharmacyNameRequired": {
     "description": "Validation error when pharmacy name is empty"
   },
@@ -197,7 +197,7 @@
   "@forgotPin": {
     "description": "Link shown on the PIN entry dialog for the no-recovery path"
   },
-  "forgotPinTitle": "إعادة بدء الصيدلية",
+  "forgotPinTitle": "إعادة بدء المحل",
   "@forgotPinTitle": {
     "description": "Title of the forgot-PIN reset dialog"
   },

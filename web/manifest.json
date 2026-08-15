@@ -1,6 +1,6 @@
 {
-    "name": "pharmacy_saas",
-    "short_name": "pharmacy_saas",
+    "name": "NoNota",
+    "short_name": "NoNota",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

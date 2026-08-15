@@ -9,7 +9,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'إدارة الصيدلية';
+  String get appTitle => 'نونوتا';
 
   @override
   String get onboardingTitle => 'مرحباً بك';
@@ -86,10 +86,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get screenUnderConstruction => 'هذه الشاشة قيد الإنشاء';
 
   @override
-  String get pharmacyNameLabel => 'اسم الصيدلية';
+  String get pharmacyNameLabel => 'اسم المحل';
 
   @override
-  String get pharmacyNameRequired => 'أدخل اسم الصيدلية';
+  String get pharmacyNameRequired => 'أدخل اسم المحل';
 
   @override
   String get ownerDisplayNameLabel => 'اسمك';
@@ -155,7 +155,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get forgotPin => 'نسيت رمز الدخول؟';
 
   @override
-  String get forgotPinTitle => 'إعادة بدء الصيدلية';
+  String get forgotPinTitle => 'إعادة بدء المحل';
 
   @override
   String get forgotPinBody =>

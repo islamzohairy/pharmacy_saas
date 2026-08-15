@@ -53,10 +53,10 @@ void main() {
       'dashboard, zero network calls', (tester) async {
     final container = await pumpApp(tester);
 
-    expect(find.text('اسم الصيدلية'), findsOneWidget);
+    expect(find.text('اسم المحل'), findsOneWidget);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'اسم الصيدلية'),
+      find.widgetWithText(TextFormField, 'اسم المحل'),
       'صيدلية النور',
     );
     await tester.enterText(
@@ -82,7 +82,7 @@ void main() {
     await tester.tap(find.text('إنشاء والبدء'));
     await tester.pumpAndSettle();
 
-    expect(find.text('أدخل اسم الصيدلية'), findsOneWidget);
+    expect(find.text('أدخل اسم المحل'), findsOneWidget);
     expect(find.text('أدخل اسمك'), findsOneWidget);
   });
 
@@ -92,7 +92,7 @@ void main() {
     final container = await pumpApp(tester);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'اسم الصيدلية'),
+      find.widgetWithText(TextFormField, 'اسم المحل'),
       'صيدلية النور',
     );
     await tester.enterText(
@@ -131,7 +131,7 @@ void main() {
     final container = await pumpApp(tester);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'اسم الصيدلية'),
+      find.widgetWithText(TextFormField, 'اسم المحل'),
       'صيدلية النور',
     );
     await tester.enterText(
@@ -212,7 +212,7 @@ void main() {
     final container = await pumpApp(tester);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'اسم الصيدلية'),
+      find.widgetWithText(TextFormField, 'اسم المحل'),
       'صيدلية النور',
     );
     await tester.enterText(
@@ -252,7 +252,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Back to onboarding, identity wiped.
-    expect(find.text('اسم الصيدلية'), findsOneWidget);
+    expect(find.text('اسم المحل'), findsOneWidget);
     expect(
       await container.read(identityRepositoryProvider).hasAnyProfile(),
       isFalse,
